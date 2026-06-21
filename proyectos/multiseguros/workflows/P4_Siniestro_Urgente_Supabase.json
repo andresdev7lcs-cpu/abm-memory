@@ -1,0 +1,371 @@
+{
+  "name": "P4 - Siniestro Urgente (Supabase)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-webhook",
+      "name": "Manual Trigger P4",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        304
+      ],
+      "webhookId": "2bbec713-6746-4376-98a3-967706aece15"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-poliza-id",
+              "name": "poliza_id",
+              "value": "POL-20250015",
+              "type": "string"
+            },
+            {
+              "id": "assign-descripcion",
+              "name": "descripcion",
+              "value": "Siniestro demo: colisión menor en parqueadero",
+              "type": "string"
+            },
+            {
+              "id": "assign-asesor",
+              "name": "asesor",
+              "value": "Asesor Demo",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-simular-siniestro-demo",
+      "name": "Simular Siniestro Demo",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "javaScriptCode": "const polizaId = $json.poliza_id;\nconst supabaseUrl = 'https://ekarbxdoaoqrtlmfzgyj.supabase.co';\nconst supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM';\n\nconst url = `${supabaseUrl}/rest/v1/polizas?numero=eq.${polizaId}`;\nconst response = await fetch(url, {\n  method: 'GET',\n  headers: {\n    'Authorization': `Bearer ${supabaseKey}`,\n    'Content-Type': 'application/json',\n    'apikey': supabaseKey\n  }\n});\n\nconst data = response.ok ? await response.json() : [];\nreturn { records: data };"
+      },
+      "id": "node-buscar-poliza",
+      "name": "Buscar Poliza (Supabase)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-records",
+              "name": "records",
+              "value": "={{ Array.isArray($json) ? $json : [$json] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-aggregate",
+      "name": "Mapear Respuesta Supabase",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-records",
+              "name": "records",
+              "value": "={{ $json.records }}",
+              "type": "array"
+            },
+            {
+              "id": "assign-poliza-id",
+              "name": "poliza_id",
+              "value": "={{ $(\"Simular Siniestro Demo\").item.json.poliza_id }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-descripcion",
+              "name": "descripcion",
+              "value": "={{ $(\"Simular Siniestro Demo\").item.json.descripcion }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-asesor",
+              "name": "asesor",
+              "value": "={{ $(\"Simular Siniestro Demo\").item.json.asesor }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-context",
+      "name": "Preservar Contexto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-existe",
+              "leftValue": "={{ Array.isArray($json.records) && $json.records.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-poliza",
+      "name": "Poliza existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "javaScriptCode": "const supabaseUrl = 'https://ekarbxdoaoqrtlmfzgyj.supabase.co';\nconst supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM';\n\nconst records = $json.records;\nif (!records || records.length === 0) {\n  return { error: 'No poliza found' };\n}\n\nconst poliza = records[0];\nconst today = new Date().toISOString().split('T')[0];\nconst payload = {\n  poliza_id: poliza.id,\n  asegurado: String(poliza.cliente_id || ''),\n  fecha_ocurrencia: today,\n  descripcion: $json.descripcion,\n  estado: 'avisado'\n};\n\nconst url = `${supabaseUrl}/rest/v1/siniestros`;\nconst response = await fetch(url, {\n  method: 'POST',\n  headers: {\n    'Authorization': `Bearer ${supabaseKey}`,\n    'Content-Type': 'application/json',\n    'apikey': supabaseKey,\n    'Prefer': 'return=representation'\n  },\n  body: JSON.stringify(payload)\n});\n\nconst data = response.ok ? await response.json() : { error: await response.text() };\nreturn data;"
+      },
+      "id": "node-crear-siniestro",
+      "name": "Crear Siniestro (Supabase)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "8695082898",
+        "text": "={{ \"🚨 SINIESTRO URGENTE\\nPóliza: \" + $(\"Preservar Contexto\").item.json.poliza_id + \"\\nDescripción: \" + $(\"Preservar Contexto\").item.json.descripcion + \"\\nAsesor: \" + $(\"Preservar Contexto\").item.json.asesor }}",
+        "additionalFields": {}
+      },
+      "id": "node-telegram",
+      "name": "Notificar Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1328,
+        160
+      ],
+      "webhookId": "b2953e42-ece4-4002-8191-e3f18deac49b",
+      "credentials": {
+        "telegramApi": {
+          "id": "S5pOddjIrEv0wzS1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-status-ok",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "assign-message-ok",
+              "name": "message",
+              "value": "Siniestro procesado",
+              "type": "string"
+            },
+            {
+              "id": "assign-siniestro-id",
+              "name": "siniestro_id",
+              "value": "={{ $(\"Crear Siniestro (Supabase)\").item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-resp-ok",
+      "name": "Respuesta 200 OK",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-status-err",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "assign-message-err",
+              "name": "message",
+              "value": "Póliza no encontrada",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-resp-error",
+      "name": "Respuesta 400 Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1104,
+        464
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger P4": {
+      "main": [
+        [
+          {
+            "node": "Simular Siniestro Demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simular Siniestro Demo": {
+      "main": [
+        [
+          {
+            "node": "Buscar Poliza (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Poliza (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Agregar Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar Resultados": {
+      "main": [
+        [
+          {
+            "node": "Preservar Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preservar Contexto": {
+      "main": [
+        [
+          {
+            "node": "Poliza existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poliza existe?": {
+      "main": [
+        [
+          {
+            "node": "Crear Siniestro (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta 400 Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Siniestro (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Notificar Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Telegram": {
+      "main": [
+        [
+          {
+            "node": "Respuesta 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "availableInMCP": false
+  },
+  "versionId": "ac65460f-0c40-4303-915c-656f999d9e87",
+  "meta": {
+    "instanceId": "59945276d6cf3267079d58d165a03395ca6794e5061c1c7ccad77a12bce43c1e"
+  },
+  "tags": ["supabase", "v2"]
+}

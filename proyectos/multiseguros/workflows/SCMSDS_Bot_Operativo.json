@@ -1,0 +1,148 @@
+{
+  "name": "SCMSDS Bot — Asistente Operativo Multiseguros",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerEvent": "messageCreate"
+      },
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [50, 300],
+      "credentials": {
+        "telegramApi": "scmsds_bot"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message;\nif (!msg) throw new Error('No message in trigger payload');\nreturn [{\n  json: {\n    chat_id: String(msg.chat.id),\n    user_message: msg.text || '',\n    user_name: msg.from?.first_name || 'Usuario'\n  }\n}];"
+      },
+      "id": "extract-data",
+      "name": "Code — Extraer datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detectar intención del mensaje para saber qué consultar en Supabase\nconst msg = $json.user_message.toLowerCase();\nlet intent = 'general';\n\nif (msg.includes('cliente') || msg.includes('clientes')) intent = 'clientes';\nelse if (msg.includes('póliza') || msg.includes('poliza') || msg.includes('vencer') || msg.includes('vencen')) intent = 'polizas';\nelse if (msg.includes('siniestro') || msg.includes('urgente')) intent = 'siniestros';\nelse if (msg.includes('cotiza') || msg.includes('cotización')) intent = 'cotizaciones';\n\nreturn [{\n  json: {\n    ...$json,\n    intent\n  }\n}];"
+      },
+      "id": "detect-intent",
+      "name": "Code — Detectar intención",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/{{ $json.intent === 'clientes' ? 'clientes?select=count' : $json.intent === 'polizas' ? 'polizas?select=id,cliente_id,fecha_vencimiento&fecha_vencimiento=lte.' + new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] : $json.intent === 'siniestros' ? 'siniestros?select=id,cliente_id,estado&estado=eq.abierto' : $json.intent === 'cotizaciones' ? 'cotizaciones?select=id,cliente_id,estado&estado=eq.pendiente' : 'clientes?select=count' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_ANON_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_ANON_KEY_AQUI"
+            },
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "supabase-query",
+      "name": "HTTP — Consultar Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const intent = $node['Code — Detectar intención'].json.intent;\nconst userMsg = $node['Code — Detectar intención'].json.user_message;\nconst data = $json;\n\nlet contexto = '';\ntry {\n  const items = Array.isArray(data) ? data : [data];\n  if (intent === 'clientes') {\n    contexto = `Clientes en base de datos: ${items.length > 0 ? JSON.stringify(items[0]) : 'sin datos'}`;\n  } else if (intent === 'polizas') {\n    contexto = `Pólizas próximas a vencer (7 días): ${items.length} encontradas. Detalle: ${JSON.stringify(items.slice(0,5))}`;\n  } else if (intent === 'siniestros') {\n    contexto = `Siniestros abiertos: ${items.length}. Detalle: ${JSON.stringify(items.slice(0,5))}`;\n  } else if (intent === 'cotizaciones') {\n    contexto = `Cotizaciones pendientes: ${items.length}. Detalle: ${JSON.stringify(items.slice(0,5))}`;\n  } else {\n    contexto = `Datos generales: ${JSON.stringify(items[0])}`;\n  }\n} catch(e) {\n  contexto = 'No se pudo obtener datos de Supabase en este momento.';\n}\n\nreturn [{\n  json: {\n    chat_id: $node['Code — Extraer datos'].json.chat_id,\n    user_message: userMsg,\n    contexto_supabase: contexto\n  }\n}];"
+      },
+      "id": "prepare-context",
+      "name": "Code — Preparar contexto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: 'gpt-4o-mini', messages: [ { role: 'system', content: 'Eres el asistente operativo de Multiseguros del Sur, una intermediaria de seguros en Neiva, Huila, Colombia.\\n\\nQUIÉN TE USA:\\n- El gerente y los asesores de Multiseguros del Sur.\\n- Hacen consultas rápidas desde el móvil sobre clientes, pólizas y siniestros.\\n\\nCÓMO ACCEDES A LOS DATOS:\\n- Se te entrega contexto directo de Supabase en cada mensaje.\\n- No inventes datos. Si no tienes el dato, di \"No tengo ese dato disponible ahora.\"\\n\\nCÓMO RESPONDES:\\n- Español latino, directo y breve.\\n- Sin tecnicismos. El gerente quiere el dato, no la explicación técnica.\\n- Formato limpio: si hay lista, usa viñetas simples.\\n- Máximo 3-4 líneas salvo que pidan resumen completo.\\n\\nQUÉ NO HACES:\\n- No das consejos de negocio ni estrategia.\\n- No eres AndyBot ni el asistente personal de Andrés Palomares. Eres el asistente de la empresa.\\n- No guardas ni repites contraseñas o claves.' }, { role: 'user', content: 'DATOS DE SUPABASE:\\n' + $json.contexto_supabase + '\\n\\nPREGUNTA DEL USUARIO:\\n' + $json.user_message } ], temperature: 0.3, max_tokens: 400 }) }}"
+      },
+      "id": "http-openai",
+      "name": "HTTP — OpenAI GPT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 300],
+      "credentials": {
+        "openAiApi": "openai_andybot"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $node['Code — Preparar contexto'].json.chat_id;\nconst text = $json.choices?.[0]?.message?.content || 'Sin respuesta';\nif (!chatId) throw new Error('chat_id perdido');\nreturn [{ json: { chat_id: chatId, response_text: text } }];"
+      },
+      "id": "prepare-send",
+      "name": "Code — Preparar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.response_text }}"
+      },
+      "id": "telegram-send",
+      "name": "Telegram — Send",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1450, 300],
+      "credentials": {
+        "telegramApi": "scmsds_bot"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{"node": "Code — Extraer datos", "type": "main", "index": 0}]]
+    },
+    "Code — Extraer datos": {
+      "main": [[{"node": "Code — Detectar intención", "type": "main", "index": 0}]]
+    },
+    "Code — Detectar intención": {
+      "main": [[{"node": "HTTP — Consultar Supabase", "type": "main", "index": 0}]]
+    },
+    "HTTP — Consultar Supabase": {
+      "main": [[{"node": "Code — Preparar contexto", "type": "main", "index": 0}]]
+    },
+    "Code — Preparar contexto": {
+      "main": [[{"node": "HTTP — OpenAI GPT", "type": "main", "index": 0}]]
+    },
+    "HTTP — OpenAI GPT": {
+      "main": [[{"node": "Code — Preparar respuesta", "type": "main", "index": 0}]]
+    },
+    "Code — Preparar respuesta": {
+      "main": [[{"node": "Telegram — Send", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "staticData": null,
+  "pinData": {}
+}

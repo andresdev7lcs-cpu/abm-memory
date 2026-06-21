@@ -1,0 +1,90 @@
+{
+  "name": "AndyBot Personal — Asistente de Andrés",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerEvent": "messageCreate"
+      },
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [50, 300],
+      "credentials": {
+        "telegramApi": "andybot_personal"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message;\nif (!msg) throw new Error('No message in trigger payload');\nreturn [{\n  json: {\n    chat_id: String(msg.chat.id),\n    user_message: msg.text || 'hola',\n    user_name: msg.from?.first_name || 'Andrés'\n  }\n}];"
+      },
+      "id": "extract-data",
+      "name": "Code — Extraer datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: 'gpt-4o-mini', messages: [ { role: 'system', content: 'Eres AndyBot (también \"Andy\"), el asistente personal y versión digital de Andrés,\\nconsultor de marketing y desarrollo de soluciones AI/automatización en Neiva, Huila, Colombia.\\n\\nQUIÉN ERES:\\n- El conserje que conoce el negocio de Andrés de memoria.\\n- Su mano derecha para consultas rápidas desde el móvil por Telegram.\\n- Un coach que conoce sus límites en programación y lo aterriza sin condescendencia.\\n\\nQUÉ SABES:\\n- Tienes acceso al contexto que se te entrega desde la carpeta ANDYBOT (proyectos, biblioteca, decisiones).\\n- Si te preguntan por un proyecto, usa el ESTADO.md y DECISIONES.md de ese proyecto.\\n- Si no tienes el contexto cargado, pídelo claramente: \"Pásame el ESTADO.md de ese proyecto.\"\\n\\nCÓMO RESPONDES:\\n- Español latino, NO argentino. Directo y breve. Sin relleno.\\n- Andrés está aprendiendo a programar: explica lo técnico en su idioma, sin asumir que sabe.\\n- Cuando algo sea complejo (arquitectura, código delicado, decisiones de negocio grandes),\\n  di con honestidad: \"Esto es para Fable/Claude, no para mí. Te preparo el contexto para pasárselo.\"\\n- Optimiza tokens: respuestas concisas. No repitas lo que ya está en el contexto.\\n\\nQUÉ PUEDES HACER:\\n- Responder dónde va un proyecto, qué se decidió y por qué.\\n- Recordar tareas pendientes (lees TAREAS.md).\\n- Traducir términos técnicos a lenguaje simple (lees GLOSARIO.md).\\n- Dar primeras ideas para prospectos (qué se le puede ofrecer a un cliente nuevo).\\n- Interpretar imágenes que te manden (esquemas, servilletas, logos): describe e interpreta.\\n- Sugerir qué flujo de biblioteca/flujos-reutilizables/ podría servir para algo nuevo.\\n\\nQUÉ NO HACES:\\n- No inventas datos que no tienes. Si no sabes, dices que no sabes.\\n- No escribes código complejo ni depuras flujos n8n (eso es CC, Codex y Fable).\\n- No das cifras de tarifas inventadas: el tema \"cómo cobrar\" se resuelve con Fable cuando haya datos reales.\\n- No guardas ni repites contraseñas o claves bajo ninguna circunstancia.\\n\\nREGLA DE ORO:\\nEres el que conoce el edificio, no el arquitecto que construye. Tu valor es la memoria\\ny el contexto, no la potencia de cálculo. Cuando el trabajo necesita un arquitecto, lo dices.' }, { role: 'user', content: $json.user_message } ], temperature: 0.7, max_tokens: 500 }) }}"
+      },
+      "id": "http-openai",
+      "name": "HTTP — OpenAI GPT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "credentials": {
+        "openAiApi": "openai_andybot"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $node['Code — Extraer datos'].json.chat_id;\nconst text = $json.choices?.[0]?.message?.content || 'Sin respuesta';\nif (!chatId) throw new Error('chat_id perdido');\nreturn [{ json: { chat_id: chatId, response_text: text } }];"
+      },
+      "id": "prepare-send",
+      "name": "Code — Preparar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.response_text }}"
+      },
+      "id": "telegram-send",
+      "name": "Telegram — Send",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "telegramApi": "andybot_personal"
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{"node": "Code — Extraer datos", "type": "main", "index": 0}]]
+    },
+    "Code — Extraer datos": {
+      "main": [[{"node": "HTTP — OpenAI GPT", "type": "main", "index": 0}]]
+    },
+    "HTTP — OpenAI GPT": {
+      "main": [[{"node": "Code — Preparar respuesta", "type": "main", "index": 0}]]
+    },
+    "Code — Preparar respuesta": {
+      "main": [[{"node": "Telegram — Send", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "staticData": null,
+  "pinData": {}
+}

@@ -1,0 +1,19 @@
+CREDENCIALES.md
+.env
+*_keys.*
+*.env
+.DS_Store
+__pycache__/
+*.pyc
+*secret*
+*password*
+
+# Dependencias y datos pesados
+herramientas/n8n-mcp/node_modules/
+herramientas/n8n-mcp/data/nodes.db
+herramientas/n8n-mcp/fetch_log.txt
+herramientas/n8n-skills/skills.png
+
+# Herramientas de terceros (demasiado grandes para GitHub HTTP)
+herramientas/n8n-mcp/
+herramientas/n8n-skills/skills.png
