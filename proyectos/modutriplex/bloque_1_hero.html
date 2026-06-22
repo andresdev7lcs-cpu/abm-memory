@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modutriplex | Tableros cortados a medida — Entrega en 48h</title>
+  <meta name="description" content="Cotiza online tableros MDF, melamínicos y maderas con corte CNC. Precio exacto antes de pagar. Entrega en menos de 48 horas en toda Colombia." />
+  <meta property="og:title" content="Modutriplex — Tu proyecto no puede esperar" />
+  <meta property="og:description" content="Material cortado a medida, precio exacto online, entrega en 48 horas." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- GA4 placeholder -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
+  <!-- Facebook Pixel placeholder -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', 'XXXXXXXXXXXXXXX');
+    fbq('track', 'PageView');
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0a;
+      --amber:    #F5A623;
+      --blue:     #2563EB;
+      --cream:    #F8F6F0;
+      --white:    #FFFFFF;
+      --dark:     #1a1a1a;
+      --muted:    rgba(255,255,255,0.55);
+      --transition-speed: 2s;
+      --slide-interval: 5000;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      background: var(--bg);
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      background: transparent;
+      transition: background 0.4s;
+    }
+    .nav.scrolled {
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--white);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo-icon {
+      width: 36px;
+      height: 36px;
+    }
+    .nav-cta {
+      background: var(--amber);
+      color: var(--dark);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.88; }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* background slides */
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition-speed) ease-in-out;
+    }
+    .hero-slide.active { opacity: 1; }
+
+    .hero-slide-1 { background: #0a0a0a; }
+    .hero-slide-2 { background: #0d1117; }
+    .hero-slide-3 { background: #0f0e0b; }
+    .hero-slide-4 { background: #0a0c10; }
+
+    /* texture overlays — wood grain feel, pure CSS */
+    .hero-slide-1::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        92deg,
+        transparent,
+        transparent 180px,
+        rgba(245,166,35,0.03) 181px,
+        rgba(245,166,35,0.03) 182px
+      );
+    }
+    .hero-slide-2::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        88deg,
+        transparent,
+        transparent 220px,
+        rgba(37,99,235,0.04) 221px,
+        rgba(37,99,235,0.04) 222px
+      );
+    }
+    .hero-slide-3::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 70% 60%, rgba(245,166,35,0.06), transparent);
+    }
+    .hero-slide-4::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 50% 50% at 30% 40%, rgba(37,99,235,0.06), transparent);
+    }
+
+    /* bottom gradient fade */
+    .hero-fade {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 180px;
+      background: linear-gradient(to bottom, transparent, #0a0a0a);
+      z-index: 1;
+    }
+
+    /* ── HERO CONTENT ── */
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 140px 40px 100px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245,166,35,0.12);
+      border: 1px solid rgba(245,166,35,0.25);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--amber);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.7s 0.1s forwards;
+    }
+    .eyebrow-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      animation: pulse 2s infinite;
+    }
+
+    .hero-headline {
+      font-size: clamp(40px, 6vw, 64px);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      max-width: 700px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.7s 0.25s forwards;
+    }
+    .hero-headline em {
+      font-style: normal;
+      color: var(--amber);
+    }
+
+    .hero-sub {
+      margin-top: 24px;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.6;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.7s 0.4s forwards;
+    }
+
+    .hero-actions {
+      margin-top: 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.7s 0.55s forwards;
+    }
+
+    .btn-primary {
+      background: var(--amber);
+      color: var(--dark);
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 16px 32px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 15px 28px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover {
+      border-color: rgba(255,255,255,0.45);
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* play icon */
+    .play-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── TRUST BAR ── */
+    .trust-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.7s 0.75s forwards;
+      margin-top: 56px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .trust-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .trust-item strong {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.1;
+    }
+    .trust-item span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .trust-divider {
+      width: 1px;
+      height: 36px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* ── TRIPLO mascota ── */
+    .triplo-wrap {
+      position: absolute;
+      bottom: 0;
+      right: 60px;
+      z-index: 3;
+      width: 220px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.9s 0.9s forwards;
+      pointer-events: none;
+    }
+    .triplo-wrap svg {
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+    }
+
+    /* ── SLIDE INDICATOR ── */
+    .slide-dots {
+      position: absolute;
+      bottom: 32px;
+      left: 40px;
+      z-index: 3;
+      display: flex;
+      gap: 8px;
+    }
+    .slide-dot {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: background 0.3s, width 0.3s;
+    }
+    .slide-dot.active {
+      background: var(--amber);
+      width: 36px;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      .nav { padding: 16px 20px; }
+      .hero-content { padding: 120px 20px 80px; }
+      .trust-bar { gap: 20px; }
+      .trust-divider { display: none; }
+      .triplo-wrap {
+        width: 140px;
+        right: 16px;
+      }
+      .slide-dots { left: 20px; bottom: 24px; }
+      .btn-primary, .btn-ghost { font-size: 15px; padding: 14px 22px; }
+    }
+
+    @media (max-width: 420px) {
+      .triplo-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <a href="#" class="nav-logo">
+      <!-- Triplo mini -->
+      <svg class="nav-logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="36" height="36" rx="8" fill="#F5A623"/>
+        <!-- castor head simplified -->
+        <ellipse cx="18" cy="15" rx="9" ry="9" fill="#7B4A1E"/>
+        <ellipse cx="18" cy="15" rx="7" ry="7" fill="#A0612A"/>
+        <!-- ears -->
+        <ellipse cx="11" cy="9" rx="3.5" ry="4" fill="#7B4A1E"/>
+        <ellipse cx="25" cy="9" rx="3.5" ry="4" fill="#7B4A1E"/>
+        <!-- eyes -->
+        <circle cx="14.5" cy="14" r="1.8" fill="#0a0a0a"/>
+        <circle cx="21.5" cy="14" r="1.8" fill="#0a0a0a"/>
+        <circle cx="15.1" cy="13.4" r="0.6" fill="white"/>
+        <circle cx="22.1" cy="13.4" r="0.6" fill="white"/>
+        <!-- nose -->
+        <ellipse cx="18" cy="18" rx="2" ry="1.3" fill="#4a2509"/>
+        <!-- teeth -->
+        <rect x="16.2" y="19.5" width="1.5" height="2.5" rx="0.4" fill="white"/>
+        <rect x="18.3" y="19.5" width="1.5" height="2.5" rx="0.4" fill="white"/>
+        <!-- cap -->
+        <path d="M9 13 Q18 4 27 13" fill="#CC2020"/>
+        <rect x="8" y="11.5" width="20" height="3" rx="1.5" fill="#DD2424"/>
+      </svg>
+      Modutriplex
+    </a>
+    <a href="#cotizador" class="nav-cta" onclick="trackEvent('nav_cta_click')">Cotizar ahora</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+
+    <!-- Background slides -->
+    <div class="hero-bg" aria-hidden="true">
+      <div class="hero-slide hero-slide-1 active"></div>
+      <div class="hero-slide hero-slide-2"></div>
+      <div class="hero-slide hero-slide-3"></div>
+      <div class="hero-slide hero-slide-4"></div>
+    </div>
+
+    <div class="hero-fade" aria-hidden="true"></div>
+
+    <!-- Content -->
+    <div class="hero-content">
+
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot" aria-hidden="true"></span>
+        Entrega en 24 - 48 horas en toda Colombia
+      </div>
+
+      <h1 class="hero-headline">
+        Tu proyecto<br>no puede <em>esperar.</em>
+      </h1>
+
+      <p class="hero-sub">
+        Material cortado a medida, precio exacto online,<br>
+        entrega en 48 horas.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#cotizador" class="btn-primary" id="heroCta" onclick="trackEvent('hero_cta_click')">
+          Cotizar ahora
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href="#video" class="btn-ghost" onclick="trackEvent('hero_secondary_click')">
+          <span class="play-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 2l9 5-9 5V2z" fill="currentColor"/>
+            </svg>
+          </span>
+          Ver cómo funciona
+        </a>
+      </div>
+
+      <!-- Trust bar -->
+      <div class="trust-bar">
+        <div class="trust-item">
+          <strong>48h</strong>
+          <span>Entrega garantizada</span>
+        </div>
+        <div class="trust-divider" aria-hidden="true"></div>
+        <div class="trust-item">
+          <strong>10</strong>
+          <span>departamentos activos</span>
+        </div>
+        <div class="trust-divider" aria-hidden="true"></div>
+        <div class="trust-item">
+          <strong>9 refs</strong>
+          <span>materiales disponibles</span>
+        </div>
+        <div class="trust-divider" aria-hidden="true"></div>
+        <div class="trust-item">
+          <strong>0 filas</strong>
+          <span>cotiza desde la obra</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Triplo mascot -->
+    <div class="triplo-wrap" aria-hidden="true">
+      <svg viewBox="0 0 220 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Body -->
+        <ellipse cx="110" cy="230" rx="62" ry="72" fill="#8B5E3C"/>
+        <!-- Polo shirt -->
+        <ellipse cx="110" cy="248" rx="58" ry="58" fill="#1D3A8A"/>
+        <!-- Head -->
+        <ellipse cx="110" cy="140" rx="70" ry="68" fill="#A0612A"/>
+        <!-- Face lighter -->
+        <ellipse cx="110" cy="150" rx="46" ry="42" fill="#C4824A"/>
+        <!-- Ears -->
+        <ellipse cx="52" cy="105" rx="22" ry="28" fill="#8B5E3C"/>
+        <ellipse cx="168" cy="105" rx="22" ry="28" fill="#8B5E3C"/>
+        <ellipse cx="52" cy="105" rx="14" ry="20" fill="#A0612A"/>
+        <ellipse cx="168" cy="105" rx="14" ry="20" fill="#A0612A"/>
+        <!-- Cap -->
+        <path d="M44 118 Q110 60 176 118" fill="#CC2222"/>
+        <rect x="40" y="114" width="140" height="18" rx="9" fill="#DD2424"/>
+        <!-- Cap brim -->
+        <rect x="68" y="128" width="84" height="10" rx="5" fill="#BB1E1E"/>
+        <!-- Eyes -->
+        <circle cx="88" cy="148" r="13" fill="white"/>
+        <circle cx="132" cy="148" r="13" fill="white"/>
+        <circle cx="90" cy="149" r="8" fill="#2a1a0a"/>
+        <circle cx="134" cy="149" r="8" fill="#2a1a0a"/>
+        <circle cx="92" cy="146" r="3" fill="white"/>
+        <circle cx="136" cy="146" r="3" fill="white"/>
+        <!-- Nose -->
+        <ellipse cx="110" cy="166" rx="11" ry="8" fill="#3a1a05"/>
+        <!-- Smile -->
+        <path d="M92 178 Q110 192 128 178" stroke="#3a1a05" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <!-- Teeth -->
+        <rect x="103" y="180" width="8" height="13" rx="2" fill="white"/>
+        <rect x="113" y="180" width="8" height="13" rx="2" fill="white"/>
+        <!-- Arms -->
+        <ellipse cx="46" cy="260" rx="20" ry="44" fill="#8B5E3C" transform="rotate(-12 46 260)"/>
+        <ellipse cx="174" cy="260" rx="20" ry="44" fill="#8B5E3C" transform="rotate(12 174 260)"/>
+        <!-- Polo collar -->
+        <path d="M88 200 L110 218 L132 200" stroke="#2a4fa8" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- Jeans -->
+        <rect x="52" y="288" width="50" height="30" rx="8" fill="#3a6bc4"/>
+        <rect x="118" y="288" width="50" height="30" rx="8" fill="#3a6bc4"/>
+        <!-- Boots -->
+        <ellipse cx="76" cy="316" rx="24" ry="10" fill="#5a3210"/>
+        <ellipse cx="144" cy="316" rx="24" ry="10" fill="#5a3210"/>
+      </svg>
+    </div>
+
+    <!-- Slide dots -->
+    <div class="slide-dots" role="tablist" aria-label="Diapositivas del hero">
+      <div class="slide-dot active" role="tab" aria-selected="true" data-index="0" tabindex="0"></div>
+      <div class="slide-dot" role="tab" aria-selected="false" data-index="1" tabindex="0"></div>
+      <div class="slide-dot" role="tab" aria-selected="false" data-index="2" tabindex="0"></div>
+      <div class="slide-dot" role="tab" aria-selected="false" data-index="3" tabindex="0"></div>
+    </div>
+
+  </section>
+
+  <!-- placeholder anchor for next blocks -->
+  <div id="cotizador" style="height:80px;background:#0a0a0a;display:flex;align-items:center;justify-content:center;">
+    <p style="color:rgba(255,255,255,0.2);font-size:14px;letter-spacing:0.08em;text-transform:uppercase;">Bloque 2 — Propuesta de valor (próximo)</p>
+  </div>
+  <div id="video" style="height:40px;background:#0a0a0a;"></div>
+
+  <script>
+    // Nav scroll state
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    // Hero background slideshow
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots   = document.querySelectorAll('.slide-dot');
+    let current  = 0;
+    let timer;
+
+    function goToSlide(idx) {
+      slides[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      dots[current].setAttribute('aria-selected', 'false');
+      current = idx;
+      slides[current].classList.add('active');
+      dots[current].classList.add('active');
+      dots[current].setAttribute('aria-selected', 'true');
+    }
+
+    function startSlider() {
+      timer = setInterval(() => {
+        goToSlide((current + 1) % slides.length);
+      }, 5000);
+    }
+
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        clearInterval(timer);
+        goToSlide(Number(dot.dataset.index));
+        startSlider();
+      });
+      dot.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          dot.click();
+        }
+      });
+    });
+
+    startSlider();
+
+    // Pause slider when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearInterval(timer);
+      else startSlider();
+    });
+
+    // Tracking helper
+    function trackEvent(eventName, params) {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', eventName, params || {});
+      }
+      if (typeof fbq !== 'undefined') {
+        fbq('trackCustom', eventName, params || {});
+      }
+    }
+  </script>
+</body>
+</html>
