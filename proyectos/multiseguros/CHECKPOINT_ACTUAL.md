@@ -1,5 +1,5 @@
 # CHECKPOINT — Estado actual del proyecto Multiseguros del Sur
-Fecha: 2026-06-20 | Fuente única de verdad de estado. ESTADO_REAL.md eliminado.
+Fecha: 2026-06-22 | Fuente única de verdad de estado. ESTADO_REAL.md eliminado.
 
 ---
 
@@ -27,13 +27,14 @@ Fecha: 2026-06-20 | Fuente única de verdad de estado. ESTADO_REAL.md eliminado.
 - HTML reescrito para Supabase (KPIs + ficha cliente migrados de Airtable)
 - ❌ Sin testear en browser — KPIs no confirmados
 
-### Bloque 4: AndyBot Telegram ⚠️ DESVIACIÓN CORREGIDA
-- Desviación detectada 2026-06-19: SCMSDS_bot tenía system prompt de Andrés (incorrecto)
-- Correcciones aplicadas:
-  - API key de OpenAI eliminada de JSONs → ahora usa `{{ $env.OPENAI_API_KEY }}`
-  - SCMSDS_BOT_SYSTEM.md creado con rol correcto del bot del cliente
-  - AndyBot personal: pendiente que Andrés cree bot nuevo en @BotFather
-- Workflow AndyBot personal: ⏳ pendiente bot nuevo
+### Bloque 4: AndyBot Telegram ✅ OPERATIVO (2026-06-22)
+- Desviación detectada 2026-06-19: SCMSDS_bot tenía system prompt de Andrés (incorrecto) — corregido
+- AndyBot personal operativo con cerebro completo en Supabase andybot-memory
+  - 7 tablas: proyectos, tareas, decisiones, glosario, historia, mision, skills — 71+ registros
+  - Prueba ácida pasada: datos específicos confirmados (523 clientes, fecha migración, costo, Celer)
+  - Workflow v10 activo en n8n — HTTP Request nativos, sin fetch ni $env
+  - Restricción confirmada: JS Task Runner 2.8.3 bloquea $env, fetch(), $http — solo HTTP Request nativos
+- ABM reorganizado: andy-rol/ separado de proyectos/multiseguros/
 - Voz (Whisper): ❌ no implementado todavía
 
 ---
@@ -72,11 +73,18 @@ proyectos/multiseguros/
 
 ## PRÓXIMAS ACCIONES (en orden)
 
-1. P4 — agregar header `apikey` en nodo "Buscar Poliza" (igual al nodo "Crear Siniestro")
+1. Rotar service_role key de Supabase MSDS (hallazgo auditoría — pendiente desde 2026-06-21)
 2. P4 — exportar v4_final desde n8n UI → guardar en /workflows/P4_Siniestro_Urgente_Supabase_v4_final.json
-3. Rotar service_role key de Supabase (hallazgo auditoría pendiente)
-4. Exportar P2 y P3 desde n8n UI → guardar en /workflows/ con nombre y fecha
-5. Configurar `OPENAI_API_KEY` en n8n → Settings → Environment Variables (nueva key de Bitwarden)
-6. Andrés crea bot nuevo en @BotFather para AndyBot personal → trae token a CC
-7. Testear gerencia.html en browser → confirmar KPIs
-8. Construir workflow `SCMSDS_Bot_Operativo.json` (bot del cliente con Supabase)
+3. Exportar P2 y P3 desde n8n UI → guardar en /workflows/ con nombre y fecha
+4. Testear gerencia.html en browser → confirmar KPIs
+5. Continuar sprint A1 (próxima sesión)
+
+---
+
+## SESIÓN 2026-06-22 — FIN
+
+- AndyBot operativo con cerebro completo en Supabase andybot-memory
+- 7 tablas: proyectos, tareas, decisiones, glosario, historia, mision, skills — 71+ registros
+- Prueba ácida pasada: datos específicos confirmados (523 clientes, fecha, costo, Celer)
+- Workflow v10 activo en n8n — HTTP Request nativos, sin fetch ni $env
+- ABM reorganizado: andy-rol/ separado de proyectos/multiseguros/
