@@ -74,10 +74,9 @@ proyectos/multiseguros/
 ## PRÓXIMAS ACCIONES (en orden)
 
 1. Rotar service_role key de Supabase MSDS (hallazgo auditoría — pendiente desde 2026-06-21)
-2. P4 — exportar v4_final desde n8n UI → guardar en /workflows/P4_Siniestro_Urgente_Supabase_v4_final.json
-3. Exportar P2 y P3 desde n8n UI → guardar en /workflows/ con nombre y fecha
-4. Testear gerencia.html en browser → confirmar KPIs
-5. Continuar sprint A1 (próxima sesión)
+2. Exportar P2 y P3 desde n8n UI → guardar en /workflows/ con nombre y fecha
+3. Eliminar footer n8n en Easypanel
+4. Continuar sprint A1 (próxima sesión)
 
 ---
 
@@ -88,3 +87,10 @@ proyectos/multiseguros/
 - Prueba ácida pasada: datos específicos confirmados (523 clientes, fecha, costo, Celer)
 - Workflow v10 activo en n8n — HTTP Request nativos, sin fetch ni $env
 - ABM reorganizado: andy-rol/ separado de proyectos/multiseguros/
+
+## SESIÓN 2026-06-22 — COMPLETA
+
+- AndyBot v13 operativo — cerebro completo con 3 proyectos
+- Tareas agrupadas por proyecto — sin mezcla entre clientes
+- Modutriplex e IMASAS cargados en Supabase andybot-memory
+- Pruebas pasadas: estado proyectos, tareas por cliente, historia, skills
