@@ -8,9 +8,12 @@
   <meta property="og:title" content="Modutriplex — Tu proyecto no puede esperar" />
   <meta property="og:description" content="Material cortado a medida, precio exacto online, entrega en 48 horas." />
   <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CO" />
+
+  <!-- Fonts: Syne (display) + DM Sans (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
 
   <!-- GA4 placeholder -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
@@ -20,85 +23,135 @@
     gtag('js', new Date());
     gtag('config', 'G-XXXXXXXXXX');
   </script>
-
-  <!-- Facebook Pixel placeholder -->
+  <!-- FB Pixel placeholder -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', 'XXXXXXXXXXXXXXX');
-    fbq('track', 'PageView');
+    fbq('init','XXXXXXXXXXXXXXX');fbq('track','PageView');
   </script>
 
   <style>
+    /* ── RESET & ROOT ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #0a0a0a;
-      --amber:    #F5A623;
-      --blue:     #2563EB;
-      --cream:    #F8F6F0;
-      --white:    #FFFFFF;
-      --dark:     #1a1a1a;
-      --muted:    rgba(255,255,255,0.55);
-      --transition-speed: 2s;
-      --slide-interval: 5000;
+      --navy:   #0E1F3B;
+      --navy2:  #0a1628;
+      --amber:  #F5A623;
+      --red:    #CC2222;
+      --white:  #FFFFFF;
+      --off:    #F8F6F0;
+      --dark:   #080d17;
+      --muted:  rgba(255,255,255,0.52);
+      --muted2: rgba(255,255,255,0.28);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'DM Sans', system-ui, sans-serif;
       font-size: 18px;
-      font-weight: 400;
-      background: var(--bg);
+      background: var(--dark);
       color: var(--white);
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── GRAIN OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0.032;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 128px 128px;
     }
 
     /* ── NAV ── */
     .nav {
       position: fixed;
       top: 0; left: 0; right: 0;
-      z-index: 100;
+      z-index: 200;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 40px;
-      background: transparent;
-      transition: background 0.4s;
+      padding: 22px 48px;
+      transition: background 0.5s, padding 0.4s, border-color 0.5s;
+      border-bottom: 1px solid transparent;
     }
     .nav.scrolled {
-      background: rgba(10,10,10,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(8,13,23,0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 16px 48px;
+      border-bottom-color: rgba(245,166,35,0.12);
     }
+
     .nav-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
       text-decoration: none;
       color: var(--white);
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
     }
-    .nav-logo-icon {
-      width: 36px;
-      height: 36px;
+    .nav-logo-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: var(--amber);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
+    .nav-logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .nav-logo-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-top: 1px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-tel {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.01em;
+      transition: color 0.2s;
+      display: none;
+    }
+    .nav-tel:hover { color: var(--white); }
     .nav-cta {
       background: var(--amber);
-      color: var(--dark);
-      font-family: 'Inter', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
+      color: #080d17;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
       border: none;
       border-radius: 8px;
-      padding: 10px 20px;
+      padding: 11px 22px;
       cursor: pointer;
       text-decoration: none;
-      transition: opacity 0.2s;
+      letter-spacing: 0.01em;
+      transition: opacity 0.2s, transform 0.15s;
     }
-    .nav-cta:hover { opacity: 0.88; }
+    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
 
     /* ── HERO ── */
     .hero {
@@ -109,527 +162,769 @@
       overflow: hidden;
     }
 
-    /* background slides */
-    .hero-bg {
+    /* Slideshow backgrounds */
+    .hero-slides {
       position: absolute;
       inset: 0;
       z-index: 0;
     }
-    .hero-slide {
+    .slide {
       position: absolute;
       inset: 0;
       opacity: 0;
-      transition: opacity var(--transition-speed) ease-in-out;
+      transition: opacity 2.2s ease-in-out;
     }
-    .hero-slide.active { opacity: 1; }
+    .slide.active { opacity: 1; }
 
-    .hero-slide-1 { background: #0a0a0a; }
-    .hero-slide-2 { background: #0d1117; }
-    .hero-slide-3 { background: #0f0e0b; }
-    .hero-slide-4 { background: #0a0c10; }
-
-    /* texture overlays — wood grain feel, pure CSS */
-    .hero-slide-1::after {
+    /* Slide 1 — Madera oscura cálida */
+    .slide-1 {
+      background:
+        radial-gradient(ellipse 80% 60% at 85% 50%, rgba(120,60,10,0.18), transparent),
+        radial-gradient(ellipse 40% 80% at 10% 80%, rgba(245,166,35,0.06), transparent),
+        linear-gradient(160deg, #0a0f18 0%, #0e1a0a 50%, #100c05 100%);
+    }
+    /* Veta de madera — líneas diagonales finas */
+    .slide-1::after {
       content: '';
       position: absolute;
       inset: 0;
       background: repeating-linear-gradient(
-        92deg,
-        transparent,
-        transparent 180px,
-        rgba(245,166,35,0.03) 181px,
-        rgba(245,166,35,0.03) 182px
+        108deg,
+        transparent 0px,
+        transparent 38px,
+        rgba(180,110,40,0.025) 38px,
+        rgba(180,110,40,0.025) 39px,
+        transparent 39px,
+        transparent 74px,
+        rgba(140,80,20,0.018) 74px,
+        rgba(140,80,20,0.018) 75px
       );
     }
-    .hero-slide-2::after {
+
+    /* Slide 2 — Industria azul CNC */
+    .slide-2 {
+      background:
+        radial-gradient(ellipse 60% 70% at 20% 30%, rgba(37,99,235,0.12), transparent),
+        radial-gradient(ellipse 50% 40% at 90% 70%, rgba(14,31,59,0.9), transparent),
+        linear-gradient(180deg, #060b14 0%, #0b1525 60%, #060e1c 100%);
+    }
+    .slide-2::after {
       content: '';
       position: absolute;
       inset: 0;
       background: repeating-linear-gradient(
-        88deg,
-        transparent,
-        transparent 220px,
-        rgba(37,99,235,0.04) 221px,
-        rgba(37,99,235,0.04) 222px
+        90deg,
+        transparent 0px,
+        transparent 120px,
+        rgba(37,99,235,0.03) 120px,
+        rgba(37,99,235,0.03) 121px
       );
     }
-    .hero-slide-3::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 60% 40% at 70% 60%, rgba(245,166,35,0.06), transparent);
+
+    /* Slide 3 — Ambiente taller cálido */
+    .slide-3 {
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 80%, rgba(200,120,30,0.1), transparent),
+        linear-gradient(140deg, #0c0a06 0%, #14100a 50%, #0a0e14 100%);
     }
-    .hero-slide-4::after {
+    .slide-3::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse 50% 50% at 30% 40%, rgba(37,99,235,0.06), transparent);
+      background: repeating-linear-gradient(
+        95deg,
+        transparent 0px,
+        transparent 60px,
+        rgba(180,100,20,0.022) 60px,
+        rgba(180,100,20,0.022) 61px
+      );
     }
 
-    /* bottom gradient fade */
-    .hero-fade {
+    /* Slide 4 — Entrega, madrugada */
+    .slide-4 {
+      background:
+        radial-gradient(ellipse 45% 60% at 75% 20%, rgba(204,34,34,0.07), transparent),
+        linear-gradient(200deg, #06080f 0%, #0c1018 55%, #080509 100%);
+    }
+
+    /* Overlay profundidad */
+    .hero-overlay {
       position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 180px;
-      background: linear-gradient(to bottom, transparent, #0a0a0a);
+      inset: 0;
       z-index: 1;
+      background:
+        linear-gradient(to right, rgba(6,10,20,0.82) 50%, transparent 100%),
+        linear-gradient(to top, rgba(6,10,20,0.9) 0%, transparent 40%);
     }
 
     /* ── HERO CONTENT ── */
     .hero-content {
       position: relative;
-      z-index: 2;
+      z-index: 10;
       width: 100%;
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 140px 40px 100px;
+      padding: 150px 48px 110px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 40px;
+      align-items: center;
     }
 
-    .hero-eyebrow {
+    .hero-left { max-width: 640px; }
+
+    /* Badge entrega */
+    .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(245,166,35,0.12);
-      border: 1px solid rgba(245,166,35,0.25);
+      gap: 9px;
+      padding: 7px 14px 7px 10px;
       border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--amber);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-bottom: 28px;
+      background: rgba(204,34,34,0.12);
+      border: 1px solid rgba(204,34,34,0.3);
+      margin-bottom: 32px;
       opacity: 0;
-      transform: translateY(16px);
-      animation: fadeUp 0.7s 0.1s forwards;
+      animation: riseIn 0.6s 0.15s cubic-bezier(0.22,1,0.36,1) forwards;
     }
-    .eyebrow-dot {
-      width: 6px;
-      height: 6px;
+    .badge-dot {
+      width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--amber);
-      animation: pulse 2s infinite;
+      background: var(--red);
+      box-shadow: 0 0 0 0 rgba(204,34,34,0.5);
+      animation: pulse-red 2s 1s infinite;
+    }
+    .badge-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #ff6b6b;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
+    /* Headline */
     .hero-headline {
-      font-size: clamp(40px, 6vw, 64px);
-      font-weight: 600;
-      line-height: 1.05;
-      letter-spacing: -0.03em;
-      max-width: 700px;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(44px, 5.5vw, 72px);
+      font-weight: 800;
+      line-height: 0.97;
+      letter-spacing: -0.04em;
       opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 0.7s 0.25s forwards;
+      animation: riseIn 0.7s 0.3s cubic-bezier(0.22,1,0.36,1) forwards;
     }
-    .hero-headline em {
-      font-style: normal;
+    .hl-light {
+      display: block;
+      color: var(--white);
+    }
+    .hl-amber {
+      display: block;
       color: var(--amber);
+      position: relative;
+    }
+    /* underline decorativo en amber */
+    .hl-amber::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--amber);
+      border-radius: 2px;
+      animation: growLine 0.6s 1s ease forwards;
     }
 
+    /* Sub */
     .hero-sub {
-      margin-top: 24px;
-      font-size: 18px;
+      margin-top: 28px;
+      font-size: 17px;
       font-weight: 400;
       color: var(--muted);
-      max-width: 520px;
-      line-height: 1.6;
+      line-height: 1.65;
+      max-width: 460px;
       opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 0.7s 0.4s forwards;
+      animation: riseIn 0.7s 0.48s cubic-bezier(0.22,1,0.36,1) forwards;
     }
 
+    /* CTAs */
     .hero-actions {
       margin-top: 40px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       flex-wrap: wrap;
       opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 0.7s 0.55s forwards;
+      animation: riseIn 0.7s 0.62s cubic-bezier(0.22,1,0.36,1) forwards;
     }
 
     .btn-primary {
       background: var(--amber);
-      color: var(--dark);
-      font-family: 'Inter', sans-serif;
+      color: #060a10;
+      font-family: 'DM Sans', sans-serif;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 500;
       border: none;
       border-radius: 8px;
-      padding: 16px 32px;
+      padding: 17px 34px;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      transition: opacity 0.2s, transform 0.2s;
+      gap: 9px;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 32px rgba(245,166,35,0.22);
     }
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(245,166,35,0.32);
+    }
     .btn-primary:active { transform: translateY(0); }
 
     .btn-ghost {
       background: transparent;
       color: var(--white);
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
       font-weight: 400;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.18);
       border-radius: 8px;
-      padding: 15px 28px;
+      padding: 16px 26px;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       transition: border-color 0.2s, background 0.2s;
     }
     .btn-ghost:hover {
-      border-color: rgba(255,255,255,0.45);
+      border-color: rgba(255,255,255,0.38);
       background: rgba(255,255,255,0.05);
     }
-
-    /* play icon */
-    .play-icon {
-      width: 18px;
-      height: 18px;
+    .play-circle {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.35);
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
-    /* ── TRUST BAR ── */
+    /* Trust metrics */
     .trust-bar {
-      position: relative;
-      z-index: 2;
+      margin-top: 60px;
+      padding-top: 36px;
+      border-top: 1px solid rgba(255,255,255,0.07);
       display: flex;
-      align-items: center;
-      gap: 32px;
-      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 0;
       opacity: 0;
-      transform: translateY(12px);
-      animation: fadeUp 0.7s 0.75s forwards;
-      margin-top: 56px;
-      padding-top: 40px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      animation: riseIn 0.7s 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
     }
     .trust-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+      flex: 1;
+      padding: 0 28px 0 0;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      margin-right: 28px;
     }
-    .trust-item strong {
-      font-size: 22px;
-      font-weight: 600;
+    .trust-item:last-child {
+      border-right: none;
+      margin-right: 0;
+    }
+    .trust-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
       color: var(--white);
-      line-height: 1.1;
     }
-    .trust-item span {
+    .trust-num span { color: var(--amber); }
+    .trust-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── TRIPLO PANEL derecho ── */
+    .hero-right {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      height: 520px;
+      opacity: 0;
+      animation: riseIn 0.9s 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    /* Card flotante detrás de Triplo */
+    .triplo-card {
+      position: absolute;
+      bottom: 40px;
+      left: 0; right: 0;
+      background: rgba(14,31,59,0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(245,166,35,0.18);
+      border-radius: 16px;
+      padding: 20px 22px;
+      z-index: 0;
+    }
+    .triplo-card-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .triplo-card-stat {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--amber);
+      line-height: 1;
+    }
+    .triplo-card-sub {
       font-size: 13px;
       color: var(--muted);
-    }
-    .trust-divider {
-      width: 1px;
-      height: 36px;
-      background: rgba(255,255,255,0.1);
+      margin-top: 4px;
     }
 
-    /* ── TRIPLO mascota ── */
-    .triplo-wrap {
-      position: absolute;
-      bottom: 0;
-      right: 60px;
-      z-index: 3;
-      width: 220px;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 0.9s 0.9s forwards;
-      pointer-events: none;
-    }
-    .triplo-wrap svg {
-      width: 100%;
-      height: auto;
-      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+    /* Triplo SVG fiel al 3D */
+    .triplo-figure {
+      position: relative;
+      z-index: 2;
+      width: 280px;
+      filter: drop-shadow(0 24px 48px rgba(0,0,0,0.7));
+      transform: translateY(0);
+      animation: float 5s 1.5s ease-in-out infinite;
     }
 
-    /* ── SLIDE INDICATOR ── */
+    /* ── SLIDE DOTS ── */
     .slide-dots {
       position: absolute;
-      bottom: 32px;
-      left: 40px;
-      z-index: 3;
+      bottom: 36px;
+      left: 48px;
+      z-index: 20;
       display: flex;
       gap: 8px;
+      opacity: 0;
+      animation: fadeIn 0.5s 1.2s forwards;
     }
-    .slide-dot {
-      width: 24px;
+    .dot {
       height: 3px;
       border-radius: 2px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.18);
       cursor: pointer;
-      transition: background 0.3s, width 0.3s;
+      transition: background 0.4s, width 0.4s;
+      width: 20px;
     }
-    .slide-dot.active {
+    .dot.active {
       background: var(--amber);
       width: 36px;
     }
 
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp {
-      to { opacity: 1; transform: translateY(0); }
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      right: 48px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      animation: fadeIn 0.5s 1.4s forwards;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    .scroll-hint-text {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      writing-mode: vertical-rl;
+    }
+    .scroll-chevron {
+      animation: bounce 1.8s 2s ease-in-out infinite;
     }
 
-    /* ── MOBILE ── */
+    /* ── KEYFRAMES ── */
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    @keyframes growLine {
+      to { width: 100%; }
+    }
+    @keyframes pulse-red {
+      0%   { box-shadow: 0 0 0 0 rgba(204,34,34,0.55); }
+      70%  { box-shadow: 0 0 0 9px rgba(204,34,34,0);  }
+      100% { box-shadow: 0 0 0 0 rgba(204,34,34,0);   }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0);    }
+      50%       { transform: translateY(-10px); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0);   opacity: 0.4; }
+      50%       { transform: translateY(6px); opacity: 1;   }
+    }
+
+    /* ── PLACEHOLDER NEXT BLOCKS ── */
+    .next-placeholder {
+      height: 80px;
+      background: #060a10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .next-placeholder p {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.12);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        padding: 130px 32px 90px;
+      }
+      .hero-right { display: none; }
+      .nav { padding: 18px 32px; }
+      .nav.scrolled { padding: 14px 32px; }
+    }
     @media (max-width: 768px) {
       .nav { padding: 16px 20px; }
-      .hero-content { padding: 120px 20px 80px; }
-      .trust-bar { gap: 20px; }
-      .trust-divider { display: none; }
-      .triplo-wrap {
-        width: 140px;
-        right: 16px;
-      }
+      .nav.scrolled { padding: 12px 20px; }
+      .hero-content { padding: 110px 20px 80px; }
+      .trust-item { padding-right: 16px; margin-right: 16px; }
+      .trust-num { font-size: 24px; }
       .slide-dots { left: 20px; bottom: 24px; }
-      .btn-primary, .btn-ghost { font-size: 15px; padding: 14px 22px; }
+      .scroll-hint { right: 20px; }
+      .btn-primary, .btn-ghost { font-size: 15px; }
     }
-
-    @media (max-width: 420px) {
-      .triplo-wrap { display: none; }
+    @media (max-width: 480px) {
+      .trust-bar { flex-wrap: wrap; gap: 20px; }
+      .trust-item {
+        border-right: none;
+        margin-right: 0;
+        padding-right: 0;
+        flex: 0 0 calc(50% - 10px);
+      }
+      .hero-actions { flex-direction: column; align-items: flex-start; }
+      .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
+    }
+    @media (min-width: 1025px) {
+      .nav-tel { display: block; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .slide.active { opacity: 1; }
     }
   </style>
 </head>
 <body>
 
   <!-- NAV -->
-  <nav class="nav" id="nav">
-    <a href="#" class="nav-logo">
-      <!-- Triplo mini -->
-      <svg class="nav-logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect width="36" height="36" rx="8" fill="#F5A623"/>
-        <!-- castor head simplified -->
-        <ellipse cx="18" cy="15" rx="9" ry="9" fill="#7B4A1E"/>
-        <ellipse cx="18" cy="15" rx="7" ry="7" fill="#A0612A"/>
-        <!-- ears -->
-        <ellipse cx="11" cy="9" rx="3.5" ry="4" fill="#7B4A1E"/>
-        <ellipse cx="25" cy="9" rx="3.5" ry="4" fill="#7B4A1E"/>
-        <!-- eyes -->
-        <circle cx="14.5" cy="14" r="1.8" fill="#0a0a0a"/>
-        <circle cx="21.5" cy="14" r="1.8" fill="#0a0a0a"/>
-        <circle cx="15.1" cy="13.4" r="0.6" fill="white"/>
-        <circle cx="22.1" cy="13.4" r="0.6" fill="white"/>
-        <!-- nose -->
-        <ellipse cx="18" cy="18" rx="2" ry="1.3" fill="#4a2509"/>
-        <!-- teeth -->
-        <rect x="16.2" y="19.5" width="1.5" height="2.5" rx="0.4" fill="white"/>
-        <rect x="18.3" y="19.5" width="1.5" height="2.5" rx="0.4" fill="white"/>
-        <!-- cap -->
-        <path d="M9 13 Q18 4 27 13" fill="#CC2020"/>
-        <rect x="8" y="11.5" width="20" height="3" rx="1.5" fill="#DD2424"/>
-      </svg>
-      Modutriplex
+  <nav class="nav" id="nav" role="banner">
+    <a href="#" class="nav-logo" aria-label="Modutriplex — Inicio">
+      <div class="nav-logo-badge" aria-hidden="true">
+        <!-- M mark -->
+        <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
+          <path d="M1 17V1l10 10L21 1v16" stroke="#060a10" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="nav-logo-text">Modutriplex</div>
+        <span class="nav-logo-sub">Corte CNC · Colombia</span>
+      </div>
     </a>
-    <a href="#cotizador" class="nav-cta" onclick="trackEvent('nav_cta_click')">Cotizar ahora</a>
+    <div class="nav-right">
+      <a href="tel:+5700000000000" class="nav-tel">+57 (000) 000-0000</a>
+      <a href="#cotizador" class="nav-cta" onclick="trackEvent('nav_cta_click')">Cotizar ahora</a>
+    </div>
   </nav>
 
   <!-- HERO -->
-  <section class="hero" id="hero">
+  <section class="hero" id="hero" aria-label="Modutriplex — Hero">
 
-    <!-- Background slides -->
-    <div class="hero-bg" aria-hidden="true">
-      <div class="hero-slide hero-slide-1 active"></div>
-      <div class="hero-slide hero-slide-2"></div>
-      <div class="hero-slide hero-slide-3"></div>
-      <div class="hero-slide hero-slide-4"></div>
+    <!-- Slides -->
+    <div class="hero-slides" aria-hidden="true">
+      <div class="slide slide-1 active"></div>
+      <div class="slide slide-2"></div>
+      <div class="slide slide-3"></div>
+      <div class="slide slide-4"></div>
     </div>
 
-    <div class="hero-fade" aria-hidden="true"></div>
+    <!-- Overlay -->
+    <div class="hero-overlay" aria-hidden="true"></div>
 
-    <!-- Content -->
+    <!-- Content grid -->
     <div class="hero-content">
 
-      <div class="hero-eyebrow">
-        <span class="eyebrow-dot" aria-hidden="true"></span>
-        Entrega en 24 - 48 horas en toda Colombia
-      </div>
+      <!-- LEFT -->
+      <div class="hero-left">
 
-      <h1 class="hero-headline">
-        Tu proyecto<br>no puede <em>esperar.</em>
-      </h1>
+        <div class="hero-badge" role="status">
+          <span class="badge-dot" aria-hidden="true"></span>
+          <span class="badge-text">Entrega garantizada en 24 – 48 horas</span>
+        </div>
 
-      <p class="hero-sub">
-        Material cortado a medida, precio exacto online,<br>
-        entrega en 48 horas.
-      </p>
+        <h1 class="hero-headline">
+          <span class="hl-light">Tu proyecto</span>
+          <span class="hl-light">no puede</span>
+          <span class="hl-amber">esperar.</span>
+        </h1>
 
-      <div class="hero-actions">
-        <a href="#cotizador" class="btn-primary" id="heroCta" onclick="trackEvent('hero_cta_click')">
-          Cotizar ahora
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-        <a href="#video" class="btn-ghost" onclick="trackEvent('hero_secondary_click')">
-          <span class="play-icon" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 2l9 5-9 5V2z" fill="currentColor"/>
+        <p class="hero-sub">
+          Material cortado a medida, precio exacto antes de pagar,
+          entrega en menos de 48 horas en toda Colombia.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#cotizador" class="btn-primary" id="heroCta" onclick="trackEvent('hero_cta_click')">
+            Cotizar ahora
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </span>
-          Ver cómo funciona
-        </a>
+          </a>
+          <a href="#video" class="btn-ghost" onclick="trackEvent('hero_secondary_click')">
+            <span class="play-circle" aria-hidden="true">
+              <svg width="8" height="10" viewBox="0 0 8 10" fill="none">
+                <path d="M1 1l6 4-6 4V1z" fill="white"/>
+              </svg>
+            </span>
+            Ver cómo funciona
+          </a>
+        </div>
+
+        <!-- Trust metrics -->
+        <div class="trust-bar" role="list" aria-label="Métricas de confianza">
+          <div class="trust-item" role="listitem">
+            <div class="trust-num">48<span>h</span></div>
+            <div class="trust-label">Entrega<br>garantizada</div>
+          </div>
+          <div class="trust-item" role="listitem">
+            <div class="trust-num">10<span>+</span></div>
+            <div class="trust-label">Departamentos<br>activos</div>
+          </div>
+          <div class="trust-item" role="listitem">
+            <div class="trust-num">9</div>
+            <div class="trust-label">Referencias<br>de material</div>
+          </div>
+          <div class="trust-item" role="listitem">
+            <div class="trust-num">0</div>
+            <div class="trust-label">Filas ni<br>desplazamientos</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Trust bar -->
-      <div class="trust-bar">
-        <div class="trust-item">
-          <strong>48h</strong>
-          <span>Entrega garantizada</span>
-        </div>
-        <div class="trust-divider" aria-hidden="true"></div>
-        <div class="trust-item">
-          <strong>10</strong>
-          <span>departamentos activos</span>
-        </div>
-        <div class="trust-divider" aria-hidden="true"></div>
-        <div class="trust-item">
-          <strong>9 refs</strong>
-          <span>materiales disponibles</span>
-        </div>
-        <div class="trust-divider" aria-hidden="true"></div>
-        <div class="trust-item">
-          <strong>0 filas</strong>
-          <span>cotiza desde la obra</span>
-        </div>
-      </div>
-    </div>
+      <!-- RIGHT — Triplo + card -->
+      <div class="hero-right" aria-hidden="true">
 
-    <!-- Triplo mascot -->
-    <div class="triplo-wrap" aria-hidden="true">
-      <svg viewBox="0 0 220 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Body -->
-        <ellipse cx="110" cy="230" rx="62" ry="72" fill="#8B5E3C"/>
-        <!-- Polo shirt -->
-        <ellipse cx="110" cy="248" rx="58" ry="58" fill="#1D3A8A"/>
-        <!-- Head -->
-        <ellipse cx="110" cy="140" rx="70" ry="68" fill="#A0612A"/>
-        <!-- Face lighter -->
-        <ellipse cx="110" cy="150" rx="46" ry="42" fill="#C4824A"/>
-        <!-- Ears -->
-        <ellipse cx="52" cy="105" rx="22" ry="28" fill="#8B5E3C"/>
-        <ellipse cx="168" cy="105" rx="22" ry="28" fill="#8B5E3C"/>
-        <ellipse cx="52" cy="105" rx="14" ry="20" fill="#A0612A"/>
-        <ellipse cx="168" cy="105" rx="14" ry="20" fill="#A0612A"/>
-        <!-- Cap -->
-        <path d="M44 118 Q110 60 176 118" fill="#CC2222"/>
-        <rect x="40" y="114" width="140" height="18" rx="9" fill="#DD2424"/>
-        <!-- Cap brim -->
-        <rect x="68" y="128" width="84" height="10" rx="5" fill="#BB1E1E"/>
-        <!-- Eyes -->
-        <circle cx="88" cy="148" r="13" fill="white"/>
-        <circle cx="132" cy="148" r="13" fill="white"/>
-        <circle cx="90" cy="149" r="8" fill="#2a1a0a"/>
-        <circle cx="134" cy="149" r="8" fill="#2a1a0a"/>
-        <circle cx="92" cy="146" r="3" fill="white"/>
-        <circle cx="136" cy="146" r="3" fill="white"/>
-        <!-- Nose -->
-        <ellipse cx="110" cy="166" rx="11" ry="8" fill="#3a1a05"/>
-        <!-- Smile -->
-        <path d="M92 178 Q110 192 128 178" stroke="#3a1a05" stroke-width="3" stroke-linecap="round" fill="none"/>
-        <!-- Teeth -->
-        <rect x="103" y="180" width="8" height="13" rx="2" fill="white"/>
-        <rect x="113" y="180" width="8" height="13" rx="2" fill="white"/>
-        <!-- Arms -->
-        <ellipse cx="46" cy="260" rx="20" ry="44" fill="#8B5E3C" transform="rotate(-12 46 260)"/>
-        <ellipse cx="174" cy="260" rx="20" ry="44" fill="#8B5E3C" transform="rotate(12 174 260)"/>
-        <!-- Polo collar -->
-        <path d="M88 200 L110 218 L132 200" stroke="#2a4fa8" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <!-- Jeans -->
-        <rect x="52" y="288" width="50" height="30" rx="8" fill="#3a6bc4"/>
-        <rect x="118" y="288" width="50" height="30" rx="8" fill="#3a6bc4"/>
-        <!-- Boots -->
-        <ellipse cx="76" cy="316" rx="24" ry="10" fill="#5a3210"/>
-        <ellipse cx="144" cy="316" rx="24" ry="10" fill="#5a3210"/>
-      </svg>
+        <!-- Card flotante -->
+        <div class="triplo-card">
+          <div class="triplo-card-label">Última cotización</div>
+          <div class="triplo-card-stat">$247.500</div>
+          <div class="triplo-card-sub">12 piezas · MDF blanco 18mm · Bogotá</div>
+        </div>
+
+        <!-- Triplo SVG — fiel al render 3D: castor café, polo azul navy, gorra roja, jeans, botas café -->
+        <svg class="triplo-figure" viewBox="0 0 280 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sombra base -->
+          <ellipse cx="140" cy="392" rx="68" ry="10" fill="rgba(0,0,0,0.35)"/>
+
+          <!-- BOTAS -->
+          <ellipse cx="108" cy="374" rx="30" ry="11" fill="#4A2810"/>
+          <ellipse cx="172" cy="374" rx="30" ry="11" fill="#4A2810"/>
+          <rect x="82" y="358" width="52" height="20" rx="8" fill="#5C3318"/>
+          <rect x="146" y="358" width="52" height="20" rx="8" fill="#5C3318"/>
+          <!-- detalle suela -->
+          <rect x="82" y="372" width="52" height="4" rx="2" fill="#3A1E08"/>
+          <rect x="146" y="372" width="52" height="4" rx="2" fill="#3A1E08"/>
+
+          <!-- JEANS — piernas -->
+          <rect x="86" y="285" width="46" height="82" rx="10" fill="#4A6FA5"/>
+          <rect x="148" y="285" width="46" height="82" rx="10" fill="#4A6FA5"/>
+          <!-- vuelta jeans -->
+          <rect x="86" y="350" width="46" height="12" rx="4" fill="#5A82BC"/>
+          <rect x="148" y="350" width="46" height="12" rx="4" fill="#5A82BC"/>
+          <!-- costura central -->
+          <line x1="109" y1="285" x2="109" y2="360" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="171" y1="285" x2="171" y2="360" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="4 3"/>
+
+          <!-- CINTURÓN -->
+          <rect x="82" y="278" width="116" height="12" rx="4" fill="#3a2210"/>
+          <rect x="128" y="276" width="24" height="16" rx="3" fill="#7a5e30"/>
+          <!-- hebilla -->
+          <rect x="133" y="279" width="14" height="10" rx="2" fill="#5a4520" stroke="#c4a44a" stroke-width="1.5"/>
+
+          <!-- CUERPO / POLO azul navy -->
+          <ellipse cx="140" cy="240" rx="68" ry="62" fill="#1D3A8A"/>
+          <!-- sombras cuerpo -->
+          <ellipse cx="140" cy="260" rx="60" ry="40" fill="rgba(0,0,0,0.12)"/>
+          <!-- cuello polo -->
+          <path d="M118 198 L140 216 L162 198" stroke="#162e74" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- botones polo -->
+          <circle cx="140" cy="210" r="3" fill="#162e74"/>
+          <circle cx="140" cy="221" r="3" fill="#162e74"/>
+
+          <!-- BRAZOS -->
+          <!-- brazo izquierdo -->
+          <ellipse cx="70" cy="248" rx="18" ry="46" fill="#8B5E3C" transform="rotate(-8 70 248)"/>
+          <ellipse cx="70" cy="248" rx="16" ry="44" fill="#A06A40" transform="rotate(-8 70 248)"/>
+          <!-- brazo derecho -->
+          <ellipse cx="210" cy="248" rx="18" ry="46" fill="#8B5E3C" transform="rotate(8 210 248)"/>
+          <ellipse cx="210" cy="248" rx="16" ry="44" fill="#A06A40" transform="rotate(8 210 248)"/>
+
+          <!-- CABEZA -->
+          <ellipse cx="140" cy="148" rx="72" ry="70" fill="#8B5020"/>
+          <!-- cara más clara -->
+          <ellipse cx="140" cy="156" rx="52" ry="48" fill="#B56830"/>
+          <!-- mejillas -->
+          <ellipse cx="112" cy="166" rx="16" ry="10" fill="rgba(180,80,30,0.3)"/>
+          <ellipse cx="168" cy="166" rx="16" ry="10" fill="rgba(180,80,30,0.3)"/>
+
+          <!-- OREJAS -->
+          <ellipse cx="73" cy="116" rx="22" ry="28" fill="#7A4418"/>
+          <ellipse cx="207" cy="116" rx="22" ry="28" fill="#7A4418"/>
+          <ellipse cx="73" cy="116" rx="14" ry="20" fill="#9B5824"/>
+          <ellipse cx="207" cy="116" rx="14" ry="20" fill="#9B5824"/>
+
+          <!-- GORRA ROJA -->
+          <!-- parte trasera -->
+          <path d="M70 130 Q80 72 140 68 Q200 72 210 130" fill="#AA1A1A"/>
+          <!-- visera frontal -->
+          <rect x="66" y="124" width="148" height="20" rx="10" fill="#CC2222"/>
+          <!-- pico visera -->
+          <rect x="82" y="140" width="116" height="12" rx="6" fill="#BB1818"/>
+          <!-- botón tope -->
+          <circle cx="140" cy="72" r="7" fill="#AA1A1A"/>
+          <circle cx="140" cy="72" r="4" fill="#CC2222"/>
+          <!-- tira ajuste trasera -->
+          <rect x="116" y="140" width="48" height="6" rx="3" fill="#991515"/>
+          <!-- detalle amarillo -->
+          <rect x="136" y="68" width="8" height="4" rx="1" fill="#F5A623"/>
+
+          <!-- OJOS -->
+          <circle cx="118" cy="150" r="14" fill="white"/>
+          <circle cx="162" cy="150" r="14" fill="white"/>
+          <!-- iris -->
+          <circle cx="120" cy="152" r="9" fill="#2a1a08"/>
+          <circle cx="164" cy="152" r="9" fill="#2a1a08"/>
+          <!-- pupila -->
+          <circle cx="120" cy="152" r="5" fill="#0a0805"/>
+          <circle cx="164" cy="152" r="5" fill="#0a0805"/>
+          <!-- brillo -->
+          <circle cx="123" cy="149" r="3" fill="white"/>
+          <circle cx="167" cy="149" r="3" fill="white"/>
+
+          <!-- NARIZ -->
+          <ellipse cx="140" cy="170" rx="12" ry="9" fill="#3A1A05"/>
+          <!-- fosas -->
+          <ellipse cx="135" cy="172" rx="3" ry="2.5" fill="#2a1200"/>
+          <ellipse cx="145" cy="172" rx="3" ry="2.5" fill="#2a1200"/>
+
+          <!-- BOCA / SONRISA -->
+          <path d="M120 182 Q140 198 160 182" stroke="#3A1A05" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <!-- DIENTES CASTOR — signo distintivo -->
+          <rect x="131" y="183" width="9" height="14" rx="2.5" fill="white" stroke="#ddd" stroke-width="0.5"/>
+          <rect x="142" y="183" width="9" height="14" rx="2.5" fill="white" stroke="#ddd" stroke-width="0.5"/>
+          <!-- línea entre dientes -->
+          <line x1="140.5" y1="183" x2="140.5" y2="197" stroke="#ccc" stroke-width="0.8"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Slide dots -->
-    <div class="slide-dots" role="tablist" aria-label="Diapositivas del hero">
-      <div class="slide-dot active" role="tab" aria-selected="true" data-index="0" tabindex="0"></div>
-      <div class="slide-dot" role="tab" aria-selected="false" data-index="1" tabindex="0"></div>
-      <div class="slide-dot" role="tab" aria-selected="false" data-index="2" tabindex="0"></div>
-      <div class="slide-dot" role="tab" aria-selected="false" data-index="3" tabindex="0"></div>
+    <div class="slide-dots" role="tablist" aria-label="Cambiar fondo">
+      <div class="dot active" role="tab" tabindex="0" data-i="0" aria-selected="true" aria-label="Fondo 1"></div>
+      <div class="dot" role="tab" tabindex="0" data-i="1" aria-selected="false" aria-label="Fondo 2"></div>
+      <div class="dot" role="tab" tabindex="0" data-i="2" aria-selected="false" aria-label="Fondo 3"></div>
+      <div class="dot" role="tab" tabindex="0" data-i="3" aria-selected="false" aria-label="Fondo 4"></div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="scroll-hint" aria-hidden="true">
+      <svg class="scroll-chevron" width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M4 7l5 5 5-5" stroke="rgba(255,255,255,0.3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="scroll-hint-text">Scroll</span>
     </div>
 
   </section>
 
-  <!-- placeholder anchor for next blocks -->
-  <div id="cotizador" style="height:80px;background:#0a0a0a;display:flex;align-items:center;justify-content:center;">
-    <p style="color:rgba(255,255,255,0.2);font-size:14px;letter-spacing:0.08em;text-transform:uppercase;">Bloque 2 — Propuesta de valor (próximo)</p>
+  <!-- Placeholders bloques siguientes -->
+  <div id="cotizador" class="next-placeholder">
+    <p>B2 — Propuesta de valor (próximo)</p>
   </div>
-  <div id="video" style="height:40px;background:#0a0a0a;"></div>
+  <div id="video" style="height:1px;background:#060a10;"></div>
 
   <script>
-    // Nav scroll state
+    // Nav scroll
     const nav = document.getElementById('nav');
     window.addEventListener('scroll', () => {
-      nav.classList.toggle('scrolled', window.scrollY > 40);
+      nav.classList.toggle('scrolled', window.scrollY > 50);
     }, { passive: true });
 
-    // Hero background slideshow
-    const slides = document.querySelectorAll('.hero-slide');
-    const dots   = document.querySelectorAll('.slide-dot');
-    let current  = 0;
-    let timer;
+    // Slideshow
+    const slides = document.querySelectorAll('.slide');
+    const dots   = document.querySelectorAll('.dot');
+    let cur = 0, timer;
 
-    function goToSlide(idx) {
-      slides[current].classList.remove('active');
-      dots[current].classList.remove('active');
-      dots[current].setAttribute('aria-selected', 'false');
-      current = idx;
-      slides[current].classList.add('active');
-      dots[current].classList.add('active');
-      dots[current].setAttribute('aria-selected', 'true');
+    function goTo(idx) {
+      slides[cur].classList.remove('active');
+      dots[cur].classList.remove('active');
+      dots[cur].setAttribute('aria-selected', 'false');
+      cur = idx;
+      slides[cur].classList.add('active');
+      dots[cur].classList.add('active');
+      dots[cur].setAttribute('aria-selected', 'true');
     }
-
     function startSlider() {
-      timer = setInterval(() => {
-        goToSlide((current + 1) % slides.length);
-      }, 5000);
+      timer = setInterval(() => goTo((cur + 1) % slides.length), 5500);
     }
-
-    dots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        clearInterval(timer);
-        goToSlide(Number(dot.dataset.index));
-        startSlider();
-      });
-      dot.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          dot.click();
-        }
-      });
+    dots.forEach(d => {
+      d.addEventListener('click', () => { clearInterval(timer); goTo(+d.dataset.i); startSlider(); });
+      d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); d.click(); } });
     });
-
+    document.addEventListener('visibilitychange', () => {
+      document.hidden ? clearInterval(timer) : startSlider();
+    });
     startSlider();
 
-    // Pause slider when tab is hidden
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) clearInterval(timer);
-      else startSlider();
-    });
+    // Counter animation on trust bar
+    function animateCounter(el, target, suffix) {
+      let start = 0;
+      const step = Math.ceil(target / 30);
+      const t = setInterval(() => {
+        start += step;
+        if (start >= target) { start = target; clearInterval(t); }
+        el.innerHTML = start + (suffix || '');
+      }, 40);
+    }
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        // solo animar una vez
+        observer.disconnect();
+      });
+    }, { threshold: 0.4 });
+    observer.observe(document.querySelector('.trust-bar'));
 
-    // Tracking helper
-    function trackEvent(eventName, params) {
-      if (typeof gtag !== 'undefined') {
-        gtag('event', eventName, params || {});
-      }
-      if (typeof fbq !== 'undefined') {
-        fbq('trackCustom', eventName, params || {});
-      }
+    // Tracking
+    function trackEvent(name, params) {
+      if (typeof gtag !== 'undefined') gtag('event', name, params || {});
+      if (typeof fbq  !== 'undefined') fbq('trackCustom', name, params || {});
     }
   </script>
 </body>
