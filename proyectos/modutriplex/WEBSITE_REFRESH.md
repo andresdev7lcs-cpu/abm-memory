@@ -92,20 +92,22 @@ Número placeholder: 57XXXXXXXXXX
 
 ## Decisiones de diseño
 
-### Paleta
-- Hero y secciones oscuras: #0a0a0a
-- Acento madera: #F5A623 (ámbar)
-- Acento tecnología: #2563EB (azul)
-- Secciones claras: #F8F6F0 (crema)
+### Paleta (adoptada de web-modutriplex.vercel.app — 2026-06-22)
+- Base oscura: #050c24 (navy profundo)
+- Secciones navy: #0B1B44
+- Rojo CTA: #E31B23 (acento principal)
+- Rojo dark hover: #b30f14
+- Secciones claras: #F3F4F6
 - Texto sobre oscuro: #FFFFFF
-- Texto sobre claro: #1a1a1a
+- Body oscuro: #111827
 
 ### Tipografía
-- Font: Inter (Google Fonts)
-- Hero headline: 64px desktop / 40px móvil
-- Sección títulos: 40px
+- Títulos/headlines: Oswald 500/600/700, uppercase, letter-spacing 0.02-0.08em
+- Body/UI: Inter 400/500/600
+- Mono (labels técnicos): Roboto Mono
+- Hero headline: clamp(40px, 7vw, 80px)
+- Sección títulos: ~40px
 - Body: 18px
-- Peso: 400 regular, 600 bold — nunca 700
 
 ### Componentes
 - Botones: sólidos, sin gradientes, border-radius 8px
@@ -150,12 +152,12 @@ Precio exacto antes de pagar. Entrega en menos de 48 horas en toda Colombia."
 - Mobile first — breakpoint principal: 768px
 
 ## Estado de bloques
-- [ ] B1: Hero
+- [x] B1: Hero — `bloque_1_hero.html` (2026-06-22)
 - [ ] B2: Propuesta de valor
 - [ ] B3: Video
-- [ ] B4: Cotizador (placeholder)
-- [ ] B5: Materiales + Mapa
-- [ ] B6: Footer + WhatsApp
+- [x] B4: Cotizador — `bloque_4_cotizador.html` (2026-06-23)
+- [x] B5: Materiales + Mapa — `bloque_5_6_materiales_footer.html` (2026-06-23)
+- [x] B6: Footer + WhatsApp — `bloque_5_6_materiales_footer.html` (2026-06-23)
 
 ## Prompt base para cada bloque
 Al pedirle a Codex cada bloque, usar este formato:
