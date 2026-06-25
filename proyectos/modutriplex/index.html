@@ -1008,9 +1008,9 @@
     @keyframes fadeOut { to { opacity: 0; transform: translateX(16px); } }
 
     /* ── GATE OVERLAY ── */
-    .gate-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; align-items:center; justify-content:center; padding:20px; z-index:900; backdrop-filter:blur(4px); }
+    .gate-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:none; align-items:center; justify-content:center; padding:20px; z-index:9000; backdrop-filter:blur(4px); overflow-y:auto; }
     .gate-overlay.show { display:flex; }
-    .gate-modal { width:min(480px,95vw); background:var(--card); border-radius:20px; border:1px solid var(--border); box-shadow:0 40px 100px rgba(0,0,0,0.7); overflow:hidden; animation:gate-in 0.25s ease-out; }
+    .gate-modal { position:relative; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; background:var(--card); border-radius:16px; border:1px solid var(--border); box-shadow:0 40px 100px rgba(0,0,0,0.7); overflow:hidden; animation:gate-in 0.25s ease-out; margin:auto; }
     @keyframes gate-in { from{opacity:0;transform:translateY(20px) scale(0.97);} to{opacity:1;transform:translateY(0) scale(1);} }
     .gate-header { background:var(--red); padding:24px 28px 20px; }
     .gate-header-eyebrow { font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.7); margin-bottom:6px; }
@@ -1517,7 +1517,7 @@
     <li><a href="#cobertura">Materiales</a></li>
     <li><a href="#cobertura">Cobertura</a></li>
     <li><a href="#como-funciona">Cómo funciona</a></li>
-    <li><a href="#" class="nav-cta" onclick="track('hero_cta_click',{location:'nav'});(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">Cotizar ahora</a></li>
+    <li><a href="#" class="nav-cta" onclick="track('hero_cta_click',{location:'nav'});if(typeof openGate!=='undefined')openGate();return false;">Cotizar ahora</a></li>
   </ul>
   <button class="nav-hamburger" id="navHamburger" aria-label="Abrir menú" aria-expanded="false">
     <span></span><span></span><span></span>
@@ -1527,7 +1527,7 @@
   <a href="#cobertura">Materiales</a>
   <a href="#cobertura">Cobertura</a>
   <a href="#como-funciona">Cómo funciona</a>
-  <a href="#" class="nav-cta" onclick="track('hero_cta_click',{location:'nav_mobile'});(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">Cotizar ahora →</a>
+  <a href="#" class="nav-cta" onclick="track('hero_cta_click',{location:'nav_mobile'});if(typeof openGate!=='undefined')openGate();return false;">Cotizar ahora →</a>
 </div>
 
 <!-- ════════════════════════════════════════
@@ -1555,7 +1555,7 @@
         Sin filas. Sin reprocesos. Sin sobrecostos.
       </h3>
       <div class="hero-actions">
-        <a href="#" class="btn-primary" onclick="track('hero_cta_click',{location:'hero_primary'});(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">
+        <a href="#" class="btn-primary" onclick="track('hero_cta_click',{location:'hero_primary'});if(typeof openGate!=='undefined')openGate();return false;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3"/>
             <path d="M9 15h3l8.5-8.5a1.5 1.5 0 00-3-3L9 12v3z"/>
@@ -1634,7 +1634,7 @@
           <div class="st-tag problema" id="st-tag">EL PROBLEMA</div>
           <h2 class="st-headline" id="st-headline">Días perdidos esperando material que no llega</h2>
           <p class="st-subtext" id="st-subtext">Cada hora de espera es dinero que pierdes. Tu cliente no puede esperar.</p>
-          <a href="#" class="st-cta" id="st-cta" onclick="(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">Cotizar ahora &rarr;</a>
+          <a href="#" class="st-cta" id="st-cta" onclick="if(typeof openGate!=='undefined')openGate();return false;">Cotizar ahora &rarr;</a>
         </div>
       </div>
       <div class="st-lista-mobile-wrap">
@@ -2201,7 +2201,7 @@
         <li><a href="#cobertura">Materiales</a></li>
         <li><a href="#cobertura">Cobertura</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
-        <li><a href="#" onclick="(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">Cotizar ahora</a></li>
+        <li><a href="#" onclick="if(typeof openGate!=='undefined')openGate();return false;">Cotizar ahora</a></li>
       </ul>
     </div>
     <div>
@@ -2216,7 +2216,7 @@
     <div>
       <div class="footer-col-title">¿LISTO PARA COTIZAR?</div>
       <p class="footer-cta-text">Tu aliado para gastar menos y ganar más en cada proyecto.<br>Material exacto. Precio justo. Entrega garantizada.</p>
-      <a href="#" class="footer-btn-primary" onclick="(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">COTIZAR AHORA →</a>
+      <a href="#" class="footer-btn-primary" onclick="if(typeof openGate!=='undefined')openGate();return false;">COTIZAR AHORA →</a>
     </div>
   </div>
   <div class="footer-sep"></div>
@@ -2474,6 +2474,11 @@
     });
     document.getElementById('gateOverlay').addEventListener('click', function(e) { if (e.target === this) closeGate(); });
     document.getElementById('cotizadorOverlay').addEventListener('click', function(e) { if (e.target === this) closeCotizador(); });
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('gateOverlay').classList.contains('show')) closeGate();
+      if (document.getElementById('cotizadorOverlay').classList.contains('show')) closeCotizador();
+    });
   })();
 
   /* ── COTIZADOR ENGINE ── */
