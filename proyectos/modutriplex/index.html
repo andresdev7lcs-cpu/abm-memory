@@ -457,21 +457,20 @@
        B2 — STORYTELLING
     ════════════════════════════════════════ */
     .storytelling {
-      position: relative;
-      z-index: 1;
       min-height: 100vh;
-      padding: 80px 40px;
-      background: #0d0d14;
-      isolation: isolate;
-      border-top: 1px solid #1a1a2e;
+      padding: 100px 60px;
+      background: var(--navy);
       transition: background 1s ease;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      position: relative;
+      z-index: 1;
+      isolation: isolate;
     }
     .storytelling.solucion { background: #0d1420; }
-    .st-inner { max-width: 1200px; margin: 0 auto; width: 100%; }
-    .st-layout { display: grid; grid-template-columns: 55% 45%; gap: 60px; align-items: start; }
+    .st-inner { max-width: 1300px; margin: 0 auto; width: 100%; }
+    .st-layout { display: grid; grid-template-columns: 58% 42%; gap: 80px; align-items: start; min-height: 420px; }
     .st-panel { position: relative; }
     .st-bg-num {
       position: absolute;
@@ -528,7 +527,7 @@
     .st-lista { display: flex; flex-direction: column; gap: 0; }
     .st-item {
       position: relative;
-      padding: 20px 0 20px 24px;
+      padding: 22px 0 22px 28px;
       cursor: pointer;
       border-left: 4px solid transparent;
       transition: border-color 0.3s ease;
@@ -550,19 +549,27 @@
     /* B2 ticker — prefixed to avoid conflict with B3 */
     .marcas-banner {
       background: #ffffff;
-      padding: 28px 0;
-      width: 100%;
-      border-top: 1px solid #e5e5e5;
-      border-bottom: 1px solid #e5e5e5;
+      padding: 26px 0;
+      width: 100vw;
+      position: relative;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      border-top: 1px solid #e0e0e0;
+      border-bottom: 1px solid #e0e0e0;
+      box-sizing: border-box;
     }
     .marcas-banner-inner {
+      width: 100%;
       max-width: 100%;
       margin: 0;
-      padding: 0 40px;
+      padding: 0 48px;
       display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 32px;
+      grid-template-columns: 220px 1fr;
+      gap: 40px;
       align-items: center;
+      box-sizing: border-box;
     }
     .marcas-label {
       font-size: 10px;
@@ -582,21 +589,22 @@
     }
     .marcas-ticker-wrap {
       overflow: hidden;
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
+      width: 100%;
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 4%, #000 96%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, #000 4%, #000 96%, transparent 100%);
     }
     .marcas-ticker-inner {
       display: flex;
-      gap: 56px;
+      gap: 64px;
       width: max-content;
-      animation: marcas-scroll 22s linear infinite;
+      animation: marcas-scroll 20s linear infinite;
       align-items: center;
     }
     .marcas-ticker-inner span {
       font-family: 'Oswald', sans-serif;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #1a1a1a;
       white-space: nowrap;
@@ -1441,8 +1449,8 @@
       .st-item.activo .st-item-text { font-weight:600; }
       .st-item-progress { display:none !important; }
       .st-panel { order:2; }
-      .marcas-banner { padding: 20px 0; }
-      .marcas-banner-inner { grid-template-columns: 1fr; gap: 12px; padding: 0 20px; }
+      .marcas-banner { width: 100vw; margin-left: -50vw; padding: 18px 0; }
+      .marcas-banner-inner { grid-template-columns: 1fr; gap: 10px; padding: 0 20px; }
       .marcas-headline { font-size: 18px; }
       .pedido-pasos { padding: 64px 16px; }
       .pedido-grid { gap: 14px; }
