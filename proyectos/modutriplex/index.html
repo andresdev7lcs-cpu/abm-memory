@@ -3,8 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modutriplex | Tableros cortados a medida — Entrega en 48h</title>
-  <meta name="description" content="Cotiza online tableros MDF, melamínicos y maderas con corte CNC. Precio exacto antes de pagar. Entrega en menos de 48 horas en toda Colombia.">
+  <title>Tableros MDF y Melamínico a Medida | Entrega 48h — Modutriplex</title>
+  <meta name="description" content="Cotiza online tableros MDF, melamínico y maderas con corte CNC. Precio exacto, sin visitas. Entrega en menos de 48h en Cundinamarca, Meta, Boyacá, Tolima y 6 departamentos más.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Modutriplex">
+  <link rel="canonical" href="https://modutriplex.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://modutriplex.com/">
+  <meta property="og:title" content="Tableros MDF y Melamínico a Medida | Entrega 48h — Modutriplex">
+  <meta property="og:description" content="Cotiza online tableros MDF, melamínico y maderas con corte CNC. Precio exacto antes de pagar. Entrega en menos de 48 horas en toda Colombia.">
+  <meta property="og:image" content="https://modutriplex.com/assets/img/og-image.jpg">
+  <meta property="og:locale" content="es_CO">
+  <meta property="og:site_name" content="Modutriplex">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tableros MDF y Melamínico a Medida | Entrega 48h — Modutriplex">
+  <meta name="twitter:description" content="Cotiza online tableros con corte CNC. Entrega en 48h en Colombia.">
+  <meta name="twitter:image" content="https://modutriplex.com/assets/img/og-image.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -559,74 +573,54 @@
     .st-item-progress-fill { height: 100%; width: 0%; background: var(--red); border-radius: 2px; transition: width linear; }
     /* B2 ticker — prefixed to avoid conflict with B3 */
     .marcas-banner {
-      background: #ffffff;
-      padding: 26px 0;
-      width: 100vw;
-      position: relative;
-      left: 50%;
-      right: 50%;
-      margin-left: -50vw;
-      margin-right: -50vw;
-      border-top: 1px solid #e0e0e0;
-      border-bottom: 1px solid #e0e0e0;
-      box-sizing: border-box;
+      background: var(--amber);
+      padding: 56px 40px;
+      margin-top: 80px;
     }
     .marcas-banner-inner {
-      width: 100%;
-      max-width: 100%;
-      margin: 0;
-      padding: 0 48px;
+      max-width: 1200px;
+      margin: 0 auto;
       display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 40px;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 48px;
       align-items: center;
-      box-sizing: border-box;
     }
     .marcas-label {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: rgba(0,0,0,0.4);
-      margin-bottom: 4px;
+      color: rgba(0,0,0,0.5);
+      margin-bottom: 12px;
     }
     .marcas-headline {
       font-family: 'Oswald', sans-serif;
-      font-size: 20px;
+      font-size: clamp(28px, 3vw, 40px);
       font-weight: 700;
-      color: #1a1a1a;
-      line-height: 1.1;
-      margin: 0;
+      color: #0d0d14;
+      line-height: 1.15;
+      margin-bottom: 12px;
     }
-    .marcas-ticker-wrap {
-      overflow: hidden;
-      width: 100%;
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 4%, #000 96%, transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0%, #000 4%, #000 96%, transparent 100%);
-    }
-    .marcas-ticker-inner {
-      display: flex;
-      gap: 64px;
-      width: max-content;
-      animation: marcas-scroll 20s linear infinite;
-      align-items: center;
-    }
-    .marcas-ticker-inner span {
-      font-family: 'Oswald', sans-serif;
+    .marcas-sub {
       font-size: 16px;
+      color: rgba(0,0,0,0.55);
+    }
+    .marcas-logos {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px 24px;
+    }
+    .marcas-logos span {
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #1a1a1a;
-      white-space: nowrap;
+      color: #0d0d14;
       cursor: default;
       transition: color 0.2s;
     }
-    .marcas-ticker-inner span:hover { color: #E63329; }
-    @keyframes marcas-scroll {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
+    .marcas-logos span:hover { color: var(--red); }
     .pedido-pasos {
       position: relative;
       max-width: none;
@@ -1464,9 +1458,9 @@
       .st-item.activo .st-item-text { font-weight:600; }
       .st-item-progress { display:none !important; }
       .st-panel { order:2; }
-      .marcas-banner { width: 100vw; margin-left: -50vw; padding: 18px 0; }
-      .marcas-banner-inner { grid-template-columns: 1fr; gap: 10px; padding: 0 20px; }
-      .marcas-headline { font-size: 18px; }
+      .marcas-banner { padding: 40px 20px; margin-top: 48px; }
+      .marcas-banner-inner { grid-template-columns: 1fr; gap: 32px; }
+      .marcas-logos { grid-template-columns: repeat(2, 1fr); }
       .pedido-pasos { padding: 64px 16px; }
       .pedido-grid { gap: 14px; }
       #como-funciona { padding:64px 16px 48px; }
@@ -1623,6 +1617,23 @@
   </div>
 </div>
     </div>
+    <div class="hero-media">
+      <div class="hero-media-glow" aria-hidden="true"></div>
+      <img
+        src="assets/img/invitacion.webp"
+        alt="Triplo — tu aliado en cada proyecto de madera"
+        class="hero-webp"
+        loading="eager"
+      >
+      <div class="hero-badge-float hero-badge-1" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        ENTREGA EN 48H
+      </div>
+      <div class="hero-badge-float hero-badge-2" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        PRECIO EXACTO ONLINE
+      </div>
+    </div>
   </div>
   <div class="hero-bottom-fade" aria-hidden="true"></div>
 </section>
@@ -1670,20 +1681,13 @@
     <div class="marcas-banner">
       <div class="marcas-banner-inner">
         <div class="marcas-texto">
-          <p class="marcas-label">MARCAS ALIADAS</p>
-          <p class="marcas-headline">Calidad certificada.</p>
+          <p class="marcas-label">RESPALDADOS POR LAS MEJORES MARCAS</p>
+          <h3 class="marcas-headline">Calidad que puedes ver,<br>tocar y garantizar.</h3>
+          <p class="marcas-sub">Solo trabajamos con fabricantes certificados.</p>
         </div>
-        <div class="marcas-ticker-wrap">
-          <div class="marcas-ticker">
-            <div class="marcas-ticker-inner">
-              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span>
-              <span>DURATEX</span><span>MADEOFI</span><span>ARAUCO</span>
-              <span>MASISA</span><span>SWISS KRONO</span>
-              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span>
-              <span>DURATEX</span><span>MADEOFI</span><span>ARAUCO</span>
-              <span>MASISA</span><span>SWISS KRONO</span>
-            </div>
-          </div>
+        <div class="marcas-logos">
+          <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span><span>DURATEX</span>
+          <span>MADEOFI</span><span>ARAUCO</span><span>MASISA</span><span>SWISS KRONO</span>
         </div>
       </div>
     </div>
@@ -2998,6 +3002,73 @@
     });
   });
 })();
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "Modutriplex",
+  "description": "Tableros MDF y melamínico cortados a medida con entrega en menos de 48 horas en Colombia.",
+  "url": "https://modutriplex.com",
+  "telephone": "+57-XXX-XXX-XXXX",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Bogotá",
+    "addressRegion": "Cundinamarca",
+    "addressCountry": "CO"
+  },
+  "areaServed": ["Cundinamarca","Meta","Boyacá","Tolima","Huila","Santander","Caldas","Risaralda","Quindío","Nariño"],
+  "priceRange": "$$",
+  "openingHours": "Mo-Sa 08:00-18:00",
+  "offers": {
+    "@type": "Offer",
+    "description": "Tableros MDF, melamínico y maderas con veta cortados a medida",
+    "areaServed": "Colombia",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Y si el material llega con defectos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Garantía total por defectos de fabricación. Si el material no cumple las especificaciones, lo reponemos sin costo adicional."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿El precio del cotizador es el precio real?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "El cotizador calcula exactamente la cantidad de láminas, metros de canto y materiales. El precio que ves es el precio que pagas, incluido IVA."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Llegan realmente a mi ciudad?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Operamos en 10 departamentos: Cundinamarca, Meta, Boyacá, Tolima, Huila, Santander, Caldas, Risaralda, Quindío y Nariño."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Es seguro pagar online?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Procesamos pagos con Wompi, la pasarela de pagos más confiable de Colombia."
+      }
+    }
+  ]
+}
 </script>
 </body>
 </html>
