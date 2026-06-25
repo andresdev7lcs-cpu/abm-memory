@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modutriplex | Hero v2 — con webp animado + profundidad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      --red:      #E63329;
+      --red-dark: #b30f14;
+      --navy:     #0d0d14;
+      --navy-deep:#050c24;
+      --charcoal: #111827;
+      --card:     #151522;
+      --border:   #222233;
+      --white:    #ffffff;
+      --muted:    #aaaaaa;
+      --amber:    #F5A623;
+      --blue:     #2563EB;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ════════════════════════════════════════
+       NAVBAR
+    ════════════════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      background: linear-gradient(to bottom, rgba(5,12,36,0.95) 0%, transparent 100%);
+      transition: background 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(5,12,36,0.98);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .nav-logo {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--white);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--red); }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--red);
+      color: var(--white) !important;
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--red-dark) !important; }
+
+    /* ════════════════════════════════════════
+       HERO WRAPPER
+    ════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: #060610;
+    }
+
+    /* CANVAS partículas */
+    #hero-particles {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Overlay oscuro */
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: linear-gradient(135deg,
+        rgba(5,12,36,0.82) 0%,
+        rgba(5,12,36,0.60) 50%,
+        rgba(11,27,68,0.45) 100%);
+      pointer-events: none;
+    }
+
+    /* Grid parallax */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    /* Orbes de luz ambiente */
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+      filter: blur(80px);
+    }
+    .hero-orb-1 {
+      width: 600px; height: 600px;
+      top: -100px; right: -80px;
+      background: radial-gradient(circle, rgba(230,51,41,0.08) 0%, transparent 70%);
+    }
+    .hero-orb-2 {
+      width: 400px; height: 400px;
+      bottom: -80px; left: -60px;
+      background: radial-gradient(circle, rgba(245,166,35,0.06) 0%, transparent 70%);
+    }
+
+    /* ════════════════════════════════════════
+       HERO INNER — dos columnas
+    ════════════════════════════════════════ */
+    .hero-inner {
+      position: relative;
+      z-index: 10;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 120px 48px 80px;
+      display: grid;
+      grid-template-columns: 55% 45%;
+      gap: 48px;
+      align-items: center;
+    }
+
+    /* ════════════════════════════════════════
+       COLUMNA IZQUIERDA — copy
+    ════════════════════════════════════════ */
+    .hero-copy { display: flex; flex-direction: column; }
+
+    /* Badge / eyebrow */
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(230,51,41,0.15);
+      border: 1px solid rgba(230,51,41,0.4);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #ff6b6b;
+      margin-bottom: 32px;
+      width: fit-content;
+
+      /* entrada desde arriba */
+      opacity: 0;
+      transform: translateY(-16px);
+      animation: fadeDown 0.6s ease forwards;
+      animation-delay: 0s;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: pulse 2s infinite;
+    }
+
+    /* headline */
+    .hero-headline {
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(44px, 6.5vw, 84px);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      line-height: 1.0;
+      color: var(--white);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .hero-headline .line {
+      display: block;
+      opacity: 0;
+      transform: translateX(-32px);
+      animation: slideRight 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    .hero-headline .line-1 { animation-delay: 0.2s; }
+    .hero-headline .line-2 { animation-delay: 0.4s; }
+    .hero-headline .line-3 {
+      animation-delay: 0.6s;
+      color: var(--red);
+      animation-name: slideRightAccent;
+    }
+    .accent-pulse {
+      display: inline-block;
+      animation: accentPulse 2.5s ease infinite;
+      animation-delay: 1.2s;
+    }
+
+    /* subheadline */
+    .hero-sub {
+      font-size: clamp(15px, 1.6vw, 18px);
+      font-weight: 400;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 480px;
+      opacity: 0;
+      animation: fadeIn 0.7s ease forwards;
+      animation-delay: 0.8s;
+    }
+
+    /* CTAs */
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 56px;
+      opacity: 0;
+      transform: scale(0.93);
+      animation: scaleIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+      animation-delay: 1s;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--red);
+      color: var(--white);
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 16px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      border: 2px solid var(--red);
+      transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      background: var(--red-dark);
+      border-color: var(--red-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(230,51,41,0.35);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: rgba(255,255,255,0.85);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 14px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover {
+      border-color: rgba(255,255,255,0.5);
+      color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    /* trust bar */
+    .trust-bar {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.6s ease forwards;
+      animation-delay: 1.2s;
+    }
+    .trust-item { display: flex; align-items: center; gap: 10px; }
+    .trust-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: rgba(230,51,41,0.12);
+      border: 1px solid rgba(230,51,41,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .trust-text strong {
+      display: block;
+      font-family: 'Oswald', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--white);
+      line-height: 1.1;
+    }
+    .trust-text span {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.02em;
+      display: block;
+    }
+    .trust-text em {
+      font-size: 10px;
+      color: rgba(230,51,41,0.7);
+      font-style: normal;
+      display: block;
+      margin-top: 1px;
+      font-weight: 500;
+    }
+
+    /* ════════════════════════════════════════
+       COLUMNA DERECHA — webp animado
+    ════════════════════════════════════════ */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateX(40px);
+      animation: slideLeft 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
+      animation-delay: 0.5s;
+    }
+
+    .hero-visual-inner {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .hero-webp {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(230,51,41,0.3);
+      box-shadow:
+        0 0 0 1px rgba(230,51,41,0.15),
+        0 24px 64px rgba(0,0,0,0.6),
+        0 0 60px rgba(230,51,41,0.08);
+      display: block;
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+      animation: glowPulse 4s ease infinite;
+      animation-delay: 1.5s;
+    }
+    .hero-webp:hover {
+      transform: scale(1.02);
+      box-shadow:
+        0 0 0 1px rgba(230,51,41,0.3),
+        0 32px 80px rgba(0,0,0,0.7),
+        0 0 80px rgba(230,51,41,0.15);
+    }
+
+    /* Badge flotante 1 — arriba izquierda */
+    .float-badge {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      z-index: 5;
+    }
+    .float-badge-1 {
+      top: -14px;
+      left: -20px;
+      background: rgba(230,51,41,0.92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      animation: floatUpDown 3s ease-in-out infinite;
+    }
+    .float-badge-2 {
+      bottom: -14px;
+      right: -20px;
+      background: rgba(37,99,235,0.92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      animation: floatUpDown 3s ease-in-out infinite;
+      animation-delay: 1.5s;
+    }
+    .float-badge-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.8);
+      flex-shrink: 0;
+    }
+
+    /* Corner accent */
+    .visual-corner {
+      position: absolute;
+      width: 40px; height: 40px;
+      pointer-events: none;
+    }
+    .visual-corner-tl {
+      top: -4px; left: -4px;
+      border-top: 2px solid var(--red);
+      border-left: 2px solid var(--red);
+      border-radius: 4px 0 0 0;
+    }
+    .visual-corner-br {
+      bottom: -4px; right: -4px;
+      border-bottom: 2px solid var(--amber);
+      border-right: 2px solid var(--amber);
+      border-radius: 0 0 4px 0;
+    }
+
+    /* ════════════════════════════════════════
+       KEYFRAMES
+    ════════════════════════════════════════ */
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.5; transform:scale(1.4); }
+    }
+    @keyframes fadeDown {
+      to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes slideRight {
+      to { opacity:1; transform:translateX(0); }
+    }
+    @keyframes slideRightAccent {
+      to { opacity:1; transform:translateX(0); }
+    }
+    @keyframes fadeIn {
+      to { opacity:1; }
+    }
+    @keyframes scaleIn {
+      to { opacity:1; transform:scale(1); }
+    }
+    @keyframes fadeUp {
+      to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes slideLeft {
+      to { opacity:1; transform:translateX(0); }
+    }
+    @keyframes floatUpDown {
+      0%,100% { transform:translateY(0px); }
+      50% { transform:translateY(-8px); }
+    }
+    @keyframes accentPulse {
+      0%,100% { color:var(--red); text-shadow:none; }
+      50% { color:#ff5549; text-shadow:0 0 30px rgba(230,51,41,0.5); }
+    }
+    @keyframes glowPulse {
+      0%,100% { box-shadow:0 0 0 1px rgba(230,51,41,0.15),0 24px 64px rgba(0,0,0,0.6),0 0 60px rgba(230,51,41,0.08); }
+      50% { box-shadow:0 0 0 1px rgba(230,51,41,0.25),0 24px 64px rgba(0,0,0,0.6),0 0 80px rgba(230,51,41,0.14); }
+    }
+
+    /* ════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════ */
+    @media (max-width: 860px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+        padding: 100px 24px 64px;
+        gap: 40px;
+      }
+      /* en móvil: webp primero */
+      .hero-copy { order: 2; }
+      .hero-visual { order: 1; opacity:1; transform:none; animation:none; }
+      .hero-visual-inner { max-width: 380px; margin: 0 auto; }
+      .float-badge { display: none; }
+      .visual-corner { display: none; }
+      .hero-eyebrow { margin-bottom: 24px; }
+      .hero-actions { margin-bottom: 40px; }
+      .trust-item:nth-child(n+4) { display: none; }
+    }
+    @media (max-width: 520px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .hero-headline { font-size: clamp(36px, 9vw, 52px); }
+      .hero-sub { font-size: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-eyebrow, .hero-headline .line, .hero-sub, .hero-actions,
+      .trust-bar, .hero-visual, .float-badge-1, .float-badge-2,
+      .hero-webp, .hero-eyebrow::before, .accent-pulse {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════ -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">MODU<span>TRIPLEX</span></a>
+  <ul class="nav-links">
+    <li><a href="#materiales">Materiales</a></li>
+    <li><a href="#cobertura">Cobertura</a></li>
+    <li><a href="#como-funciona">Cómo funciona</a></li>
+    <li><a href="#cotizador" class="nav-cta">Cotizar ahora</a></li>
+  </ul>
+</nav>
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="hero" id="hero" aria-label="Hero Modutriplex">
+
+  <!-- Canvas de partículas -->
+  <canvas id="hero-particles" aria-hidden="true"></canvas>
+
+  <!-- Overlay de gradiente -->
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <!-- Grid parallax -->
+  <div class="hero-grid" id="hero-grid" aria-hidden="true"></div>
+
+  <!-- Orbes de luz ambiente -->
+  <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+  <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
+
+  <!-- Contenido de dos columnas -->
+  <div class="hero-inner">
+
+    <!-- ── Columna izquierda: copy ── -->
+    <div class="hero-copy">
+
+      <div class="hero-eyebrow" aria-label="Cobertura">
+        Bogotá — 10 departamentos activos
+      </div>
+
+      <h1 class="hero-headline">
+        <span class="line line-1">Tu proyecto</span>
+        <span class="line line-2">no puede</span>
+        <span class="line line-3"><span class="accent-pulse">ESPERAR.</span></span>
+      </h1>
+
+      <p class="hero-sub">
+        Tu tiempo vale dinero. Nosotros lo sabemos.<br>
+        Material exacto, precio claro, en tu puerta en 48 horas.<br>
+        Sin filas. Sin llamadas. Sin sorpresas.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#cotizador" class="btn-primary" onclick="typeof track!=='undefined'&&track('hero_cta_click',{location:'hero_primary'})">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3"/>
+            <path d="M9 15h3l8.5-8.5a1.5 1.5 0 00-3-3L9 12v3z"/>
+          </svg>
+          Cotizar ahora
+        </a>
+        <a href="#como-funciona" class="btn-ghost" onclick="typeof track!=='undefined'&&track('hero_cta_click',{location:'hero_secondary'})">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          Ver cómo funciona
+        </a>
+      </div>
+
+      <div class="trust-bar" role="list">
+        <div class="trust-item" role="listitem">
+          <div class="trust-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="trust-text">
+            <strong>48h</strong>
+            <span>Entrega garantizada</span>
+            <em>o te devolvemos tu dinero</em>
+          </div>
+        </div>
+        <div class="trust-item" role="listitem">
+          <div class="trust-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          </div>
+          <div class="trust-text">
+            <strong>Precio exacto</strong>
+            <span>Online, sin sorpresas</span>
+            <em>antes de pagar, no después</em>
+          </div>
+        </div>
+        <div class="trust-item" role="listitem">
+          <div class="trust-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <div class="trust-text">
+            <strong>10 depart.</strong>
+            <span>Cobertura regional</span>
+            <em>y expandiendo</em>
+          </div>
+        </div>
+        <div class="trust-item" role="listitem">
+          <div class="trust-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="trust-text">
+            <strong>CNC Bogotá</strong>
+            <span>Corte industrial</span>
+            <em>30 años de experiencia</em>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /hero-copy -->
+
+    <!-- ── Columna derecha: webp animado ── -->
+    <div class="hero-visual" aria-label="Triplo mascota Modutriplex">
+      <div class="hero-visual-inner">
+
+        <!-- Badge flotante 1 -->
+        <div class="float-badge float-badge-1" aria-hidden="true">
+          <span class="float-badge-dot"></span>
+          ⚡ ENTREGA EN 48H
+        </div>
+
+        <!-- Imagen webp -->
+        <img
+          src="/assets/Modutriplex_invitacion.webp"
+          alt="Triplo, mascota de Modutriplex — corte CNC a tu medida"
+          class="hero-webp"
+          loading="eager"
+          decoding="async"
+        />
+
+        <!-- Badge flotante 2 -->
+        <div class="float-badge float-badge-2" aria-hidden="true">
+          <span class="float-badge-dot"></span>
+          ✓ PRECIO EXACTO ONLINE
+        </div>
+
+        <!-- Esquinas decorativas -->
+        <div class="visual-corner visual-corner-tl" aria-hidden="true"></div>
+        <div class="visual-corner visual-corner-br" aria-hidden="true"></div>
+
+      </div>
+    </div><!-- /hero-visual -->
+
+  </div><!-- /hero-inner -->
+</section>
+
+<!-- Spacer para preview -->
+<div style="height:80px;background:var(--navy);display:flex;align-items:center;justify-content:center;">
+  <p style="color:#444;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">↓ Resto de la landing continúa aquí</p>
+</div>
+
+<!-- ════════════════════════════════════════
+     JS — Navbar scroll
+════════════════════════════════════════ -->
+<script>
+(function() {
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', function() {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+})();
+</script>
+
+<!-- ════════════════════════════════════════
+     JS — Canvas partículas
+════════════════════════════════════════ -->
+<script>
+(function() {
+  const canvas = document.getElementById('hero-particles');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const COLORS = ['rgba(255,255,255,0.15)', 'rgba(245,166,35,0.18)', 'rgba(255,255,255,0.10)'];
+  const MAX_PARTICLES = window.innerWidth < 768 ? 20 : 40;
+
+  function resize() {
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  window.addEventListener('resize', resize, { passive: true });
+  resize();
+
+  const particles = [];
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.8 + 0.4,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      opacity: Math.random() * 0.6 + 0.2
+    });
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(function(p) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(tick);
+  }
+
+  /* Respeta prefers-reduced-motion */
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    tick();
+  }
+})();
+</script>
+
+<!-- ════════════════════════════════════════
+     JS — Parallax grid en scroll
+════════════════════════════════════════ -->
+<script>
+(function() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const grid = document.getElementById('hero-grid');
+  if (!grid) return;
+  let ticking = false;
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      requestAnimationFrame(function() {
+        const offset = window.scrollY * 0.3;
+        grid.style.transform = 'translateY(' + offset + 'px)';
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>
