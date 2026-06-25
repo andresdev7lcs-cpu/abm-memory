@@ -511,22 +511,6 @@
       max-width: 560px;
     }
     .st-subtext { font-size: 18px; color: var(--muted); line-height: 1.65; max-width: 520px; margin-bottom: 36px; }
-    .st-visual {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: 12px;
-      background: #111118;
-      overflow: hidden;
-      background-image:
-        linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 32px 32px;
-      margin-top: 24px;
-    }
-    .st-visual.glow-rojo { box-shadow: 0 0 0 1px rgba(230,51,41,0.2), 0 0 60px rgba(230,51,41,0.12); }
-    .st-visual.glow-azul { box-shadow: 0 0 0 1px rgba(37,99,235,0.3), 0 0 60px rgba(37,99,235,0.15); }
-    .st-visual-label { position: absolute; bottom: 16px; left: 20px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #333; }
     .st-cta { display: none; }
     .st-cta.visible {
       display: inline-block;
@@ -565,58 +549,61 @@
     .st-item-progress-fill { height: 100%; width: 0%; background: var(--red); border-radius: 2px; transition: width linear; }
     /* B2 ticker — prefixed to avoid conflict with B3 */
     .marcas-banner {
-      background: var(--amber);
-      padding: 20px 40px;
+      background: #ffffff;
+      padding: 28px 0;
+      width: 100%;
+      border-top: 1px solid #e5e5e5;
+      border-bottom: 1px solid #e5e5e5;
     }
     .marcas-banner-inner {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: 100%;
+      margin: 0;
+      padding: 0 40px;
       display: grid;
-      grid-template-columns: 1fr 2fr;
+      grid-template-columns: 260px 1fr;
       gap: 32px;
       align-items: center;
     }
-    .marcas-texto { flex-shrink: 0; }
     .marcas-label {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(0,0,0,0.45);
+      color: rgba(0,0,0,0.4);
       margin-bottom: 4px;
     }
     .marcas-headline {
       font-family: 'Oswald', sans-serif;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
-      color: #0d0d14;
+      color: #1a1a1a;
       line-height: 1.1;
       margin: 0;
     }
     .marcas-ticker-wrap {
       overflow: hidden;
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
     }
     .marcas-ticker-inner {
       display: flex;
-      gap: 48px;
+      gap: 56px;
       width: max-content;
-      animation: marcas-scroll 25s linear infinite;
+      animation: marcas-scroll 22s linear infinite;
       align-items: center;
     }
     .marcas-ticker-inner span {
       font-family: 'Oswald', sans-serif;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #0d0d14;
+      color: #1a1a1a;
       white-space: nowrap;
       cursor: default;
       transition: color 0.2s;
     }
-    .marcas-ticker-inner span:hover { color: var(--red); }
+    .marcas-ticker-inner span:hover { color: #E63329; }
     @keyframes marcas-scroll {
       0%   { transform: translateX(0); }
       100% { transform: translateX(-50%); }
@@ -1454,8 +1441,8 @@
       .st-item.activo .st-item-text { font-weight:600; }
       .st-item-progress { display:none !important; }
       .st-panel { order:2; }
-      .marcas-banner { padding: 16px 20px; }
-      .marcas-banner-inner { grid-template-columns: 1fr; gap: 12px; }
+      .marcas-banner { padding: 20px 0; }
+      .marcas-banner-inner { grid-template-columns: 1fr; gap: 12px; padding: 0 20px; }
       .marcas-headline { font-size: 18px; }
       .pedido-pasos { padding: 64px 16px; }
       .pedido-grid { gap: 14px; }
@@ -1639,9 +1626,6 @@
             <div class="st-item-text">Somos parte de tu equipo de trabajo →</div>
             <div class="st-item-progress"><div class="st-item-progress-fill" id="prog-4"></div></div>
           </div>
-        </div>
-        <div class="st-visual glow-rojo" id="st-visual">
-          <span class="st-visual-label" id="st-visual-label">Imagen próximamente</span>
         </div>
       </div>
     </div>
@@ -2255,7 +2239,7 @@
   const elTag     = document.getElementById('st-tag');
   const elHead    = document.getElementById('st-headline');
   const elSub     = document.getElementById('st-subtext');
-  const elVisual  = document.getElementById('st-visual');
+  const elVisual  = null; // eliminado
   const elCta     = document.getElementById('st-cta');
   const items     = document.querySelectorAll('.st-item');
   let actual = 0, timer = null;
@@ -2269,7 +2253,6 @@
       elTag.className    = 'st-tag ' + d.tagClase;
       elHead.textContent = d.headline;
       elSub.textContent  = d.subtext;
-      elVisual.className = 'st-visual ' + d.glow;
       elCta.className    = d.cta ? 'st-cta visible' : 'st-cta';
       seccion.classList.toggle('solucion', n === 4);
       var bgNum = document.getElementById('st-bg-num');
