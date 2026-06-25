@@ -408,17 +408,15 @@
     }
     .btn-ghost:hover { border-color: var(--white); color: var(--white); transform: translateY(-2px); }
     .trust-bar {
-      display: flex;
-      gap: 20px;
-      flex-wrap: nowrap;
-      margin-top: 10px;
-      padding-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 64px;
+      padding-top: 40px;
       border-top: 1px solid rgba(255,255,255,0.08);
-      overflow-x: auto;
-      padding-bottom: 4px;
     }
-    .trust-item { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
-    .trust-item { min-width: max-content; }
+    .trust-item { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
     .trust-icon {
       width: 48px; height: 48px;
       border-radius: 8px;
@@ -433,14 +431,19 @@
     .trust-text strong {
       display: block;
       font-family: 'Oswald', sans-serif;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 0.02em;
       color: var(--white);
       line-height: 1.1;
       white-space: nowrap;
     }
-    .trust-text span { font-size: 12px; color: rgba(255,255,255,0.72); letter-spacing: 0.02em; }
+    .trust-text span {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+      display: block;
+    }
     .hero-bottom-fade {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -468,7 +471,7 @@
     }
     .storytelling.solucion { background: #0d1420; }
     .st-inner { max-width: 1200px; margin: 0 auto; width: 100%; }
-    .st-layout { display: grid; grid-template-columns: 60% 40%; gap: 60px; align-items: start; }
+    .st-layout { display: grid; grid-template-columns: 55% 45%; gap: 60px; align-items: start; }
     .st-panel { position: relative; }
     .st-bg-num {
       position: absolute;
@@ -510,7 +513,8 @@
     .st-subtext { font-size: 18px; color: var(--muted); line-height: 1.65; max-width: 520px; margin-bottom: 36px; }
     .st-visual {
       position: relative;
-      height: 220px;
+      width: 100%;
+      aspect-ratio: 16/9;
       border-radius: 12px;
       background: #111118;
       overflow: hidden;
@@ -518,9 +522,10 @@
         linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
       background-size: 32px 32px;
+      margin-top: 24px;
     }
-    .st-visual.glow-rojo { box-shadow: 0 0 0 1px rgba(230,51,41,0.2), 0 0 40px rgba(230,51,41,0.1); }
-    .st-visual.glow-azul { box-shadow: 0 0 0 1px rgba(37,99,235,0.3), 0 0 40px rgba(37,99,235,0.15); }
+    .st-visual.glow-rojo { box-shadow: 0 0 0 1px rgba(230,51,41,0.2), 0 0 60px rgba(230,51,41,0.12); }
+    .st-visual.glow-azul { box-shadow: 0 0 0 1px rgba(37,99,235,0.3), 0 0 60px rgba(37,99,235,0.15); }
     .st-visual-label { position: absolute; bottom: 16px; left: 20px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #333; }
     .st-cta { display: none; }
     .st-cta.visible {
@@ -560,111 +565,61 @@
     .st-item-progress-fill { height: 100%; width: 0%; background: var(--red); border-radius: 2px; transition: width linear; }
     /* B2 ticker — prefixed to avoid conflict with B3 */
     .marcas-banner {
-      position: relative;
-      background: #ffffff;
-      padding: 56px 0;
-      margin-top: 80px;
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
-      overflow: hidden;
-      isolation: isolate;
-    }
-    .marcas-banner::before,
-    .marcas-banner::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 0;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .marcas-banner::before {
-      left: 0;
-      background: transparent;
-      backdrop-filter: none;
-    }
-    .marcas-banner::after {
-      right: 0;
-      background: transparent;
-      backdrop-filter: none;
+      background: var(--amber);
+      padding: 20px 40px;
     }
     .marcas-banner-inner {
-      max-width: none;
+      max-width: 1200px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 3fr;
-      gap: 40px;
+      grid-template-columns: 1fr 2fr;
+      gap: 32px;
       align-items: center;
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      padding: 0;
     }
-    .marcas-texto {
-      padding: 0 28px 0 40px;
-    }
+    .marcas-texto { flex-shrink: 0; }
     .marcas-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(0,0,0,0.55);
-      margin-bottom: 12px;
+      color: rgba(0,0,0,0.45);
+      margin-bottom: 4px;
     }
     .marcas-headline {
       font-family: 'Oswald', sans-serif;
-      font-size: clamp(34px, 3.8vw, 54px);
+      font-size: 22px;
       font-weight: 700;
       color: #0d0d14;
-      line-height: 1.15;
-      margin-bottom: 12px;
+      line-height: 1.1;
+      margin: 0;
     }
-    .marcas-sub {
-      font-size: 18px;
-      color: rgba(0,0,0,0.58);
-    }
-    .marcas-marquee {
-      position: relative;
+    .marcas-ticker-wrap {
       overflow: hidden;
-      mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
     }
-    .marcas-track {
+    .marcas-ticker-inner {
       display: flex;
+      gap: 48px;
       width: max-content;
-      gap: 52px;
-      animation: marcas-scroll 24s linear infinite;
-      will-change: transform;
-    }
-    .marcas-track:hover { animation-play-state: paused; }
-    .marcas-group {
-      display: flex;
-      gap: 52px;
+      animation: marcas-scroll 25s linear infinite;
       align-items: center;
     }
-    .marcas-logos {
-      display: flex;
-      gap: 42px;
-      align-items: center;
-    }
-    .marcas-logos span {
+    .marcas-ticker-inner span {
       font-family: 'Oswald', sans-serif;
-      font-size: clamp(24px, 2vw, 30px);
+      font-size: 16px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #0d0d14;
       white-space: nowrap;
       cursor: default;
-      transition: opacity 0.2s, color 0.2s, transform 0.2s;
-      opacity: 0.82;
+      transition: color 0.2s;
     }
-    .marcas-logos span:hover { color: var(--red); opacity: 1; transform: translateY(-2px); }
+    .marcas-ticker-inner span:hover { color: var(--red); }
     @keyframes marcas-scroll {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
     }
     .pedido-pasos {
       position: relative;
@@ -1243,19 +1198,44 @@
     /* ════════════════════════════════════════
        B3 — 3 PASOS (pedido-en-linea)
     ════════════════════════════════════════ */
-    #pedido-en-linea { background: var(--navy); padding: 100px 40px; scroll-margin-top: 70px; }
-    .pasos-intro { max-width: 720px; margin: 0 auto 72px; text-align: center; }
-    .pasos-grid { display: flex; align-items: center; gap: 0; max-width: 1100px; margin: 0 auto 64px; justify-content: center; }
+    #pedido-en-linea {
+      background: #f8f6f0;
+      color: #1a1a1a;
+      padding: 0;
+      position: relative;
+      scroll-margin-top: 70px;
+    }
+    .pasos-trapecio-top {
+      width: 100%;
+      height: 60px;
+      background: var(--navy);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 0);
+      display: block;
+    }
+    .pasos-trapecio-bottom {
+      width: 100%;
+      height: 60px;
+      background: var(--navy);
+      clip-path: polygon(0 100%, 100% 0, 100% 100%, 0 100%);
+      display: block;
+    }
+    .pasos-contenido { padding: 80px 40px; }
+    .pasos-intro { max-width: 800px; margin: 0 auto 72px; text-align: center; }
+    .pasos-intro .pill-red { border-color: var(--red); color: var(--red); }
+    .pasos-intro .section-title { color: #1a1a1a; font-size: clamp(40px, 5vw, 64px); margin-bottom: 20px; }
+    .pasos-intro .section-sub { color: #555; font-size: clamp(16px, 2vw, 20px); }
+    .pasos-grid { display: flex; align-items: stretch; gap: 0; max-width: 1100px; margin: 0 auto 64px; justify-content: center; }
     .paso-card {
-      flex: 1; max-width: 280px;
-      background: var(--card); border: 1px solid var(--border);
+      flex: 1; max-width: 300px;
+      background: #ffffff; border: 1px solid #e5e5e5;
       border-radius: 16px; padding: 36px 28px;
       position: relative; transition: transform 0.25s ease, box-shadow 0.25s ease;
+      color: #1a1a1a;
     }
-    .paso-card:hover { transform: translateY(-8px); box-shadow: 0 20px 48px rgba(230,51,41,0.15); }
+    .paso-card:hover { transform: translateY(-8px); box-shadow: 0 20px 48px rgba(230,51,41,0.12); }
     .paso-num {
       font-family: 'Oswald', sans-serif; font-size: 64px; font-weight: 900;
-      color: rgba(230,51,41,0.08); position: absolute; top: 16px; right: 20px;
+      color: rgba(230,51,41,0.06); position: absolute; top: 16px; right: 20px;
       line-height: 1; user-select: none;
     }
     .paso-icon {
@@ -1266,24 +1246,27 @@
     .paso-titulo {
       font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700;
       letter-spacing: 0.04em; text-transform: uppercase;
-      color: var(--white); margin-bottom: 14px;
+      color: #1a1a1a; margin-bottom: 14px;
     }
-    .paso-desc { font-size: 15px; color: var(--muted); line-height: 1.65; margin-bottom: 20px; }
-    .paso-desc strong { color: var(--white); }
+    .paso-desc { font-size: 15px; color: #666; line-height: 1.65; margin-bottom: 20px; }
+    .paso-desc strong { color: #1a1a1a; }
     .paso-tag {
-      display: inline-block; background: rgba(230,51,41,0.12);
-      border: 1px solid rgba(230,51,41,0.25); color: var(--red);
+      display: inline-block; background: rgba(230,51,41,0.08);
+      border: 1px solid rgba(230,51,41,0.2); color: var(--red);
       border-radius: 50px; padding: 6px 14px;
       font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
     }
-    .paso-conector { padding: 0 16px; opacity: 0.4; flex-shrink: 0; }
+    .paso-conector {
+      padding: 0 20px; opacity: 0.3; flex-shrink: 0;
+      display: flex; align-items: center;
+    }
     .pasos-cta {
       max-width: 600px; margin: 0 auto; text-align: center;
-      padding: 48px 40px; background: var(--card);
+      padding: 48px 40px; background: #1a1a1a;
       border-radius: 16px; border-top: 3px solid var(--red);
     }
-    .pasos-cta-text { font-size: 20px; font-style: italic; color: var(--white); line-height: 1.5; margin-bottom: 8px; }
-    .pasos-cta-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+    .pasos-cta-text { font-size: 20px; font-style: italic; color: #ffffff; line-height: 1.5; margin-bottom: 8px; }
+    .pasos-cta-sub { font-size: 13px; color: #888; margin-bottom: 32px; }
     .pasos-btn {
       background: var(--red); color: #fff; border: none;
       padding: 18px 48px; border-radius: 4px;
@@ -1459,8 +1442,7 @@
       .hero-content { grid-template-columns: 1fr; }
       .hero-headline { font-size: 48px; line-height: 1.05; max-width: 100%; }
       .hero-sub { max-width: 100%; margin-bottom: 18px; }
-      .trust-bar { gap:14px; margin-top:24px; }
-      .trust-item:nth-child(n+4) { display:flex; }
+      .trust-bar { grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; padding-top: 24px; }
       .storytelling { padding:60px 20px; }
       .st-layout { display:flex; flex-direction:column; gap:40px; }
       .st-lista-mobile-wrap { order:1; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:4px; }
@@ -1472,9 +1454,9 @@
       .st-item.activo .st-item-text { font-weight:600; }
       .st-item-progress { display:none !important; }
       .st-panel { order:2; }
-      .marcas-banner-inner { grid-template-columns:1fr; padding:0 18px; }
-      .marcas-banner { padding:40px 0; }
-      .marcas-marquee { margin-top: 10px; }
+      .marcas-banner { padding: 16px 20px; }
+      .marcas-banner-inner { grid-template-columns: 1fr; gap: 12px; }
+      .marcas-headline { font-size: 18px; }
       .pedido-pasos { padding: 64px 16px; }
       .pedido-grid { gap: 14px; }
       #como-funciona { padding:64px 16px 48px; }
@@ -1501,7 +1483,11 @@
       #cotizador-wrapper .cot-wrap { padding:16px; }
       #cotizador-wrapper table { min-width:900px; }
       #cobertura { padding:60px 20px; }
-      #pedido-en-linea { padding: 60px 20px; }
+      .pasos-grid { flex-direction: column; gap: 20px; }
+      .paso-conector { transform: rotate(90deg); padding: 4px 0; justify-content: center; }
+      .paso-card { max-width: 100%; width: 100%; }
+      .pasos-contenido { padding: 60px 20px; }
+      .pasos-cta { padding: 36px 24px; }
       #footer { padding:40px 20px 32px; }
       .depto-grid { grid-template-columns:1fr; }
       .footer-grid { grid-template-columns:1fr; gap:32px; }
@@ -1574,31 +1560,43 @@
         </a>
       </div>
       <div class="trust-bar">
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          </div>
-          <div class="trust-text"><strong>48h o te devolvemos tu dinero</strong></div>
-        </div>
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <div class="trust-text"><strong>Precio exacto antes de pagar, no después</strong></div>
-        </div>
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </div>
-          <div class="trust-text"><strong>10 depart. y expandiendo</strong></div>
-        </div>
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <div class="trust-text"><strong>CNC Bogotá 30 años de experiencia</strong></div>
-        </div>
-      </div>
+  <div class="trust-item">
+    <div class="trust-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="trust-text">
+      <strong>48h</strong>
+      <span>o te devolvemos tu dinero</span>
+    </div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div class="trust-text">
+      <strong>Precio exacto</strong>
+      <span>antes de pagar, no después</span>
+    </div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="trust-text">
+      <strong>10 depart.</strong>
+      <span>y expandiendo cada mes</span>
+    </div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="trust-text">
+      <strong>CNC Bogotá</strong>
+      <span>30 años de experiencia</span>
+    </div>
+  </div>
+</div>
     </div>
   </div>
   <div class="hero-bottom-fade" aria-hidden="true"></div>
@@ -1616,37 +1614,52 @@
           <div class="st-tag problema" id="st-tag">EL PROBLEMA</div>
           <h2 class="st-headline" id="st-headline">Días perdidos esperando material que no llega</h2>
           <p class="st-subtext" id="st-subtext">Cada hora de espera es dinero que pierdes. Tu cliente no puede esperar.</p>
-          <div class="st-visual glow-rojo" id="st-visual">
-            <span class="st-visual-label" id="st-visual-label">Imagen próximamente</span>
-          </div>
           <a href="#" class="st-cta" id="st-cta" onclick="(function(){var o=document.getElementById('gateOverlay');if(o){o.style.display='flex';}})();return false;">Cotizar ahora &rarr;</a>
+        </div>
+      </div>
+      <div class="st-lista-mobile-wrap">
+        <div class="st-lista" id="st-lista">
+          <div class="st-item activo" data-index="0" tabindex="0" role="button" aria-pressed="true">
+            <div class="st-item-text">¿Cuánto te cuesta esperar un día más?</div>
+            <div class="st-item-progress"><div class="st-item-progress-fill" id="prog-0"></div></div>
+          </div>
+          <div class="st-item" data-index="1" tabindex="0" role="button" aria-pressed="false">
+            <div class="st-item-text">Vas al punto de venta y el precio no es lo que esperabas</div>
+            <div class="st-item-progress"><div class="st-item-progress-fill" id="prog-1"></div></div>
+          </div>
+          <div class="st-item" data-index="2" tabindex="0" role="button" aria-pressed="false">
+            <div class="st-item-text">El calibre exacto que necesitas: agotado. Siempre.</div>
+            <div class="st-item-progress"><div class="st-item-progress-fill" id="prog-2"></div></div>
+          </div>
+          <div class="st-item" data-index="3" tabindex="0" role="button" aria-pressed="false">
+            <div class="st-item-text">Material que llega mal. Obra que hay que rehacer.</div>
+            <div class="st-item-progress"><div class="st-item-progress-fill" id="prog-3"></div></div>
+          </div>
+          <div class="st-item" data-index="4" tabindex="0" role="button" aria-pressed="false">
+            <div class="st-item-text">Somos parte de tu equipo de trabajo →</div>
+            <div class="st-item-progress"><div class="st-item-progress-fill" id="prog-4"></div></div>
+          </div>
+        </div>
+        <div class="st-visual glow-rojo" id="st-visual">
+          <span class="st-visual-label" id="st-visual-label">Imagen próximamente</span>
         </div>
       </div>
     </div>
     <div class="marcas-banner">
       <div class="marcas-banner-inner">
         <div class="marcas-texto">
-          <p class="marcas-label">RESPALDADOS POR LAS MEJORES MARCAS</p>
-          <h3 class="marcas-headline">Calidad que puedes ver,<br>tocar y garantizar.</h3>
-          <p class="marcas-sub">Solo trabajamos con fabricantes certificados.</p>
+          <p class="marcas-label">MARCAS ALIADAS</p>
+          <p class="marcas-headline">Calidad certificada.</p>
         </div>
-        <div class="marcas-marquee" aria-label="Marcas aliadas">
-          <div class="marcas-track">
-            <div class="marcas-group marcas-logos">
-              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span><span>DURATEX</span>
-              <span>MADEOFI</span><span>ARAUCO</span><span>MASISA</span><span>SWISS KRONO</span>
-            </div>
-            <div class="marcas-group marcas-logos" aria-hidden="true">
-              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span><span>DURATEX</span>
-              <span>MADEOFI</span><span>ARAUCO</span><span>MASISA</span><span>SWISS KRONO</span>
-            </div>
-            <div class="marcas-group marcas-logos" aria-hidden="true">
-              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span><span>DURATEX</span>
-              <span>MADEOFI</span><span>ARAUCO</span><span>MASISA</span><span>SWISS KRONO</span>
-            </div>
-            <div class="marcas-group marcas-logos" aria-hidden="true">
-              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span><span>DURATEX</span>
-              <span>MADEOFI</span><span>ARAUCO</span><span>MASISA</span><span>SWISS KRONO</span>
+        <div class="marcas-ticker-wrap">
+          <div class="marcas-ticker">
+            <div class="marcas-ticker-inner">
+              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span>
+              <span>DURATEX</span><span>MADEOFI</span><span>ARAUCO</span>
+              <span>MASISA</span><span>SWISS KRONO</span>
+              <span>VESTO</span><span>ECOFORT</span><span>PRIMADERA</span>
+              <span>DURATEX</span><span>MADEOFI</span><span>ARAUCO</span>
+              <span>MASISA</span><span>SWISS KRONO</span>
             </div>
           </div>
         </div>
@@ -1685,12 +1698,15 @@
 </div>
 
 <section class="pedido-pasos" id="pedido-en-linea">
+<div class="pasos-trapecio-top"></div>
+
+<div class="pasos-contenido">
   <div class="pasos-intro">
     <p class="pill pill-red">ASÍ FUNCIONA</p>
-    <h2 class="section-title">TAN FÁCIL QUE<br>DA GANAS DE EMPEZAR.</h2>
+    <h2 class="section-title">TU PEDIDO LISTO EN<br>3 PASOS FÁCILES.</h2>
     <p class="section-sub">
       Sin llamadas. Sin visitas. Sin reprocesos.<br>
-      Tu proyecto listo en 3 pasos.
+      De tu medida a tu puerta.
     </p>
   </div>
 
@@ -1714,8 +1730,8 @@
     </div>
 
     <div class="paso-conector" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <path d="M8 20h24M24 12l8 8-8 8" stroke="#E63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+        <path d="M8 20h24M24 12l8 8-8 8" stroke="#E63329" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
 
@@ -1725,7 +1741,7 @@
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
           <rect x="6" y="10" width="28" height="20" rx="3" stroke="#E63329" stroke-width="2"/>
           <path d="M13 20h14M13 25h8" stroke="#E63329" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="30" cy="12" r="6" fill="#0d0d14" stroke="#E63329" stroke-width="1.5"/>
+          <circle cx="30" cy="12" r="6" fill="#f8f6f0" stroke="#E63329" stroke-width="1.5"/>
           <path d="M27.5 12l2 2 3-3" stroke="#E63329" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
@@ -1737,8 +1753,8 @@
     </div>
 
     <div class="paso-conector" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <path d="M8 20h24M24 12l8 8-8 8" stroke="#E63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+        <path d="M8 20h24M24 12l8 8-8 8" stroke="#E63329" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
 
@@ -1770,12 +1786,14 @@
     <button class="pasos-btn" onclick="(function(){
       var o = document.getElementById('cotizadorOverlay') ||
               document.getElementById('gate-overlay') ||
-              document.querySelector('[id*=overlay]') ||
-              document.querySelector('[class*=overlay]');
-      if(o){ o.style.display='flex'; o.style.alignItems='center'; o.style.justifyContent='center'; }
-      return false;
+              document.querySelector('.cotizador-overlay') ||
+              document.querySelector('.gate-overlay');
+      if(o){ o.style.display='flex'; }
     })()">EMPEZAR MI PROYECTO →</button>
   </div>
+</div>
+
+<div class="pasos-trapecio-bottom"></div>
 </section>
 
 <div class="dos-columnas">
