@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegurOS — Gerencia</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ VARIABLES §2B — LIGHT (gerente/supervisor) ══ */
+:root {
+  --bg:      #f4f6fa;
+  --s1:      #ffffff;
+  --s2:      #f0f3f8;
+  --border:  #dde3ec;
+  --text:    #1a2235;
+  --t2:      #6b7a90;
+  --t3:      #9aa3b0;
+  --accent:  #2d7fe0;
+  --success: #1db37a;
+  --warning: #d4922a;
+  --danger:  #cc3f3f;
+  --shadow:  0 2px 12px rgba(0,0,0,.08);
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--success)} .dot-warn{background:var(--warning)} .dot-danger{background:var(--danger)} .dot-n{background:var(--t3)} .dot-accent{background:var(--accent)}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-ok{background:rgba(29,179,122,.1);color:var(--success)}
+.badge-warn{background:rgba(212,146,42,.1);color:var(--warning)}
+.badge-danger{background:rgba(204,63,63,.1);color:var(--danger)}
+.badge-n{background:rgba(107,122,144,.1);color:var(--t2)}
+.badge-accent{background:rgba(45,127,224,.1);color:var(--accent)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:background .15s,opacity .15s;white-space:nowrap;text-decoration:none}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){opacity:.88}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--border)}
+.btn-ghost:hover:not(:disabled){background:var(--s2);color:var(--text)}
+.btn-danger-soft{background:rgba(204,63,63,.08);color:var(--danger);border:1px solid rgba(204,63,63,.2)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+
+/* ── TOPNAV ── */
+.topnav{position:fixed;top:0;left:0;right:0;height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 20px;z-index:300;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.nav-logo{font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;margin-right:8px}
+.nav-logo span{color:var(--accent)}
+.nav-tab-wrap{display:flex;gap:2px}
+.nav-tab{padding:6px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--t2);font-family:'Inter',sans-serif;white-space:nowrap;transition:background .15s,color .15s}
+.nav-tab:hover{background:var(--s2);color:var(--text)}
+.nav-tab.active{background:var(--s2);color:var(--text)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.rol-badge{font-size:11px;color:var(--t2);background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-weight:600}
+
+/* ── LAYOUT ── */
+.page{padding-top:52px;display:none;min-height:100vh}
+.page.active{display:block}
+.container{max-width:1280px;margin:0 auto;padding:20px 20px}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.kpi-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.kpi-danger::before{background:var(--danger)} .kpi-warn::before{background:var(--warning)} .kpi-ok::before{background:var(--success)} .kpi-accent::before{background:var(--accent)}
+.kpi-label{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
+.kpi-value{font-size:30px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.kpi-danger .kpi-value{color:var(--danger)} .kpi-warn .kpi-value{color:var(--warning)} .kpi-ok .kpi-value{color:var(--success)} .kpi-accent .kpi-value{color:var(--accent)}
+.kpi-sub{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* ── TABLE ── */
+.table-wrap{border-radius:10px;border:1px solid var(--border);overflow:hidden;background:var(--s1)}
+.table-wrap table{width:100%;border-collapse:collapse}
+.table-wrap th{font-size:11px;font-weight:700;color:var(--t2);text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--s1)}
+.table-wrap td{font-size:13px;padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.table-wrap tr:last-child td{border-bottom:none}
+.table-wrap tr:hover td{background:var(--s2)}
+
+/* ── XP MINI ── */
+.xp-mini{display:flex;align-items:center;gap:6px}
+.xp-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;min-width:60px}
+.xp-fill{height:100%;background:var(--accent);border-radius:2px}
+.xp-val{font-size:11px;color:var(--t2);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+
+/* ── AGENT PANEL ── */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:12px}
+
+.agent-row{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:var(--s2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.agent-row:last-child{margin-bottom:0}
+.agent-row-body{flex:1;min-width:0}
+.agent-row-name{font-size:12px;font-weight:600}
+.agent-row-detail{font-size:11px;color:var(--t2);margin-top:2px}
+.agent-row-time{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;white-space:nowrap;flex-shrink:0}
+
+/* ── ACTIVITY LOG ── */
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.activity-item:hover{border-color:var(--accent)}
+.activity-item.urgent{border-left:3px solid var(--danger)}
+.act-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.act-body{flex:1;min-width:0}
+.act-title{font-size:13px;font-weight:600}
+.act-meta{font-size:11px;color:var(--t2);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.act-right{flex-shrink:0}
+
+/* ── NOTIF ── */
+.notif-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);margin-bottom:6px}
+.notif-body{flex:1}
+.notif-title{font-size:12px;font-weight:600}
+.notif-sub{font-size:11px;color:var(--t2);margin-top:1px}
+.notif-time{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;flex-shrink:0;white-space:nowrap}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:12px;width:90%;max-width:480px;max-height:92vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s;box-shadow:var(--shadow)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{padding:16px 18px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--t2);font-size:20px;padding:2px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:14px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.modal-footer{padding:0 18px 18px;display:flex;gap:8px;justify-content:flex-end}
+
+/* ── FORM ── */
+.field{display:flex;flex-direction:column;gap:5px}
+.label{font-size:12px;font-weight:600;color:var(--t2)}
+.input,.select,.textarea{background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;width:100%;outline:none;transition:border-color .15s;appearance:none}
+.input::placeholder,.textarea::placeholder{color:var(--t3)}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent)}
+.textarea{resize:vertical;min-height:70px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.field-grid{grid-template-columns:1fr}}
+
+/* ── LIVE ── */
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── SECTION ── */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-size:13px;font-weight:700}
+
+/* ── URGENTE OVERRIDE ── */
+.urgente-row{border-left:3px solid var(--danger) !important}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(29,179,122,.4);color:var(--success)}
+#toast.err{border-color:rgba(204,63,63,.4);color:var(--danger)}
+
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:24px;color:var(--t3);font-size:12px}
+
+/* ── CLIENT DRAWER ── */
+.client-link{background:none;border:none;padding:0;color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.client-link:hover{color:var(--accent)}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.34);z-index:540;opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:52px;right:0;width:min(100vw,375px);height:calc(100vh - 52px);background:var(--s1);border-left:1px solid var(--border);z-index:550;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s ease;box-shadow:-10px 0 24px rgba(0,0,0,.12)}
+.drawer.open{transform:translateX(0)}
+.drawer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.drawer-title{font-size:15px;font-weight:800;line-height:1.25}
+.drawer-sub{font-size:11px;color:var(--t2);margin-top:3px}
+.drawer-close{background:none;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--t2);font-size:18px;line-height:1}
+.drawer-close:hover{background:var(--s2);color:var(--text)}
+.drawer-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:12px 16px 0}
+.drawer-tab{border:1px solid var(--border);background:transparent;color:var(--t2);border-radius:8px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer}
+.drawer-tab.active{background:var(--s2);color:var(--text)}
+.drawer-body{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px;flex:1}
+.drawer-section{display:flex;flex-direction:column;gap:8px}
+.drawer-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.drawer-row{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px}
+.drawer-row-label{font-size:11px;color:var(--t2);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.drawer-row-value{font-size:13px;font-weight:600;word-break:break-word}
+.drawer-table-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--s1)}
+.drawer-table-wrap table{width:100%;border-collapse:collapse}
+.drawer-table-wrap th,.drawer-table-wrap td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;text-align:left;vertical-align:top}
+.drawer-table-wrap th{background:var(--s1);color:var(--t2);font-weight:700;white-space:nowrap}
+.drawer-table-wrap tr:last-child td{border-bottom:none}
+.drawer-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+.drawer-pill-ok{background:rgba(29,179,122,.1);color:var(--success)}
+.drawer-pill-warn{background:rgba(212,146,42,.12);color:var(--warning)}
+.drawer-pill-danger{background:rgba(204,63,63,.12);color:var(--danger)}
+.drawer-skeleton{display:flex;flex-direction:column;gap:10px}
+.drawer-skeleton .skeleton{height:14px;border-radius:6px}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+.stack{display:flex;flex-direction:column;gap:10px}
+.stack-lg{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;align-items:center;gap:8px}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mt-3{margin-top:12px} .mt-4{margin-top:16px} .mt-5{margin-top:24px}
+.mb-2{margin-bottom:8px} .mb-3{margin-bottom:12px} .mb-4{margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPNAV ══ -->
+<nav class="topnav">
+  <div class="nav-logo">Segur<span>OS</span></div>
+  <div class="nav-tab-wrap">
+    <button class="nav-tab active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('asesores',this)">Asesores</button>
+    <button class="nav-tab" onclick="showPage('actividades',this)">Actividades</button>
+    <button class="nav-tab" onclick="showPage('comunicaciones',this)">Comunicaciones</button>
+    <button class="nav-tab" onclick="showPage('agentes',this)">Agentes</button>
+  </div>
+  <div class="nav-right">
+    <div class="row">
+      <div class="live-dot"></div>
+      <span style="font-size:11px;color:var(--t2)">Live</span>
+    </div>
+    <div class="rol-badge">Gerente</div>
+    <a href="demo_completa_seguros.html" class="btn btn-ghost btn-sm" style="text-decoration:none">Vista Asesor</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════
+     DASHBOARD
+══════════════════════════════ -->
+<main class="page active" id="page-dashboard">
+<div class="container">
+
+  <div class="row-between mb-4">
+    <div>
+      <h1 style="font-size:18px;font-weight:800">Dashboard Gerencia</h1>
+      <div style="font-size:12px;color:var(--t2);margin-top:2px" id="fecha-hoy">Cargando...</div>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModalAsignar()">Asignar tarea</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid mb-4">
+    <div class="kpi-card kpi-accent">
+      <div class="kpi-label">Total clientes</div>
+      <div class="kpi-value" id="g-clientes-total">—</div>
+      <div class="kpi-sub">base operativa</div>
+    </div>
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-label">Urgentes</div>
+      <div class="kpi-value" id="g-urgentes">—</div>
+      <div class="kpi-sub">requieren acción hoy</div>
+    </div>
+    <div class="kpi-card kpi-warn">
+      <div class="kpi-label">Pendientes</div>
+      <div class="kpi-value" id="g-pendientes">—</div>
+      <div class="kpi-sub">actividades abiertas</div>
+    </div>
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-label">Completadas</div>
+      <div class="kpi-value" id="g-completadas">—</div>
+      <div class="kpi-sub">esta semana</div>
+    </div>
+    <div class="kpi-card kpi-accent">
+      <div class="kpi-label">Sin contacto</div>
+      <div class="kpi-value" id="g-sin-contacto">—</div>
+      <div class="kpi-sub">+15 días</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pólizas x vencer</div>
+      <div class="kpi-value" id="g-polizas-vencer">—</div>
+      <div class="kpi-sub">próx. 30 días</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Siniestros activos</div>
+      <div class="kpi-value" id="g-siniestros">—</div>
+      <div class="kpi-sub">en gestión</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Actividades urgentes -->
+    <div>
+      <div class="section-hd">
+        <div class="section-title">Actividades urgentes</div>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('actividades',document.querySelectorAll('.nav-tab')[2])">Ver todas</button>
+      </div>
+      <div id="dash-urgentes">
+        <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div>Cargando...</div>
+      </div>
+    </div>
+
+    <!-- Mini-agentes resumen -->
+    <div>
+      <div class="section-hd">
+        <div class="section-title">Mini-agentes — último run</div>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('agentes',document.querySelectorAll('.nav-tab')[4])">Detalles</button>
+      </div>
+      <div id="dash-agentes">
+        <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notificaciones enviadas -->
+  <div class="section-hd mt-5">
+    <div class="section-title">Notificaciones Telegram enviadas</div>
+    <span style="font-size:11px;color:var(--t2)" id="notif-count"></span>
+  </div>
+  <div id="dash-notif">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div></div>
+  </div>
+
+</div>
+</main>
+
+<!-- ══════════════════════════════
+     ASESORES
+══════════════════════════════ -->
+<main class="page" id="page-asesores">
+<div class="container">
+  <div class="row-between mb-4">
+    <h2 style="font-size:16px;font-weight:700">Equipo — Automóviles</h2>
+    <button class="btn btn-primary btn-sm" onclick="abrirModalAsignar()">Asignar tarea</button>
+  </div>
+
+  <div class="table-wrap mb-4">
+    <table>
+      <thead>
+        <tr>
+          <th>Asesor</th>
+          <th>Nivel</th>
+          <th>XP</th>
+          <th>Tareas abiertas</th>
+          <th>Urgentes</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-asesores">
+        <tr><td colspan="7" class="empty">Cargando asesores...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tabla pólizas por vencer -->
+  <div class="section-hd mt-5">
+    <div class="section-title">Pólizas por vencer — próximos 30 días</div>
+    <span class="badge badge-warn" id="polizas-count"></span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Aseguradora</th>
+          <th>Vencimiento</th>
+          <th>Días</th>
+          <th>Estado</th>
+          <th>Asesor</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-polizas">
+        <tr><td colspan="7" class="empty">Cargando pólizas...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</main>
+
+<!-- ══════════════════════════════
+     ACTIVIDADES
+══════════════════════════════ -->
+<main class="page" id="page-actividades">
+<div class="container">
+  <div class="row-between mb-3">
+    <h2 style="font-size:16px;font-weight:700">Todas las actividades</h2>
+    <div class="row">
+      <select class="select" style="width:auto;padding:6px 10px;font-size:12px" id="filtro-prioridad-ger" onchange="cargarActividades()">
+        <option value="">Todas</option>
+        <option value="Urgente">Urgentes</option>
+        <option value="Alta">Alta</option>
+        <option value="Media">Media</option>
+      </select>
+      <select class="select" style="width:auto;padding:6px 10px;font-size:12px" id="filtro-estado-ger" onchange="cargarActividades()">
+        <option value="">Todos estados</option>
+        <option value="Abierta">Abiertas</option>
+        <option value="En progreso">En progreso</option>
+        <option value="Vencida">Vencidas</option>
+      </select>
+    </div>
+  </div>
+  <div id="lista-actividades-ger">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div></div>
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════
+     COMUNICACIONES
+══════════════════════════════ -->
+<main class="page" id="page-comunicaciones">
+<div class="container">
+  <div class="row-between mb-4">
+    <div>
+      <h2 style="font-size:16px;font-weight:700">Comunicaciones</h2>
+      <div style="font-size:12px;color:var(--t2);margin-top:2px">Canales centralizados — WhatsApp, email, Telegram, llamadas</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="abrirModalCom()">Registrar comunicación</button>
+  </div>
+
+  <div class="kpi-grid mb-4">
+    <div class="kpi-card kpi-accent">
+      <div class="kpi-label">Hoy</div>
+      <div class="kpi-value" id="com-hoy">—</div>
+      <div class="kpi-sub">mensajes del día</div>
+    </div>
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-label">Sin responder</div>
+      <div class="kpi-value" id="com-nuevas">—</div>
+      <div class="kpi-sub">requieren respuesta</div>
+    </div>
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-label">WhatsApp</div>
+      <div class="kpi-value" id="com-whatsapp">—</div>
+      <div class="kpi-sub">últimos 30 días</div>
+    </div>
+    <div class="kpi-card kpi-warn">
+      <div class="kpi-label">Email</div>
+      <div class="kpi-value" id="com-email">—</div>
+      <div class="kpi-sub">últimos 30 días</div>
+    </div>
+  </div>
+
+  <div class="row-between mb-3">
+    <div class="section-title">Bandeja de entrada</div>
+    <div class="row">
+      <select class="select" style="width:auto;padding:6px 10px;font-size:12px" id="filtro-com-canal" onchange="cargarComunicaciones()">
+        <option value="">Todos canales</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="email">Email</option>
+        <option value="telegram">Telegram</option>
+        <option value="llamada">Llamada</option>
+      </select>
+      <select class="select" style="width:auto;padding:6px 10px;font-size:12px" id="filtro-com-estado" onchange="cargarComunicaciones()">
+        <option value="">Todos estados</option>
+        <option value="nueva">Nuevas</option>
+        <option value="leida">Leídas</option>
+        <option value="respondida">Respondidas</option>
+        <option value="cerrada">Cerradas</option>
+      </select>
+      <select class="select" style="width:auto;padding:6px 10px;font-size:12px" id="filtro-com-direccion" onchange="cargarComunicaciones()">
+        <option value="">Todas</option>
+        <option value="entrante">Entrantes</option>
+        <option value="saliente">Salientes</option>
+      </select>
+    </div>
+  </div>
+  <div id="lista-comunicaciones">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div></div>
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════
+     AGENTES
+══════════════════════════════ -->
+<main class="page" id="page-agentes">
+<div class="container">
+  <div class="row-between mb-4">
+    <div>
+      <h2 style="font-size:16px;font-weight:700">Mini-Agentes IA</h2>
+      <div style="font-size:12px;color:var(--t2);margin-top:2px">Tabla Log_Workflows — refresh automático 60s</div>
+    </div>
+    <div class="row">
+      <div class="live-dot"></div>
+      <span style="font-size:11px;color:var(--t2)" id="ultimo-refresh">—</span>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="row-between mb-3">
+        <div class="card-title" style="margin-bottom:0">Agente A — Vigía Renovaciones</div>
+        <span class="badge" id="ger-vigia-status">cargando</span>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Cron 8am diario · Claude Haiku · Tabla Polizas_Auto</div>
+      <div id="ger-vigia-log"><div class="empty"><div class="spinner" style="margin:0 auto 6px"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="row-between mb-3">
+        <div class="card-title" style="margin-bottom:0">Agente B — Lector Journey</div>
+        <span class="badge" id="ger-journey-status">cargando</span>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Webhook on-demand · Claude Haiku · Actividades cliente</div>
+      <div id="ger-journey-log"><div class="empty"><div class="spinner" style="margin:0 auto 6px"></div></div></div>
+    </div>
+  </div>
+
+  <!-- Tabla completa Log_Workflows -->
+  <div class="section-hd">
+    <div class="section-title">Log completo de ejecuciones</div>
+    <span class="badge badge-n" id="log-count"></span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Workflow</th>
+          <th>Procesadas</th>
+          <th>Actividades creadas</th>
+          <th>Urgentes</th>
+          <th>Notificaciones</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-log-workflows">
+        <tr><td colspan="7" class="empty">Cargando logs...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════
+     MODAL: ASIGNAR TAREA
+══════════════════════════════ -->
+<div class="modal-overlay" id="modal-asignar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Asignar tarea</div>
+      <button class="modal-close" onclick="cerrarModal('modal-asignar')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="label">Asesor</label>
+        <select class="select" id="asignar-asesor">
+          <option value="">Seleccionar asesor...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label">Cliente (opcional)</label>
+        <input class="input" id="asignar-cliente" placeholder="Nombre del cliente">
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label class="label">Tipo de tarea</label>
+          <select class="select" id="asignar-tipo">
+            <option value="Llamada">Llamada</option>
+            <option value="Cotizacion">Cotización</option>
+            <option value="Renovacion">Renovación</option>
+            <option value="Siniestro">Siniestro</option>
+            <option value="Cobro">Cobro</option>
+            <option value="Seguimiento">Seguimiento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Prioridad</label>
+          <select class="select" id="asignar-prioridad">
+            <option value="Media">Media</option>
+            <option value="Alta">Alta</option>
+            <option value="Urgente">Urgente</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">Fecha límite</label>
+        <input class="input" id="asignar-fecha" type="date">
+      </div>
+      <div class="field">
+        <label class="label">Instrucciones</label>
+        <textarea class="textarea" id="asignar-instrucciones" placeholder="Detalles para el asesor..." maxlength="280"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-asignar')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-asignar" onclick="confirmarAsignar()">Asignar y notificar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL: MARCAR URGENTE
+══════════════════════════════ -->
+<div class="modal-overlay" id="modal-urgente">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">Marcar como urgente</div>
+      <button class="modal-close" onclick="cerrarModal('modal-urgente')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="urgente-info" style="font-size:13px;color:var(--t2)"></div>
+      <div style="font-size:12px;padding:10px;background:rgba(204,63,63,.05);border:1px solid rgba(204,63,63,.15);border-radius:8px;color:var(--danger)">
+        Se notificará al asesor asignado por Telegram de inmediato.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-urgente')">Cancelar</button>
+      <button class="btn btn-danger-soft" onclick="confirmarUrgente()">Confirmar urgente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL: REGISTRAR COMUNICACIÓN
+══════════════════════════════ -->
+<div class="modal-overlay" id="modal-com">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Registrar comunicación</div>
+      <button class="modal-close" onclick="cerrarModal('modal-com')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-grid">
+        <div class="field">
+          <label class="label">Canal</label>
+          <select class="select" id="com-canal">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">Email</option>
+            <option value="telegram">Telegram</option>
+            <option value="llamada">Llamada</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Dirección</label>
+          <select class="select" id="com-direccion">
+            <option value="entrante">Entrante</option>
+            <option value="saliente">Saliente</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">Cliente (nombre, opcional)</label>
+        <input class="input" id="com-cliente" placeholder="Buscar por nombre...">
+      </div>
+      <div class="field">
+        <label class="label">Remitente / contacto</label>
+        <input class="input" id="com-remitente" placeholder="Número o correo">
+      </div>
+      <div class="field">
+        <label class="label">Asunto</label>
+        <input class="input" id="com-asunto" placeholder="Tema breve">
+      </div>
+      <div class="field">
+        <label class="label">Mensaje</label>
+        <textarea class="textarea" id="com-mensaje" placeholder="Contenido del mensaje..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-com')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-com-guardar" onclick="guardarComunicacion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     FICHA CLIENTE
+══════════════════════════════ -->
+<div class="drawer-overlay" id="cliente-drawer-overlay" onclick="cerrarFichaCliente()"></div>
+<aside class="drawer" id="cliente-drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawer-cliente-nombre">Cliente</div>
+      <div class="drawer-sub" id="drawer-cliente-sub">Ficha de cliente</div>
+    </div>
+    <button class="drawer-close" onclick="cerrarFichaCliente()">×</button>
+  </div>
+  <div class="drawer-tabs">
+    <button class="drawer-tab active" data-tab="datos" onclick="cambiarTabCliente('datos')">Datos</button>
+    <button class="drawer-tab" data-tab="polizas" onclick="cambiarTabCliente('polizas')">Pólizas</button>
+    <button class="drawer-tab" data-tab="actividades" onclick="cambiarTabCliente('actividades')">Actividades</button>
+    <button class="drawer-tab" data-tab="siniestros" onclick="cambiarTabCliente('siniestros')">Siniestros</button>
+  </div>
+  <div class="drawer-body" id="drawer-cliente-body">
+    <div class="drawer-skeleton">
+      <div class="skeleton" style="width:70%"></div>
+      <div class="skeleton" style="width:92%"></div>
+      <div class="skeleton" style="width:65%"></div>
+      <div class="skeleton" style="width:84%"></div>
+    </div>
+  </div>
+</aside>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════
+     CONFIG
+══════════════════════════════ -->
+<script>
+const CFG = {
+  supabaseUrl:  'https://ekarbxdoaoqrtlmfzgyj.supabase.co',
+  supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM',
+};
+
+const Estado = { trabajadores: [], actividades: [], logs: [], polizas: [], clientes: [], comunicaciones: [], fichaCliente: null, _urgenteid: null };
+
+/* API SUPABASE */
+async function sp(tabla, query='') {
+  const url = `${CFG.supabaseUrl}/rest/v1/${tabla}${query}`;
+  const r = await fetch(url, {
+    headers: {
+      'apikey': CFG.supabaseKey,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function spCount(tabla, query='') {
+  const q = query ? (query.startsWith('?') ? query : '?' + query) : '?';
+  const url = `${CFG.supabaseUrl}/rest/v1/${tabla}${q}${q.includes('limit') ? '' : (q.endsWith('?') ? 'limit=0' : '&limit=0')}`;
+  console.log('spCount URL:', url);
+  const r = await fetch(url, {
+    headers: {
+      'apikey': CFG.supabaseKey,
+      'Content-Type': 'application/json',
+      'Prefer': 'count=exact'
+    }
+  });
+  if (!r.ok) {
+    console.error('spCount error:', r.status, r.statusText);
+    return 0;
+  }
+  const contentRange = r.headers.get('content-range');
+  console.log('contentRange:', contentRange);
+  if (contentRange && contentRange !== '*/*') {
+    const match = contentRange.match(/\/(\d+)$/);
+    return match ? parseInt(match[1]) : 0;
+  }
+  return 0;
+}
+
+async function spSum(tabla, column, query='') {
+  const q = query ? (query.startsWith('?') ? query : '?' + query) : '';
+  const url = `${CFG.supabaseUrl}/rest/v1/${tabla}${q}${q.includes('?') ? '&' : '?'}select=${column}`;
+  console.log('spSum URL:', url);
+  const r = await fetch(url, {
+    headers: {
+      'apikey': CFG.supabaseKey,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) {
+    console.error('spSum error:', r.status, r.statusText);
+    return 0;
+  }
+  const data = await r.json();
+  return (data || []).reduce((sum, row) => sum + (parseFloat(row[column]) || 0), 0);
+}
+
+async function spCreate(tabla, fields) {
+  const r = await fetch(`${CFG.supabaseUrl}/rest/v1/${tabla}`, {
+    method: 'POST',
+    headers: {
+      'apikey': CFG.supabaseKey,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(fields)
+  });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function spUpdate(tabla, id, fields) {
+  const r = await fetch(`${CFG.supabaseUrl}/rest/v1/${tabla}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': CFG.supabaseKey,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(fields)
+  });
+  if (!r.ok) throw new Error(r.status);
+  return true;
+}
+
+async function spRecord(tabla, id) {
+  const r = await fetch(`${CFG.supabaseUrl}/rest/v1/${tabla}?id=eq.${id}&select=*`, {
+    headers: { 'apikey': CFG.supabaseKey }
+  });
+  if (!r.ok) throw new Error(r.status);
+  const data = await r.json();
+  return data.length > 0 ? data[0] : null;
+}
+
+function linkCliente(id, nombre) {
+  return `<button type="button" class="client-link" onclick="event.stopPropagation(); abrirFichaCliente('${id}')">${esc(nombre || 'Sin nombre')}</button>`;
+}
+
+function nombreClienteDesdeRefs(refs) {
+  const ids = Array.isArray(refs) ? refs : [];
+  if (!ids.length) return '—';
+  const mapa = new Map((Estado.clientes || []).map(r => [r.id, r.fields?.nombre_completo || r.fields?.nombre || r.id]));
+  return ids.map(id => mapa.get(id) || id).join(', ');
+}
+
+function formatearFecha(valor) {
+  if (!valor) return '—';
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return valor;
+  return fecha.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function calcularDiasRestantes(poliza) {
+  if (typeof poliza.fields?.dias_para_vencer === 'number') return poliza.fields.dias_para_vencer;
+  if (!poliza.fields?.fecha_vencimiento) return null;
+  const fechaVencimiento = new Date(poliza.fields.fecha_vencimiento);
+  const diff = fechaVencimiento - new Date();
+  return Math.ceil(diff / 86400000);
+}
+
+function setDrawerSkeleton() {
+  document.getElementById('drawer-cliente-body').innerHTML = `
+    <div class="drawer-skeleton">
+      <div class="skeleton" style="width:72%"></div>
+      <div class="skeleton" style="width:94%"></div>
+      <div class="skeleton" style="width:63%"></div>
+      <div class="skeleton" style="width:88%"></div>
+      <div class="skeleton" style="width:55%"></div>
+    </div>`;
+}
+
+function abrirFichaCliente(clienteId) {
+  if (!clienteId) return;
+  Estado.fichaCliente = { id: clienteId, tab: 'datos', cliente: null, polizas: [], actividades: [], siniestros: [] };
+  document.getElementById('cliente-drawer').classList.add('open');
+  document.getElementById('cliente-drawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('cliente-drawer-overlay').classList.add('open');
+  setDrawerSkeleton();
+  cargarFichaCliente(clienteId).catch(() => {
+    document.getElementById('drawer-cliente-body').innerHTML = `<div class="empty">No se pudo cargar la ficha del cliente</div>`;
+  });
+}
+
+function cerrarFichaCliente() {
+  document.getElementById('cliente-drawer').classList.remove('open');
+  document.getElementById('cliente-drawer').setAttribute('aria-hidden', 'true');
+  document.getElementById('cliente-drawer-overlay').classList.remove('open');
+}
+
+function cambiarTabCliente(tab) {
+  if (!Estado.fichaCliente) return;
+  Estado.fichaCliente.tab = tab;
+  document.querySelectorAll('.drawer-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  renderFichaCliente();
+}
+
+async function cargarFichaCliente(clienteId) {
+  const [cliente, polizasRes, actividadesRes, siniestrosRes] = await Promise.all([
+    spRecord('clientes', clienteId),
+    sp('polizas', `?cliente_id=eq.${clienteId}&order=fecha_vencimiento.desc&limit=50&select=*`),
+    sp('actividades', `?cliente_id=eq.${clienteId}&order=fecha_inicio.desc&limit=5&select=*`),
+    sp('siniestros', `?order=creado_en.desc&limit=100&select=*`),
+  ]);
+
+  const polizas = polizasRes || [];
+  const siniestros = siniestrosRes || [];
+
+  Estado.fichaCliente = {
+    id: clienteId,
+    tab: Estado.fichaCliente?.tab || 'datos',
+    cliente,
+    polizas,
+    actividades: actividadesRes || [],
+    siniestros,
+  };
+
+  renderFichaCliente();
+}
+
+function renderFichaCliente() {
+  const ficha = Estado.fichaCliente;
+  if (!ficha) return;
+  const cliente = ficha.cliente;
+  const nombre = cliente?.nombre || 'Cliente';
+  document.getElementById('drawer-cliente-nombre').textContent = nombre;
+  document.getElementById('drawer-cliente-sub').textContent = cliente?.identificacion || cliente?.telefono || ficha.id;
+  const tab = ficha.tab || 'datos';
+  document.querySelectorAll('.drawer-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+
+  if (tab === 'datos') {
+    document.getElementById('drawer-cliente-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-grid">
+          <div class="drawer-row"><div class="drawer-row-label">Nombre</div><div class="drawer-row-value">${nombre}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">ID</div><div class="drawer-row-value">${cliente?.identificacion || '—'}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">Teléfono</div><div class="drawer-row-value">${cliente?.telefono || '—'}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">Email</div><div class="drawer-row-value">${cliente?.correo || '—'}</div></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (tab === 'polizas') {
+    const rows = ficha.polizas.map(p => {
+      const hoy = new Date();
+      const fechaVence = new Date(p.fecha_vencimiento);
+      const dias = Math.floor((fechaVence - hoy) / (1000 * 60 * 60 * 24));
+      const cls = dias < 0 ? 'drawer-pill drawer-pill-danger' : dias <= 30 ? 'drawer-pill drawer-pill-warn' : 'drawer-pill drawer-pill-ok';
+      const label = dias < 0 ? `Vencida ${Math.abs(dias)}d` : dias <= 30 ? `Por vencer ${dias}d` : `Vigente ${dias}d`;
+      return `<tr>
+        <td>${p.numero || '—'}</td>
+        <td>${p.aseguradora || '—'}</td>
+        <td>${formatearFecha(p.fecha_vencimiento)}</td>
+        <td><span class="${cls}">${label}</span></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('drawer-cliente-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-table-wrap">
+          <table>
+            <thead><tr><th>N° póliza</th><th>Aseguradora</th><th>Fecha fin</th><th>Estado</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="4" class="empty">Sin pólizas registradas</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (tab === 'actividades') {
+    const rows = ficha.actividades.map(a => {
+      return `<tr>
+        <td>${formatearFecha(a.fecha_inicio)}</td>
+        <td>${a.clase || '—'}</td>
+        <td>${a.descripcion || '—'}</td>
+        <td>${a.estado || '—'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('drawer-cliente-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Estado</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="4" class="empty">Sin actividades registradas</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const rows = ficha.siniestros.map(s => {
+    return `<tr>
+      <td>${formatearFecha(s.creado_en)}</td>
+      <td>${s.descripcion || '—'}</td>
+      <td><span class="drawer-pill ${s.estado==='cerrado' ? 'drawer-pill-ok' : s.estado==='avisado' ? 'drawer-pill-warn' : 'drawer-pill-danger'}">${s.estado || '—'}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('drawer-cliente-body').innerHTML = `
+    <div class="drawer-section">
+      ${rows ? `
+        <div class="drawer-table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Descripción</th><th>Estado</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>` : `<div class="empty">Sin siniestros registrados</div>`}
+    </div>`;
+}
+
+/* NAV */
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id==='asesores') { cargarAsesores(); cargarPolizasVencer(); }
+  if (id==='actividades') cargarActividades();
+  if (id==='comunicaciones') cargarComunicaciones();
+  if (id==='agentes') cargarAgentesGer();
+}
+
+/* INIT */
+document.addEventListener('DOMContentLoaded', async () => {
+  const hoy = new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('fecha-hoy').textContent = hoy.charAt(0).toUpperCase() + hoy.slice(1);
+  await Promise.all([cargarKPIs(), cargarDashUrgentes(), cargarDashAgentes(), cargarNotifDash(), cargarTrabajadoresGer()]);
+  setInterval(cargarKPIs, 60000);
+  setInterval(cargarDashAgentes, 60000);
+});
+
+/* KPIs */
+async function cargarKPIs() {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    const fecha30 = new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0];
+
+    const [totalActs, totalPolizas, totalClientes, totalSiniestros, cartera] = await Promise.all([
+      spCount('actividades', '?estado=neq.Completada'),
+      spCount('polizas', `?estado=eq.vigente&fecha_vencimiento=gte.${hoy}&fecha_vencimiento=lte.${fecha30}`),
+      spCount('clientes', ''),
+      spCount('siniestros', '?estado=neq.cerrado'),
+      spSum('polizas', 'prima', '?estado=eq.vigente'),
+    ]);
+
+    set('g-clientes-total', totalClientes);
+    set('g-urgentes', cartera > 0 ? '$ ' + cartera.toLocaleString('es-CO', {maximumFractionDigits: 0}) : '—');
+    set('g-pendientes', totalActs);
+    set('g-completadas', '—');
+    set('g-sin-contacto', '—');
+    set('g-polizas-vencer', totalPolizas);
+    set('g-siniestros', totalSiniestros);
+  } catch (e) {
+    console.error('Error cargarKPIs:', e);
+    set('g-clientes-total','—');
+    set('g-urgentes','—'); set('g-pendientes','—'); set('g-completadas','—');
+    set('g-sin-contacto','—'); set('g-polizas-vencer','—'); set('g-siniestros','—');
+  }
+}
+
+/* DASH URGENTES */
+async function cargarDashUrgentes() {
+  try {
+    const res = await sp('actividades', '?estado=eq.urgente&order=fecha_inicio.desc&limit=5&select=*');
+    renderActividadesList('dash-urgentes', res||[], true);
+  } catch (e) {
+    console.error('cargarDashUrgentes:', e);
+    renderActividadesMock('dash-urgentes');
+  }
+}
+
+function renderActividadesList(elId, records, compact) {
+  const el = document.getElementById(elId);
+  if (!records.length) { el.innerHTML = `<div class="empty">Sin actividades urgentes</div>`; return; }
+  el.innerHTML = records.map(r => {
+    const pr = r.estado || 'abierta';
+    const dotCls = pr==='urgente'?'dot-danger':pr==='abierta'?'dot-warn':'dot-n';
+    const clienteNombre = '—';
+    return `<div class="activity-item ${pr==='urgente'?'urgent':''}" onclick="abrirUrgente('${r.id}','${esc(r.clase||'')}')">
+      <div class="act-icon" style="background:${pr==='urgente'?'rgba(204,63,63,.08)':'rgba(212,146,42,.08)'}">
+        <span class="dot ${dotCls}"></span>
+      </div>
+      <div class="act-body">
+        <div class="act-title">${r.clase||'Actividad'}</div>
+        <div class="act-meta">
+          <span>${clienteNombre}</span>
+        </div>
+      </div>
+      <div class="act-right">
+        <span class="badge ${pr==='urgente'?'badge-danger':'badge-warn'}">${pr}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderActividadesMock(elId) {
+  renderActividadesList(elId, [
+    {id:'m1',fields:{tipo:'Renovación',prioridad:'Urgente',cliente:['Jorge Herrera'],fecha_limite:'2026-06-12'}},
+    {id:'m2',fields:{tipo:'Siniestro',prioridad:'Urgente',cliente:['Mario Torres'],fecha_limite:'2026-06-10'}},
+  ], true);
+}
+
+/* DASH AGENTES */
+async function cargarDashAgentes() {
+  try {
+    const res = await sp('logs', '?order=timestamp.desc&limit=3&select=*');
+    renderAgentesDash(res||[]);
+    document.getElementById('ultimo-refresh').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  } catch (e) {
+    console.error('cargarDashAgentes:', e);
+    renderAgentesDashMock();
+  }
+}
+
+function renderAgentesDash(logs) {
+  const el = document.getElementById('dash-agentes');
+  if (!logs.length) { el.innerHTML = `<div class="empty">Sin ejecuciones</div>`; return; }
+  el.innerHTML = logs.map(r => {
+    const ts = r.timestamp ? new Date(r.timestamp).toLocaleString('es-CO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const dotCls = 'dot-ok';
+    return `<div class="agent-row">
+      <span class="dot ${dotCls}" style="margin-top:4px"></span>
+      <div class="agent-row-body">
+        <div class="agent-row-name">Evento registrado</div>
+        <div class="agent-row-detail">${r.cambio_estado||'—'}</div>
+      </div>
+      <div class="agent-row-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAgentesDashMock() {
+  renderAgentesDash([
+    {id:'l1',fields:{workflow:'P2 — Vigía Renovaciones',timestamp:new Date(Date.now()-3600000).toISOString(),polizas_procesadas:28,actividades_creadas:4,urgentes:2}},
+    {id:'l2',fields:{workflow:'P4 — Siniestro Urgente',timestamp:new Date(Date.now()-7200000).toISOString(),polizas_procesadas:1,actividades_creadas:1,urgentes:1}},
+  ]);
+}
+
+/* DASH NOTIF */
+async function cargarNotifDash() {
+  try {
+    const res = await sp('logs', '?order=timestamp.desc&limit=5&select=*');
+    const records = res||[];
+    document.getElementById('notif-count').textContent = `${records.length} eventos`;
+    renderNotifGer(records);
+  } catch (e) {
+    console.error('cargarNotifDash:', e);
+    renderNotifMock();
+  }
+}
+
+function renderNotifGer(records) {
+  const el = document.getElementById('dash-notif');
+  if (!records.length) { el.innerHTML = `<div class="empty">Sin notificaciones</div>`; return; }
+  el.innerHTML = records.map(r => {
+    const tipo = 'Evento';
+    const dotCls = 'dot-accent';
+    const ts = r.timestamp ? new Date(r.timestamp).toLocaleString('es-CO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="notif-item">
+      <div style="padding-top:5px"><span class="dot ${dotCls}"></span></div>
+      <div class="notif-body">
+        <div class="notif-title">${tipo}</div>
+        ${r.cambio_estado?`<div class="notif-sub">${truncar(r.cambio_estado,80)}</div>`:''}
+      </div>
+      <div class="notif-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderNotifMock() {
+  document.getElementById('notif-count').textContent = '3 alertas';
+  document.getElementById('dash-notif').innerHTML = `
+    <div class="notif-item"><div style="padding-top:5px"><span class="dot dot-danger"></span></div><div class="notif-body"><div class="notif-title">Póliza por vencer &lt; 7 días</div><div class="notif-sub">Jorge Herrera — vence 12 jun 2026</div></div><div class="notif-time">08:00</div></div>
+    <div class="notif-item"><div style="padding-top:5px"><span class="dot dot-warn"></span></div><div class="notif-body"><div class="notif-title">Póliza por vencer &lt; 30 días</div><div class="notif-sub">Mario Torres — vence 28 jun 2026</div></div><div class="notif-time">08:00</div></div>
+    <div class="notif-item"><div style="padding-top:5px"><span class="dot dot-accent"></span></div><div class="notif-body"><div class="notif-title">Siniestro registrado</div><div class="notif-sub">Claudia Vega — choque frontal, en gestión</div></div><div class="notif-time">Ayer</div></div>`;
+}
+
+/* ASESORES */
+async function cargarTrabajadoresGer() {
+  try {
+    const res = await sp('asesores', '?activo=eq.true&select=*');
+    Estado.trabajadores = res||[];
+    const sel = document.getElementById('asignar-asesor');
+    Estado.trabajadores.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.nombre||r.id;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.error('cargarTrabajadoresGer:', e);
+  }
+}
+
+async function cargarAsesores() {
+  try {
+    const [trabajadores, acts] = await Promise.all([
+      sp('asesores', '?activo=eq.true&select=*'),
+      sp('actividades', '?estado=neq.Completada&select=*'),
+    ]);
+    Estado.trabajadores = trabajadores||[];
+    const activsPorAsesor = {};
+    (acts||[]).forEach(r => {
+      const resp = r.asesor_id;
+      if (!resp) return;
+      if (!activsPorAsesor[resp]) activsPorAsesor[resp] = {total:0,urgentes:0};
+      activsPorAsesor[resp].total++;
+      if (r.estado==='abierta') activsPorAsesor[resp].urgentes++;
+    });
+    renderTablaAsesores(Estado.trabajadores, activsPorAsesor);
+  } catch (e) {
+    console.error('cargarAsesores:', e);
+    renderTablaAsesoresMock();
+  }
+}
+
+function renderTablaAsesores(trabajadores, activs) {
+  const tb = document.getElementById('tabla-asesores');
+  if (!trabajadores.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">Sin asesores registrados</td></tr>`; return; }
+  tb.innerHTML = trabajadores.map(r => {
+    const xp = 0;
+    const nivel = 'Asesor';
+    const pct = 0;
+    const ac = activs[r.id]||{total:0,urgentes:0};
+    const urg = ac.urgentes;
+    return `<tr>
+      <td><strong>${r.nombre||'—'}</strong></td>
+      <td><span class="badge badge-n">${nivel}</span></td>
+      <td>
+        <div class="xp-mini">
+          <div class="xp-track"><div class="xp-fill" style="width:${pct}%"></div></div>
+          <div class="xp-val">${xp}</div>
+        </div>
+      </td>
+      <td><span style="font-family:'JetBrains Mono',monospace">${ac.total}</span></td>
+      <td>${urg>0?`<span class="badge badge-danger">${urg}</span>`:`<span style="color:var(--t3)">0</span>`}</td>
+      <td><span class="badge badge-ok">Activo</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="abrirModalAsignarA('${r.id}','${esc(r.nombre||'')}')">Asignar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTablaAsesoresMock() {
+  document.getElementById('tabla-asesores').innerHTML = `
+    <tr>
+      <td><strong>Carlos Asesor</strong></td>
+      <td><span class="badge badge-n">Asesor</span></td>
+      <td><div class="xp-mini"><div class="xp-track"><div class="xp-fill" style="width:62%"></div></div><div class="xp-val">620</div></div></td>
+      <td><span style="font-family:'JetBrains Mono',monospace">7</span></td>
+      <td><span class="badge badge-danger">2</span></td>
+      <td><span class="badge badge-ok">Activo</span></td>
+      <td><button class="btn btn-ghost btn-sm">Asignar</button></td>
+    </tr>
+    <tr>
+      <td><strong>Laura Mendoza</strong></td>
+      <td><span class="badge badge-n">Aprendiz</span></td>
+      <td><div class="xp-mini"><div class="xp-track"><div class="xp-fill" style="width:38%"></div></div><div class="xp-val">380</div></div></td>
+      <td><span style="font-family:'JetBrains Mono',monospace">5</span></td>
+      <td><span style="color:var(--t3)">0</span></td>
+      <td><span class="badge badge-ok">Activo</span></td>
+      <td><button class="btn btn-ghost btn-sm">Asignar</button></td>
+    </tr>`;
+}
+
+/* PÓLIZAS POR VENCER */
+async function cargarPolizasVencer() {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    const fecha30 = new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0];
+    const res = await sp('polizas', `?estado=eq.vigente&fecha_vencimiento=gte.${hoy}&fecha_vencimiento=lte.${fecha30}&order=fecha_vencimiento.asc&select=*`);
+    const records = res||[];
+    document.getElementById('polizas-count').textContent = records.length + ' pólizas';
+    renderTablaPolizas(records);
+  } catch (e) {
+    console.error('cargarPolizasVencer:', e);
+    renderTablaPolizasMock();
+  }
+}
+
+function renderTablaPolizas(records) {
+  const tb = document.getElementById('tabla-polizas');
+  if (!records.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">Sin pólizas por vencer</td></tr>`; return; }
+  tb.innerHTML = records.map(r => {
+    const hoy = new Date();
+    const fechaVence = new Date(r.fecha_vencimiento);
+    const dias = Math.floor((fechaVence - hoy) / (1000 * 60 * 60 * 24));
+    const dotCls = dias<0?'dot-danger':dias<8?'dot-danger':dias<15?'dot-warn':'dot-ok';
+    const badgeCls = dias<0?'badge-danger':dias<8?'badge-danger':dias<15?'badge-warn':'badge-n';
+    const diasLabel = dias<0?`Vencida ${Math.abs(dias)}d`:`${dias}d`;
+    const clienteNombre = '—';
+    return `<tr class="${dias<8?'urgente-row':''}">
+      <td>${clienteNombre}</td>
+      <td>${r.aseguradora||'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${r.fecha_vencimiento||'—'}</td>
+      <td><span class="badge ${badgeCls}">${diasLabel}</span></td>
+      <td>${r.estado||'—'}</td>
+      <td>—</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="abrirModalAsignar()">Asignar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTablaPolizasMock() {
+  document.getElementById('polizas-count').textContent = '4 pólizas';
+  document.getElementById('tabla-polizas').innerHTML = `
+    <tr class="urgente-row"><td>Jorge Herrera</td><td>Sura</td><td style="font-family:'JetBrains Mono',monospace">2026-06-12</td><td><span class="badge badge-danger">2d</span></td><td>Por vencer</td><td>Carlos A.</td><td><button class="btn btn-ghost btn-sm">Asignar</button></td></tr>
+    <tr class="urgente-row"><td>Mario Torres</td><td>Bolívar</td><td style="font-family:'JetBrains Mono',monospace">2026-06-17</td><td><span class="badge badge-danger">7d</span></td><td>Por vencer</td><td>Laura M.</td><td><button class="btn btn-ghost btn-sm">Asignar</button></td></tr>
+    <tr><td>Sandra López</td><td>Sura</td><td style="font-family:'JetBrains Mono',monospace">2026-06-28</td><td><span class="badge badge-warn">18d</span></td><td>Vigente</td><td>Carlos A.</td><td><button class="btn btn-ghost btn-sm">Asignar</button></td></tr>`;
+}
+
+/* ACTIVIDADES */
+async function cargarActividades() {
+  const estado = document.getElementById('filtro-estado-ger').value;
+  let query = '?estado=neq.Completada';
+  if (estado) query += `&estado=eq.${estado}`;
+  try {
+    const res = await sp('actividades', `${query}&order=estado.desc&select=*`);
+    renderActividadesList('lista-actividades-ger', res||[], false);
+  } catch (e) {
+    console.error('cargarActividades:', e);
+    renderActividadesMock('lista-actividades-ger');
+  }
+}
+
+/* AGENTES GERENCIA */
+async function cargarAgentesGer() {
+  try {
+    const res = await sp('logs', '?order=timestamp.desc&limit=30&select=*');
+    const logs = res||[];
+    Estado.logs = logs;
+    document.getElementById('log-count').textContent = logs.length + ' registros';
+    document.getElementById('ultimo-refresh').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
+    renderLogCard('ger-vigia-log','ger-vigia-status', logs.slice(0,3));
+    renderLogCard('ger-journey-log','ger-journey-status',[]);
+    renderTablaLog(logs);
+  } catch (e) {
+    console.error('cargarAgentesGer:', e);
+    renderAgentesMockGer();
+  }
+}
+
+function renderLogCard(elId, statusId, logs) {
+  const el = document.getElementById(elId);
+  const statusEl = document.getElementById(statusId);
+  if (!logs.length) {
+    el.innerHTML = `<div class="empty">Sin ejecuciones</div>`;
+    statusEl.className='badge badge-n'; statusEl.textContent='sin datos'; return;
+  }
+  statusEl.className = 'badge badge-ok';
+  statusEl.textContent = 'operando';
+  el.innerHTML = logs.map(r => {
+    const ts = r.timestamp?new Date(r.timestamp).toLocaleString('es-CO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+    return `<div class="agent-row">
+      <span class="dot dot-ok" style="margin-top:4px"></span>
+      <div class="agent-row-body">
+        <div class="agent-row-name">Workflow ejecutado</div>
+        <div class="agent-row-detail">${r.cambio_estado||'—'}</div>
+      </div>
+      <div class="agent-row-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTablaLog(logs) {
+  const tb = document.getElementById('tabla-log-workflows');
+  if (!logs.length) { tb.innerHTML=`<tr><td colspan="7" class="empty">Sin logs</td></tr>`; return; }
+  tb.innerHTML = logs.map(r => {
+    const ts = r.timestamp?new Date(r.timestamp).toLocaleString('es-CO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${ts}</td>
+      <td>Log</td>
+      <td style="font-family:'JetBrains Mono',monospace">—</td>
+      <td style="font-family:'JetBrains Mono',monospace">—</td>
+      <td><span class="dot dot-ok" style="display:inline-block"></span></td>
+      <td style="font-family:'JetBrains Mono',monospace">—</td>
+      <td><span class="dot dot-ok"></span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAgentesMockGer() {
+  const mock = [
+    {id:'l1',fields:{workflow:'P2 — Vigía Renovaciones',timestamp:new Date(Date.now()-3600000).toISOString(),polizas_procesadas:28,actividades_creadas:4,urgentes:2,notificaciones_enviadas:3}},
+    {id:'l2',fields:{workflow:'P2 — Vigía Renovaciones',timestamp:new Date(Date.now()-90000000).toISOString(),polizas_procesadas:31,actividades_creadas:3,urgentes:1,notificaciones_enviadas:2}},
+    {id:'l3',fields:{workflow:'P4 — Siniestro Urgente',timestamp:new Date(Date.now()-7200000).toISOString(),polizas_procesadas:1,actividades_creadas:1,urgentes:1,notificaciones_enviadas:1}},
+  ];
+  Estado.logs = mock;
+  document.getElementById('log-count').textContent = mock.length + ' registros';
+  document.getElementById('ultimo-refresh').textContent = 'Demo';
+  renderLogCard('ger-vigia-log','ger-vigia-status', mock.slice(0,2));
+  renderLogCard('ger-journey-log','ger-journey-status', []);
+  renderTablaLog(mock);
+}
+
+/* MODAL ASIGNAR */
+function abrirModalAsignar() {
+  document.getElementById('asignar-cliente').value = '';
+  document.getElementById('asignar-instrucciones').value = '';
+  const manana = new Date(); manana.setDate(manana.getDate()+1);
+  document.getElementById('asignar-fecha').value = manana.toISOString().split('T')[0];
+  abrirModal('modal-asignar');
+}
+function abrirModalAsignarA(id, nombre) {
+  document.getElementById('asignar-asesor').value = id;
+  abrirModalAsignar();
+}
+
+async function confirmarAsignar() {
+  const btn = document.getElementById('btn-asignar');
+  const asesorId = document.getElementById('asignar-asesor').value;
+  const cliente = document.getElementById('asignar-cliente').value.trim();
+  const tipo = document.getElementById('asignar-tipo').value;
+  const prioridad = document.getElementById('asignar-prioridad').value;
+  const fecha = document.getElementById('asignar-fecha').value;
+  const desc = document.getElementById('asignar-instrucciones').value.trim();
+
+  if (!asesorId) { toast('Selecciona un asesor', 'err'); return; }
+
+  const fields = {
+    asesor_id: parseInt(asesorId),
+    clase: tipo,
+    descripcion: desc,
+    estado: 'abierta',
+    fecha_inicio: new Date().toISOString().split('T')[0]
+  };
+
+  btn.disabled = true; btn.innerHTML = `<div class="spinner"></div> Asignando...`;
+
+  try {
+    await spCreate('actividades', fields);
+    toast('Tarea asignada — asesor notificado', 'ok');
+    cerrarModal('modal-asignar');
+    await cargarKPIs();
+  } catch (e) {
+    console.error('confirmarAsignar:', e);
+    toast('Error al asignar', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Asignar y notificar';
+  }
+}
+
+/* MODAL URGENTE */
+function abrirUrgente(id, nombre) {
+  Estado._urgenteid = id;
+  document.getElementById('urgente-info').textContent = `Actividad: ${nombre}`;
+  abrirModal('modal-urgente');
+}
+async function confirmarUrgente() {
+  if (!Estado._urgenteid) return;
+  try {
+    await spUpdate('actividades', Estado._urgenteid, { estado: 'urgente' });
+    toast('Marcado urgente — asesor notificado', 'ok');
+    cerrarModal('modal-urgente');
+    await cargarKPIs();
+    await cargarDashUrgentes();
+  } catch (e) {
+    console.error('confirmarUrgente:', e);
+    toast('Error', 'err');
+  }
+}
+
+/* COMUNICACIONES */
+const CANAL_META = {
+  whatsapp: {icon:'💬', badge:'badge-ok',     label:'WhatsApp'},
+  email:    {icon:'✉️', badge:'badge-accent', label:'Email'},
+  telegram: {icon:'✈️', badge:'badge-accent', label:'Telegram'},
+  llamada:  {icon:'📞', badge:'badge-n',      label:'Llamada'},
+  sms:      {icon:'✉️', badge:'badge-n',      label:'SMS'},
+};
+
+async function cargarComunicaciones() {
+  const canal = document.getElementById('filtro-com-canal').value;
+  const estado = document.getElementById('filtro-com-estado').value;
+  const dir = document.getElementById('filtro-com-direccion').value;
+  let query = '?order=creado_en.desc&limit=50&select=*';
+  if (canal) query += `&canal=eq.${canal}`;
+  if (estado) query += `&estado=eq.${estado}`;
+  if (dir) query += `&direccion=eq.${dir}`;
+  try {
+    const res = await sp('comunicaciones', query);
+    const coms = res || [];
+    Estado.comunicaciones = coms;
+    const ids = [...new Set(coms.map(c => c.cliente_id).filter(Boolean))];
+    const nombres = new Map();
+    if (ids.length) {
+      const cls = await sp('clientes', `?id=in.(${ids.join(',')})&select=id,nombre`);
+      (cls||[]).forEach(c => nombres.set(c.id, c.nombre));
+    }
+    renderComunicaciones(coms, nombres);
+    cargarKPIsCom();
+  } catch (e) {
+    console.error('cargarComunicaciones:', e);
+    document.getElementById('lista-comunicaciones').innerHTML = `<div class="empty">Error cargando comunicaciones</div>`;
+  }
+}
+
+async function cargarKPIsCom() {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    const hace30 = new Date(Date.now() - 30*86400000).toISOString().split('T')[0];
+    const [nHoy, nNuevas, nWa, nEmail] = await Promise.all([
+      spCount('comunicaciones', `?creado_en=gte.${hoy}`),
+      spCount('comunicaciones', '?estado=eq.nueva'),
+      spCount('comunicaciones', `?canal=eq.whatsapp&creado_en=gte.${hace30}`),
+      spCount('comunicaciones', `?canal=eq.email&creado_en=gte.${hace30}`),
+    ]);
+    set('com-hoy', nHoy); set('com-nuevas', nNuevas); set('com-whatsapp', nWa); set('com-email', nEmail);
+  } catch (e) { console.error('cargarKPIsCom:', e); }
+}
+
+function renderComunicaciones(coms, nombres) {
+  const el = document.getElementById('lista-comunicaciones');
+  if (!coms.length) { el.innerHTML = `<div class="empty">Sin comunicaciones registradas</div>`; return; }
+  el.innerHTML = coms.map(c => {
+    const meta = CANAL_META[c.canal] || {icon:'💬', badge:'badge-n', label:c.canal||'—'};
+    const nueva = c.estado === 'nueva';
+    const estadoBadge = nueva ? 'badge-danger' : c.estado==='respondida' ? 'badge-ok' : c.estado==='cerrada' ? 'badge-n' : 'badge-warn';
+    const ts = c.creado_en ? new Date(c.creado_en).toLocaleString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    const quien = c.cliente_id
+      ? linkCliente(c.cliente_id, nombres.get(c.cliente_id) || 'Cliente')
+      : `<span>${escHtml(c.remitente || 'Sin identificar')}</span>`;
+    return `<div class="activity-item ${nueva && c.direccion==='entrante' ? 'urgent':''}">
+      <div class="act-icon" style="background:var(--s2)">${meta.icon}</div>
+      <div class="act-body">
+        <div class="act-title">${escHtml(c.asunto || truncar(c.mensaje||'—', 70))}</div>
+        <div class="act-meta">
+          ${quien}
+          <span class="badge ${meta.badge}">${meta.label}</span>
+          <span>${c.direccion==='saliente'?'↗ saliente':'↙ entrante'}</span>
+          ${c.remitente && c.cliente_id ? `<span>${escHtml(c.remitente)}</span>` : ''}
+          <span>${ts}</span>
+        </div>
+      </div>
+      <div class="act-right row">
+        <span class="badge ${estadoBadge}">${c.estado}</span>
+        ${c.estado==='nueva' || c.estado==='leida' ? `<button class="btn btn-ghost btn-sm" onclick="marcarCom(${c.id},'respondida')">Respondida</button>`:''}
+        ${c.estado!=='cerrada' ? `<button class="btn btn-ghost btn-sm" onclick="marcarCom(${c.id},'cerrada')">Cerrar</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function marcarCom(id, estado) {
+  try {
+    await spUpdate('comunicaciones', id, { estado });
+    toast(`Comunicación marcada: ${estado}`, 'ok');
+    await cargarComunicaciones();
+  } catch (e) {
+    console.error('marcarCom:', e);
+    toast('Error al actualizar', 'err');
+  }
+}
+
+function abrirModalCom() {
+  ['com-cliente','com-remitente','com-asunto','com-mensaje'].forEach(id => document.getElementById(id).value = '');
+  abrirModal('modal-com');
+}
+
+async function guardarComunicacion() {
+  const btn = document.getElementById('btn-com-guardar');
+  const canal = document.getElementById('com-canal').value;
+  const direccion = document.getElementById('com-direccion').value;
+  const nombreCliente = document.getElementById('com-cliente').value.trim();
+  const remitente = document.getElementById('com-remitente').value.trim();
+  const asunto = document.getElementById('com-asunto').value.trim();
+  const mensaje = document.getElementById('com-mensaje').value.trim();
+  if (!mensaje && !asunto) { toast('Escribe asunto o mensaje', 'err'); return; }
+
+  btn.disabled = true; btn.innerHTML = `<div class="spinner"></div> Guardando...`;
+  try {
+    let cliente_id = null;
+    if (nombreCliente) {
+      const matches = await sp('clientes', `?nombre=ilike.*${encodeURIComponent(nombreCliente)}*&select=id,nombre&limit=2`);
+      if (matches && matches.length === 1) cliente_id = matches[0].id;
+    }
+    await spCreate('comunicaciones', {
+      canal, direccion,
+      remitente: remitente || null,
+      asunto: asunto || null,
+      mensaje: mensaje || null,
+      cliente_id,
+      estado: direccion === 'saliente' ? 'respondida' : 'nueva'
+    });
+    toast(cliente_id ? 'Comunicación registrada y vinculada' : 'Comunicación registrada', 'ok');
+    cerrarModal('modal-com');
+    await cargarComunicaciones();
+  } catch (e) {
+    console.error('guardarComunicacion:', e);
+    toast('Error al guardar', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
+/* HELPERS */
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function set(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function truncar(s,n) { return s.length>n?s.slice(0,n)+'…':s; }
+function esc(s) { return s.replace(/'/g,"&#39;"); }
+function escHtml(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+let _tt;
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show'+(type?' '+type:'');
+  clearTimeout(_tt); _tt = setTimeout(()=>t.className='', 2800);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if(e.target===ov) ov.classList.remove('open'); });
+});
+
+setInterval(cargarDashAgentes, 60000);
+</script>
+</body>
+</html>

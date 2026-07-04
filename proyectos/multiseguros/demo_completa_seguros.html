@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SegurOS — CRM Piloto</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   VARIABLES §2B — DARK (asesores)
+══════════════════════════════════════════ */
+:root {
+  --bg:      #0f1117;
+  --s1:      #161b26;
+  --s2:      #1c2333;
+  --border:  #2a3347;
+  --text:    #f0f4f8;
+  --t2:      #8899aa;
+  --t3:      #4a5568;
+  --accent:  #3d8ef0;
+  --success: #2ecc8a;
+  --warning: #e8a838;
+  --danger:  #e05555;
+  --shadow:  0 2px 12px rgba(0,0,0,0.5);
+}
+
+/* ── RESET ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── SEMÁFOROS — solo puntos 8px ── */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--success)} .dot-warn{background:var(--warning)} .dot-danger{background:var(--danger)} .dot-n{background:var(--t3)} .dot-accent{background:var(--accent)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-ok{background:rgba(46,204,138,.12);color:var(--success)}
+.badge-warn{background:rgba(232,168,56,.12);color:var(--warning)}
+.badge-danger{background:rgba(224,85,85,.12);color:var(--danger)}
+.badge-n{background:rgba(136,153,170,.12);color:var(--t2)}
+.badge-accent{background:rgba(61,142,240,.12);color:var(--accent)}
+
+/* ── BOTONES ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,opacity .15s;white-space:nowrap;text-decoration:none}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover:not(:disabled){opacity:.88}
+.btn-ghost{background:transparent;color:var(--t2);border-color:var(--border)}
+.btn-ghost:hover:not(:disabled){background:var(--s2);color:var(--text)}
+.btn-danger-soft{background:rgba(224,85,85,.1);color:var(--danger);border-color:rgba(224,85,85,.25)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-icon{padding:0;width:32px;height:32px;border-radius:8px;font-size:16px}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:24px;right:20px;width:50px;height:50px;border-radius:14px;background:var(--accent);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(61,142,240,.4);z-index:200;transition:transform .15s,box-shadow .15s;line-height:1}
+.fab:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(61,142,240,.5)}
+
+/* ── TOPNAV ── */
+.topnav{position:fixed;top:0;left:0;right:0;height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 16px;z-index:300}
+.nav-logo{font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;margin-right:4px}
+.nav-logo span{color:var(--accent)}
+.nav-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:6px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--t2);font-family:'Inter',sans-serif;white-space:nowrap;transition:background .15s,color .15s}
+.nav-tab:hover{background:var(--s2);color:var(--text)}
+.nav-tab.active{background:var(--s2);color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.notif-btn{position:relative;width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--t2);transition:background .15s}
+.notif-btn:hover{background:var(--s2);color:var(--text)}
+.notif-badge{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--s1)}
+
+/* ── PAGE ── */
+.page{padding-top:52px;min-height:100vh;display:none}
+.page.active{display:block}
+.container{max-width:1280px;margin:0 auto;padding:20px 16px}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px}
+.kpi-label{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+.kpi-value{font-size:28px;font-weight:800;color:var(--text);font-family:'JetBrains Mono',monospace}
+.kpi-sub{font-size:11px;color:var(--t3);margin-top:3px}
+.kpi-card.kpi-danger .kpi-value{color:var(--danger)}
+.kpi-card.kpi-warn .kpi-value{color:var(--warning)}
+.kpi-card.kpi-ok .kpi-value{color:var(--success)}
+
+/* ── XP HEADER CARD ── */
+.asesor-header{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.asesor-ava{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.asesor-info{flex:1;min-width:0}
+.asesor-name{font-size:15px;font-weight:700}
+.asesor-area{font-size:11px;color:var(--t2);margin-top:1px}
+.xp-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.xp-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.xp-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease}
+.xp-label{font-size:11px;color:var(--t2);white-space:nowrap;font-family:'JetBrains Mono',monospace}
+.nivel-badge{font-size:11px;font-weight:600;color:var(--accent);background:rgba(61,142,240,.1);border-radius:5px;padding:2px 8px;white-space:nowrap}
+
+/* ── KANBAN ── */
+.kanban-scroll{overflow-x:auto;padding-bottom:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.kanban-scroll::-webkit-scrollbar{height:4px}
+.kanban-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.kanban{display:flex;gap:10px;min-width:max-content}
+
+.kb-col{width:220px;background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.kb-col-hd{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.kb-col-title{font-size:12px;font-weight:700;flex:1}
+.kb-col-count{font-size:11px;font-weight:600;color:var(--t2);background:var(--s2);border-radius:5px;padding:1px 7px;font-family:'JetBrains Mono',monospace}
+.kb-cards{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:120px;flex:1}
+
+/* ── CLIENT CARD ── */
+.client-card{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 11px;cursor:pointer;transition:border-color .15s;position:relative}
+.client-card:hover{border-color:var(--accent)}
+.client-card.urgent{border-left:3px solid var(--danger)}
+.client-card.alert{border-left:3px solid var(--warning)}
+.client-card.ok{border-left:3px solid var(--success)}
+
+.cc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px}
+.cc-name{font-size:13px;font-weight:600;line-height:1.3}
+.cc-meta{font-size:11px;color:var(--t2);margin-bottom:6px}
+.cc-dias{font-family:'JetBrains Mono',monospace;font-size:11px}
+.cc-footer{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:7px}
+.cc-asesor{font-size:11px;color:var(--t2);display:flex;align-items:center;gap:5px}
+.cc-ava{width:18px;height:18px;border-radius:5px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;flex-shrink:0}
+.cc-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.client-card:hover .cc-actions{opacity:1}
+
+/* ── SECTION HEADER ── */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-size:13px;font-weight:700}
+.section-link{font-size:11px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;font-weight:600;padding:0}
+.section-link:hover{opacity:.8}
+
+/* ── AGENT PANEL ── */
+.agent-panel{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.agent-panel-hd{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.agent-panel-title{font-size:12px;font-weight:700;flex:1}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.agent-panel-body{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.agent-panel-body.collapsed{display:none}
+
+.agent-row{display:flex;align-items:flex-start;gap:8px;padding:9px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px}
+.agent-row-icon{font-size:14px;flex-shrink:0;padding-top:1px}
+.agent-row-body{flex:1;min-width:0}
+.agent-row-name{font-size:12px;font-weight:600}
+.agent-row-detail{font-size:11px;color:var(--t2);margin-top:2px}
+.agent-row-time{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;white-space:nowrap;flex-shrink:0}
+
+/* ── NOTIF PANEL ── */
+.notif-list{display:flex;flex-direction:column;gap:6px}
+.notif-item{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--s2)}
+.notif-item.unread{border-color:rgba(61,142,240,.3);background:rgba(61,142,240,.04)}
+.notif-dot-wrap{padding-top:5px}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:12px;font-weight:600}
+.notif-sub{font-size:11px;color:var(--t2);margin-top:1px}
+.notif-time{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;white-space:nowrap;flex-shrink:0}
+
+/* ── TASK LIST ── */
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .15s}
+.task-item:hover{border-color:var(--accent)}
+.task-item.urgent-task{border-left:3px solid var(--danger)}
+.task-item.warn-task{border-left:3px solid var(--warning)}
+.task-check{width:18px;height:18px;border:2px solid var(--border);border-radius:5px;flex-shrink:0;margin-top:1px;cursor:pointer;transition:background .15s,border-color .15s}
+.task-check:hover{border-color:var(--accent)}
+.task-check.done{background:var(--success);border-color:var(--success);display:flex;align-items:center;justify-content:center}
+.task-body{flex:1;min-width:0}
+.task-name{font-size:13px;font-weight:600}
+.task-meta{font-size:11px;color:var(--t2);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.task-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+@media(min-width:600px){.modal-overlay{align-items:center}}
+
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;transform:translateY(50px);transition:transform .22s cubic-bezier(.22,.68,0,1.2)}
+.modal-overlay.open .modal{transform:translateY(0)}
+@media(min-width:600px){.modal{border-radius:12px}}
+
+.modal-header{padding:16px 18px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--t2);font-size:20px;padding:2px;line-height:1;transition:color .15s}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:14px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.modal-footer{padding:0 18px 18px;display:flex;gap:8px;justify-content:flex-end}
+
+/* ── FORM ── */
+.field{display:flex;flex-direction:column;gap:5px}
+.label{font-size:12px;font-weight:600;color:var(--t2);letter-spacing:.02em}
+.input,.select,.textarea{background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;width:100%;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
+.input::placeholder,.textarea::placeholder{color:var(--t3)}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent)}
+.textarea{resize:vertical;min-height:70px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── AUTOCOMPLETE ── */
+.autocomplete-wrap{position:relative}
+.autocomplete-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:600;box-shadow:var(--shadow);max-height:200px;overflow-y:auto;display:none}
+.autocomplete-list.open{display:block}
+.autocomplete-item{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.autocomplete-item:hover{background:var(--s2)}
+.autocomplete-item strong{font-weight:600}
+.autocomplete-item span{font-size:11px;color:var(--t2)}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;pointer-events:none;color:var(--text)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(46,204,138,.4);color:var(--success)}
+#toast.err{border-color:rgba(224,85,85,.4);color:var(--danger)}
+
+/* ── SPINNER ── */
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:28px 16px;color:var(--t3);font-size:12px}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;color:var(--t2);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--s1)}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--s2)}
+
+/* ── GAP/SPACING ── */
+.stack{display:flex;flex-direction:column;gap:10px}
+.stack-lg{display:flex;flex-direction:column;gap:16px}
+.grid-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.row{display:flex;align-items:center;gap:8px}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mt-3{margin-top:12px} .mt-4{margin-top:16px} .mt-5{margin-top:24px}
+.mb-2{margin-bottom:8px} .mb-3{margin-bottom:12px}
+
+/* ── LOADING STATE ── */
+.skeleton{background:linear-gradient(90deg,var(--s2) 25%,var(--border) 50%,var(--s2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── CLIENT DRAWER ── */
+.client-link{background:none;border:none;padding:0;color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.client-link:hover{color:var(--accent)}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.34);z-index:540;opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:52px;right:0;width:min(100vw,375px);height:calc(100vh - 52px);background:var(--s1);border-left:1px solid var(--border);z-index:550;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s ease;box-shadow:-10px 0 24px rgba(0,0,0,.12)}
+.drawer.open{transform:translateX(0)}
+.drawer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.drawer-title{font-size:15px;font-weight:800;line-height:1.25}
+.drawer-sub{font-size:11px;color:var(--t2);margin-top:3px}
+.drawer-close{background:none;border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--t2);font-size:18px;line-height:1}
+.drawer-close:hover{background:var(--s2);color:var(--text)}
+.drawer-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:12px 16px 0}
+.drawer-tab{border:1px solid var(--border);background:transparent;color:var(--t2);border-radius:8px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer}
+.drawer-tab.active{background:var(--s2);color:var(--text)}
+.drawer-body{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px;flex:1}
+.drawer-section{display:flex;flex-direction:column;gap:8px}
+.drawer-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.drawer-row{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px}
+.drawer-row-label{font-size:11px;color:var(--t2);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.drawer-row-value{font-size:13px;font-weight:600;word-break:break-word}
+.drawer-table-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--s1)}
+.drawer-table-wrap table{width:100%;border-collapse:collapse}
+.drawer-table-wrap th,.drawer-table-wrap td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;text-align:left;vertical-align:top}
+.drawer-table-wrap th{background:var(--s1);color:var(--t2);font-weight:700;white-space:nowrap}
+.drawer-table-wrap tr:last-child td{border-bottom:none}
+.drawer-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+.drawer-pill-ok{background:rgba(46,204,138,.12);color:var(--success)}
+.drawer-pill-warn{background:rgba(232,168,56,.12);color:var(--warning)}
+.drawer-pill-danger{background:rgba(224,85,85,.12);color:var(--danger)}
+.drawer-skeleton{display:flex;flex-direction:column;gap:10px}
+.drawer-skeleton .skeleton{height:14px;border-radius:6px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .topnav{padding:0 12px}
+  .container{padding:16px 12px}
+  .field-grid{grid-template-columns:1fr}
+  .kpi-value{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOP NAV ══ -->
+<nav class="topnav">
+  <div class="nav-logo">Segur<span>OS</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('asesor',this)">Asesor</button>
+    <button class="nav-tab" onclick="showPage('journey',this)">Journey</button>
+    <button class="nav-tab" onclick="showPage('tareas',this)">Tareas</button>
+    <button class="nav-tab" onclick="showPage('agentes',this)">Agentes</button>
+  </div>
+  <div class="nav-right">
+    <button class="notif-btn" onclick="showPage('notif',document.querySelectorAll('.nav-tab')[3])">
+      <span style="font-size:15px">&#x1F514;</span>
+      <div class="notif-badge" id="notif-badge" style="display:none"></div>
+    </button>
+    <a href="gerencia.html" class="btn btn-ghost btn-sm" style="text-decoration:none">Gerencia</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PÁGINA: ASESOR
+══════════════════════════════════════ -->
+<main class="page active" id="page-asesor">
+<div class="container">
+
+  <!-- Header del asesor -->
+  <div class="asesor-header mb-3">
+    <div class="asesor-ava" id="asesor-ava">CA</div>
+    <div class="asesor-info">
+      <div class="row-between">
+        <div class="asesor-name" id="asesor-name">Carlos Asesor</div>
+        <div class="nivel-badge" id="nivel-badge">Asesor Nv.2</div>
+      </div>
+      <div class="asesor-area" id="asesor-area">Área Automóviles</div>
+      <div class="xp-row mt-3">
+        <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:42%"></div></div>
+        <div class="xp-label" id="xp-label">620 / 1000 XP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs pills -->
+  <div class="grid-kpi mb-3">
+    <div class="kpi-card kpi-accent">
+      <div class="kpi-label">Total clientes</div>
+      <div class="kpi-value" id="kpi-clientes-total">—</div>
+      <div class="kpi-sub">base activa</div>
+    </div>
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-label">Urgentes</div>
+      <div class="kpi-value" id="kpi-urgentes">—</div>
+      <div class="kpi-sub">requieren acción hoy</div>
+    </div>
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-label">Completadas</div>
+      <div class="kpi-value" id="kpi-completadas">—</div>
+      <div class="kpi-sub">esta semana</div>
+    </div>
+    <div class="kpi-card kpi-warn">
+      <div class="kpi-label">Pendientes</div>
+      <div class="kpi-value" id="kpi-pendientes">—</div>
+      <div class="kpi-sub">en cola</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Sin contacto</div>
+      <div class="kpi-value" id="kpi-sin-contacto">—</div>
+      <div class="kpi-sub">+15 días</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Siniestros activos</div>
+      <div class="kpi-value" id="kpi-siniestros-activos">—</div>
+      <div class="kpi-sub">en gestión</div>
+    </div>
+  </div>
+
+  <!-- Insight del agente IA -->
+  <div class="agent-panel mb-3" id="insight-panel">
+    <div class="agent-panel-hd" onclick="togglePanel('insight-body')">
+      <div class="live-dot"></div>
+      <div class="agent-panel-title">Agente IA — Insight del día</div>
+      <span id="insight-toggle" style="font-size:11px;color:var(--t3)">&#9660;</span>
+    </div>
+    <div class="agent-panel-body" id="insight-body">
+      <div id="insight-content">
+        <div class="skeleton mb-2" style="width:80%;height:13px"></div>
+        <div class="skeleton" style="width:55%;height:13px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tareas del día -->
+  <div class="section-hd">
+    <div class="section-title">Tareas del día</div>
+    <button class="section-link" onclick="showPage('tareas',null)">Ver todas</button>
+  </div>
+  <div class="stack" id="tareas-hoy">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div>Cargando tareas...</div>
+  </div>
+
+  <!-- Clientes con alertas -->
+  <div class="section-hd mt-5">
+    <div class="section-title">Clientes con alertas activas</div>
+    <button class="section-link" onclick="showPage('journey',null)">Ver journey</button>
+  </div>
+  <div class="stack" id="clientes-alerta">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div>Cargando...</div>
+  </div>
+
+  <!-- Notificaciones recientes -->
+  <div class="section-hd mt-5">
+    <div class="section-title">Notificaciones Telegram</div>
+    <span class="badge badge-n" style="font-size:10px">via Bot</span>
+  </div>
+  <div class="notif-list" id="notif-asesor">
+    <div class="empty">Sin notificaciones recientes</div>
+  </div>
+
+  <div style="height:80px"></div>
+</div>
+</main>
+
+<!-- ══════════════════════════════════════
+     PÁGINA: JOURNEY KANBAN (6 etapas)
+══════════════════════════════════════ -->
+<main class="page" id="page-journey">
+<div class="container">
+  <div class="row-between mb-3">
+    <div>
+      <h2 style="font-size:16px;font-weight:700">Customer Journey</h2>
+      <div style="font-size:11px;color:var(--t2);margin-top:2px">Automóviles · mover cliente entre etapas manualmente</div>
+    </div>
+    <div class="row">
+      <div id="journey-filtro" style="font-size:12px;color:var(--t2)"></div>
+    </div>
+  </div>
+
+  <div class="kanban-scroll">
+    <div class="kanban" id="journey-kanban">
+      <!-- cols generadas por JS -->
+      <div class="empty" style="min-width:300px"><div class="spinner" style="margin:0 auto 8px"></div>Cargando journey...</div>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════════════
+     PÁGINA: TAREAS
+══════════════════════════════════════ -->
+<main class="page" id="page-tareas">
+<div class="container">
+  <div class="row-between mb-3">
+    <h2 style="font-size:16px;font-weight:700">Mis Tareas</h2>
+    <div class="row">
+      <select class="select" style="width:auto;padding:6px 10px;font-size:12px" onchange="filtrarTareas(this.value)">
+        <option value="">Todas</option>
+        <option value="Urgente">Urgentes</option>
+        <option value="Alta">Alta</option>
+        <option value="Media">Media</option>
+        <option value="Baja">Baja</option>
+      </select>
+    </div>
+  </div>
+  <div class="stack" id="lista-tareas">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div>Cargando tareas...</div>
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════════════
+     PÁGINA: AGENTES
+══════════════════════════════════════ -->
+<main class="page" id="page-agentes">
+<div class="container">
+  <div class="row-between mb-3">
+    <div>
+      <h2 style="font-size:16px;font-weight:700">Mini-Agentes IA</h2>
+      <div style="font-size:11px;color:var(--t2);margin-top:2px">Log de actividad en tiempo real</div>
+    </div>
+    <div class="row">
+      <div class="live-dot"></div>
+      <span style="font-size:11px;color:var(--t2)">Auto-refresh 60s</span>
+    </div>
+  </div>
+
+  <!-- Agente A — Vigía -->
+  <div class="section-hd">
+    <div class="section-title">Agente A — Vigía de Renovaciones</div>
+    <span class="badge" id="vigia-status">cargando...</span>
+  </div>
+  <div class="stack mb-3" id="vigia-log">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div></div>
+  </div>
+
+  <!-- Agente B — Lector Journey -->
+  <div class="section-hd mt-4">
+    <div class="section-title">Agente B — Lector de Journey</div>
+    <span class="badge" id="journey-agent-status">cargando...</span>
+  </div>
+  <div class="stack" id="journey-agent-log">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div></div>
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════════════
+     PÁGINA: NOTIFICACIONES
+══════════════════════════════════════ -->
+<main class="page" id="page-notif">
+<div class="container">
+  <div class="row-between mb-3">
+    <h2 style="font-size:16px;font-weight:700">Notificaciones</h2>
+    <button class="btn btn-ghost btn-sm" onclick="marcarTodasLeidas()">Marcar leídas</button>
+  </div>
+  <div class="notif-list" id="notif-full">
+    <div class="empty"><div class="spinner" style="margin:0 auto 8px"></div>Cargando...</div>
+  </div>
+</div>
+</main>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL: CREAR / EDITAR CLIENTE
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cliente-titulo">Nuevo cliente</div>
+      <button class="modal-close" onclick="cerrarModal('modal-cliente')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cliente-id">
+
+      <div class="field">
+        <label class="label">Nombre completo</label>
+        <input class="input" id="cliente-nombre" placeholder="Juan García López" autocomplete="off">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="label">Documento (cédula)</label>
+          <input class="input" id="cliente-doc" placeholder="1234567890">
+        </div>
+        <div class="field">
+          <label class="label">Teléfono</label>
+          <input class="input" id="cliente-tel" placeholder="+57300...">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Email</label>
+        <input class="input" id="cliente-email" type="email" placeholder="correo@ejemplo.com">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="label">Estado</label>
+          <select class="select" id="cliente-estado">
+            <option value="Prospecto">Prospecto</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Etapa Journey</label>
+          <select class="select" id="cliente-etapa">
+            <option value="Prospecto">Prospecto</option>
+            <option value="Cotizacion_enviada">Cotización enviada</option>
+            <option value="En_negociacion">En negociación</option>
+            <option value="Cliente_activo">Cliente activo</option>
+            <option value="En_renovacion">En renovación</option>
+            <option value="Retenido">Retenido</option>
+            <option value="Perdido">Perdido</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Asesor asignado</label>
+        <select class="select" id="cliente-asesor">
+          <option value="">Sin asignar</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-cliente" onclick="guardarCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL: REGISTRAR ACTIVIDAD
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-actividad">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Registrar actividad</div>
+      <button class="modal-close" onclick="cerrarModal('modal-actividad')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="label">Cliente</label>
+        <div class="autocomplete-wrap">
+          <input class="input" id="act-cliente" placeholder="Buscar por nombre o cédula..." autocomplete="off" oninput="buscarClienteAuto(this.value)">
+          <div class="autocomplete-list" id="autocomplete-list"></div>
+        </div>
+        <input type="hidden" id="act-cliente-id">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="label">Tipo</label>
+          <select class="select" id="act-tipo">
+            <option value="Llamada">Llamada</option>
+            <option value="Cotizacion">Cotización</option>
+            <option value="Renovacion">Renovación</option>
+            <option value="Siniestro">Siniestro</option>
+            <option value="Cobro">Cobro</option>
+            <option value="Seguimiento">Seguimiento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Resultado</label>
+          <select class="select" id="act-resultado">
+            <option value="Exitoso">Exitoso</option>
+            <option value="Sin_respuesta">Sin respuesta</option>
+            <option value="Reagendado">Reagendado</option>
+            <option value="Escalado">Escalado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Observación <span style="color:var(--t3)">(máx 280 caracteres)</span></label>
+        <textarea class="textarea" id="act-descripcion" placeholder="Describir la interacción..." maxlength="280"></textarea>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="label">Prioridad</label>
+          <select class="select" id="act-prioridad">
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+            <option value="Alta">Alta</option>
+            <option value="Urgente">Urgente</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Fecha límite</label>
+          <input class="input" id="act-fecha-limite" type="date">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-actividad')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-registrar-act" onclick="registrarActividad()">
+        Registrar +XP
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL: MOVER CLIENTE EN JOURNEY
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-mover-etapa">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title">Mover a etapa</div>
+      <button class="modal-close" onclick="cerrarModal('modal-mover-etapa')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="mover-cliente-info" style="font-size:13px;color:var(--t2);margin-bottom:4px"></div>
+      <div class="field">
+        <label class="label">Nueva etapa</label>
+        <select class="select" id="mover-etapa-sel">
+          <option value="Prospecto">Prospecto</option>
+          <option value="Cotizacion_enviada">Cotización enviada</option>
+          <option value="En_negociacion">En negociación</option>
+          <option value="Cliente_activo">Cliente activo</option>
+          <option value="En_renovacion">En renovación</option>
+          <option value="Retenido">Retenido</option>
+          <option value="Perdido">Perdido</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-mover-etapa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarMoverEtapa()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="abrirModalActividad()" title="Registrar actividad">+</button>
+
+<!-- ═══════════════════════════════════════════════
+     FICHA CLIENTE
+═══════════════════════════════════════════════ -->
+<div class="drawer-overlay" id="cliente-drawer-overlay" onclick="cerrarFichaCliente()"></div>
+<aside class="drawer" id="cliente-drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawer-cliente-nombre">Cliente</div>
+      <div class="drawer-sub" id="drawer-cliente-sub">Ficha de cliente</div>
+    </div>
+    <button class="drawer-close" onclick="cerrarFichaCliente()">×</button>
+  </div>
+  <div class="drawer-tabs">
+    <button class="drawer-tab active" data-tab="datos" onclick="cambiarTabCliente('datos')">Datos</button>
+    <button class="drawer-tab" data-tab="polizas" onclick="cambiarTabCliente('polizas')">Pólizas</button>
+    <button class="drawer-tab" data-tab="actividades" onclick="cambiarTabCliente('actividades')">Actividades</button>
+    <button class="drawer-tab" data-tab="siniestros" onclick="cambiarTabCliente('siniestros')">Siniestros</button>
+  </div>
+  <div class="drawer-body" id="drawer-cliente-body">
+    <div class="drawer-skeleton">
+      <div class="skeleton" style="width:72%"></div>
+      <div class="skeleton" style="width:94%"></div>
+      <div class="skeleton" style="width:63%"></div>
+      <div class="skeleton" style="width:88%"></div>
+      <div class="skeleton" style="width:55%"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════
+     CONFIG — editar con valores reales
+═══════════════════════════════════════════════ -->
+<script>
+const CFG = {
+  token:        'afpalomaresr',
+  base:         'app1UXLmLSjLDL5Mu',
+  clientes:     'tblYb9IY2HOg3eFLI',
+  polizas:      'tblwPDtCWNDJ4utZ2',
+  siniestros:   'tblCUcr4Xbt8vmGCC',
+  trabajadores: 'tblyIIlhti0otFBjC',
+  actividades:  'Actividades',
+  logs:         'Log_Workflows',
+  alertas:      'Alertas_Log',
+  // Asesor logueado (simulado en piloto)
+  ASESOR_NOMBRE:    'Carlos Asesor',
+  ASESOR_INICIALES: 'CA',
+  ASESOR_ID:        null,  // llenar con record ID de Trabajadores
+  REFRESH_AGENTES:  60000, // ms
+};
+CFG.AIRTABLE_TOKEN = CFG.token;
+CFG.BASE_ID = CFG.base;
+CFG.T_CLIENTES = CFG.clientes;
+CFG.T_POLIZAS = CFG.polizas;
+CFG.T_SINIESTROS = CFG.siniestros;
+CFG.T_TRABAJADORES = CFG.trabajadores;
+CFG.T_ACTIVIDADES = CFG.actividades;
+CFG.T_LOG_WORKFLOWS = CFG.logs;
+CFG.T_ALERTAS = CFG.alertas;
+
+/* ──────────────────────
+   ESTADO LOCAL
+────────────────────── */
+const Estado = {
+  clientes: [],
+  actividades: [],
+  alertas: [],
+  agenteLogs: [],
+  trabajadores: [],
+  clienteSeleccionado: null,
+  fichaCliente: null,
+  notifNoLeidas: 0,
+};
+
+/* ──────────────────────
+   AIRTABLE API
+────────────────────── */
+async function at(tabla, params = '') {
+  const url = `https://api.airtable.com/v0/${CFG.BASE_ID}/${encodeURIComponent(tabla)}${params}`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${CFG.AIRTABLE_TOKEN}` } });
+  if (!r.ok) throw new Error(`Airtable ${r.status}`);
+  return r.json();
+}
+
+async function atCreate(tabla, fields) {
+  const url = `https://api.airtable.com/v0/${CFG.BASE_ID}/${encodeURIComponent(tabla)}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${CFG.AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+  });
+  if (!r.ok) throw new Error(`Airtable POST ${r.status}`);
+  return r.json();
+}
+
+async function atUpdate(tabla, recordId, fields) {
+  const url = `https://api.airtable.com/v0/${CFG.BASE_ID}/${encodeURIComponent(tabla)}/${recordId}`;
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${CFG.AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+  });
+  if (!r.ok) throw new Error(`Airtable PATCH ${r.status}`);
+  return r.json();
+}
+
+async function atRecord(tabla, recordId) {
+  const url = `https://api.airtable.com/v0/${CFG.BASE_ID}/${encodeURIComponent(tabla)}/${recordId}`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${CFG.AIRTABLE_TOKEN}` } });
+  if (!r.ok) throw new Error(`Airtable GET ${r.status}`);
+  return r.json();
+}
+
+function nombreClienteDesdeRefs(refs) {
+  const ids = Array.isArray(refs) ? refs : [];
+  if (!ids.length) return '—';
+  const mapa = new Map((Estado.clientes || []).map(r => [r.id, r.fields?.nombre_completo || r.fields?.nombre || r.id]));
+  return ids.map(id => mapa.get(id) || id).join(', ');
+}
+
+function linkCliente(id, nombre) {
+  return `<button type="button" class="client-link" onclick="event.stopPropagation(); abrirFichaCliente('${id}')">${escape(nombre || 'Sin nombre')}</button>`;
+}
+
+function formatearFecha(valor) {
+  if (!valor) return '—';
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return valor;
+  return fecha.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function calcularDiasRestantes(poliza) {
+  if (typeof poliza.fields?.dias_para_vencer === 'number') return poliza.fields.dias_para_vencer;
+  if (!poliza.fields?.fecha_vencimiento) return null;
+  const fechaVencimiento = new Date(poliza.fields.fecha_vencimiento);
+  const diff = fechaVencimiento - new Date();
+  return Math.ceil(diff / 86400000);
+}
+
+function setDrawerSkeleton() {
+  document.getElementById('drawer-cliente-body').innerHTML = `
+    <div class="drawer-skeleton">
+      <div class="skeleton" style="width:72%"></div>
+      <div class="skeleton" style="width:94%"></div>
+      <div class="skeleton" style="width:63%"></div>
+      <div class="skeleton" style="width:88%"></div>
+      <div class="skeleton" style="width:55%"></div>
+    </div>`;
+}
+
+function abrirFichaCliente(clienteId) {
+  if (!clienteId) return;
+  Estado.fichaCliente = { id: clienteId, tab: 'datos', cliente: null, polizas: [], actividades: [], siniestros: [] };
+  document.getElementById('cliente-drawer').classList.add('open');
+  document.getElementById('cliente-drawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('cliente-drawer-overlay').classList.add('open');
+  setDrawerSkeleton();
+  cargarFichaCliente(clienteId).catch(() => {
+    document.getElementById('drawer-cliente-body').innerHTML = `<div class="empty">No se pudo cargar la ficha del cliente</div>`;
+  });
+}
+
+function cerrarFichaCliente() {
+  document.getElementById('cliente-drawer').classList.remove('open');
+  document.getElementById('cliente-drawer').setAttribute('aria-hidden', 'true');
+  document.getElementById('cliente-drawer-overlay').classList.remove('open');
+}
+
+function cambiarTabCliente(tab) {
+  if (!Estado.fichaCliente) return;
+  Estado.fichaCliente.tab = tab;
+  document.querySelectorAll('.drawer-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  renderFichaCliente();
+}
+
+async function cargarFichaCliente(clienteId) {
+  const [cliente, polizasRes, actividadesRes, siniestrosRes] = await Promise.all([
+    atRecord(CFG.T_CLIENTES, clienteId),
+    at(CFG.T_POLIZAS, `?filterByFormula=${encodeURIComponent(`FIND(\"${clienteId}\", ARRAYJOIN({cliente}))`)}&sort[0][field]=fecha_vencimiento&sort[0][direction]=desc&maxRecords=50`),
+    at(CFG.T_ACTIVIDADES, `?filterByFormula=${encodeURIComponent(`FIND(\"${clienteId}\", ARRAYJOIN({cliente(s)}))`)}&sort[0][field]=fecha_creacion&sort[0][direction]=desc&maxRecords=5`),
+    at(CFG.T_SINIESTROS, `?sort[0][field]=Timestamp&sort[0][direction]=desc&maxRecords=100`),
+  ]);
+
+  const polizas = polizasRes.records || [];
+  const polizaIds = new Set(polizas.map(r => r.id));
+  const siniestros = (siniestrosRes.records || []).filter(r => (r.fields.Poliza_ID || []).some(id => polizaIds.has(id)));
+
+  Estado.fichaCliente = {
+    id: clienteId,
+    tab: Estado.fichaCliente?.tab || 'datos',
+    cliente,
+    polizas,
+    actividades: actividadesRes.records || [],
+    siniestros,
+  };
+
+  renderFichaCliente();
+}
+
+function renderFichaCliente() {
+  const ficha = Estado.fichaCliente;
+  if (!ficha) return;
+  const cliente = ficha.cliente || Estado.clientes.find(r => r.id === ficha.id);
+  const nombre = cliente?.fields?.nombre_completo || cliente?.fields?.nombre || 'Cliente';
+  document.getElementById('drawer-cliente-nombre').textContent = nombre;
+  document.getElementById('drawer-cliente-sub').textContent = cliente?.fields?.Documento || cliente?.fields?.documento || cliente?.fields?.telefono || ficha.id;
+  const tab = ficha.tab || 'datos';
+  document.querySelectorAll('.drawer-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+
+  if (tab === 'datos') {
+    const f = cliente?.fields || {};
+    const asesor = f.Agente_asignado || f.area_responsable || '—';
+    document.getElementById('drawer-cliente-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-grid">
+          <div class="drawer-row"><div class="drawer-row-label">Nombre</div><div class="drawer-row-value">${nombre}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">Cédula</div><div class="drawer-row-value">${f.Documento || '—'}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">Teléfono</div><div class="drawer-row-value">${f.telefono || '—'}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">Asesor asignado</div><div class="drawer-row-value">${asesor}</div></div>
+          <div class="drawer-row"><div class="drawer-row-label">Fecha ingreso</div><div class="drawer-row-value">${formatearFecha(cliente?.createdTime)}</div></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (tab === 'polizas') {
+    const rows = ficha.polizas.map(p => {
+      const dias = calcularDiasRestantes(p);
+      const cls = dias === null ? 'drawer-pill' : dias < 0 ? 'drawer-pill drawer-pill-danger' : dias <= 30 ? 'drawer-pill drawer-pill-warn' : 'drawer-pill drawer-pill-ok';
+      const label = dias === null ? (p.fields.estado || '—') : dias < 0 ? `Vencida ${Math.abs(dias)}d` : dias <= 30 ? `Por vencer ${dias}d` : `Vigente ${dias}d`;
+      return `<tr>
+        <td>${p.fields.numero_poliza || '—'}</td>
+        <td>${p.fields.aseguradora || '—'}</td>
+        <td>${formatearFecha(p.fields.fecha_vencimiento)}</td>
+        <td><span class="${cls}">${label}</span></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('drawer-cliente-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-table-wrap">
+          <table>
+            <thead><tr><th>N° póliza</th><th>Aseguradora</th><th>Fecha fin</th><th>Estado</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="4" class="empty">Sin pólizas registradas</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (tab === 'actividades') {
+    const rows = ficha.actividades.map(a => {
+      const f = a.fields || {};
+      return `<tr>
+        <td>${formatearFecha(f.fecha_creacion)}</td>
+        <td>${f.tipo || '—'}</td>
+        <td>${f.descripcion || '—'}</td>
+        <td>${f.resultado || '—'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('drawer-cliente-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Resultado</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="4" class="empty">Sin actividades registradas</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const rows = ficha.siniestros.map(s => {
+    const f = s.fields || {};
+    return `<tr>
+      <td>${formatearFecha(s.createdTime || f.Timestamp)}</td>
+      <td>${f.Descripcion || '—'}</td>
+      <td><span class="drawer-pill ${f.Estado==='Resuelto' ? 'drawer-pill-ok' : f.Estado==='Registrado' ? 'drawer-pill-warn' : 'drawer-pill-danger'}">${f.Estado || '—'}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('drawer-cliente-body').innerHTML = `
+    <div class="drawer-section">
+      ${rows ? `
+        <div class="drawer-table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Descripción</th><th>Estado</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>` : `<div class="empty">Sin siniestros registrados</div>`}
+    </div>`;
+}
+
+/* ──────────────────────
+   NAVEGACIÓN
+────────────────────── */
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  if (btn) btn.classList.add('active');
+  // lazy-load
+  if (id === 'journey') cargarJourney();
+  if (id === 'tareas') cargarTareas();
+  if (id === 'agentes') cargarAgentes();
+  if (id === 'notif') cargarNotifFull();
+}
+
+/* ──────────────────────
+   INIT
+────────────────────── */
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('asesor-ava').textContent = CFG.ASESOR_INICIALES;
+  document.getElementById('asesor-name').textContent = CFG.ASESOR_NOMBRE;
+
+  await Promise.all([
+    cargarKPIs(),
+    cargarTareasHoy(),
+    cargarClientesAlerta(),
+    cargarNotifAsesor(),
+    cargarTrabajadores(),
+  ]);
+
+  cargarInsight();
+  setInterval(cargarNotifAsesor, 30000);
+  setInterval(cargarKPIs, 60000);
+});
+
+/* ──────────────────────
+   KPIs
+────────────────────── */
+async function cargarKPIs() {
+  try {
+    const [acts, polizas, clientes, todosClientes, siniestros] = await Promise.all([
+      at(CFG.T_ACTIVIDADES, `?filterByFormula=AND({estado}!="Completada")`),
+      at(CFG.T_POLIZAS, `?filterByFormula=AND({dias_para_vencer}>=0,{dias_para_vencer}<31)`),
+      at(CFG.T_CLIENTES, `?filterByFormula={dias_sin_contacto}>15`),
+      at(CFG.T_CLIENTES, `?maxRecords=1000`),
+      at(CFG.T_SINIESTROS, `?filterByFormula={Estado}!="Resuelto"`),
+    ]);
+
+    const urgentes = (acts.records || []).filter(r => r.fields.prioridad === 'Urgente').length;
+    const completadas = 0; // requiere filtro por semana — simplificado
+    const pendientes = (acts.records || []).length;
+    const sinContacto = (clientes.records || []).length;
+    Estado.clientes = todosClientes.records || [];
+
+    set('kpi-clientes-total', (todosClientes.records || []).length);
+    set('kpi-urgentes', urgentes);
+    set('kpi-completadas', completadas);
+    set('kpi-pendientes', pendientes);
+    set('kpi-sin-contacto', sinContacto);
+    set('kpi-siniestros-activos', (siniestros.records || []).length);
+
+    Estado.notifNoLeidas = urgentes > 0 ? urgentes : 0;
+    document.getElementById('notif-badge').style.display = urgentes > 0 ? 'block' : 'none';
+  } catch(e) {
+    // token no configurado — mostrar valores demo
+    set('kpi-clientes-total', '—');
+    set('kpi-urgentes', '3');
+    set('kpi-completadas', '8');
+    set('kpi-pendientes', '12');
+    set('kpi-sin-contacto', '5');
+    set('kpi-siniestros-activos', '2');
+  }
+}
+
+/* ──────────────────────
+   TAREAS HOY
+────────────────────── */
+async function cargarTareasHoy() {
+  try {
+    const res = await at(CFG.T_ACTIVIDADES, `?filterByFormula=AND({estado}!="Completada")&sort[0][field]=prioridad&sort[0][direction]=desc&maxRecords=5`);
+    renderTareas(document.getElementById('tareas-hoy'), res.records || [], 3);
+  } catch {
+    renderTareasMock();
+  }
+}
+
+async function cargarTareas() {
+  try {
+    const res = await at(CFG.T_ACTIVIDADES, `?sort[0][field]=prioridad&sort[0][direction]=desc`);
+    Estado.actividades = res.records || [];
+    filtrarTareas('');
+  } catch {
+    document.getElementById('lista-tareas').innerHTML = `<div class="empty">Sin conexión — verificar token Airtable</div>`;
+  }
+}
+
+function filtrarTareas(prioridad) {
+  const lista = prioridad
+    ? Estado.actividades.filter(r => r.fields.prioridad === prioridad)
+    : Estado.actividades;
+  renderTareas(document.getElementById('lista-tareas'), lista, 999);
+}
+
+function renderTareas(el, records, max) {
+  if (!records.length) { el.innerHTML = `<div class="empty">Sin tareas pendientes</div>`; return; }
+  const mostrar = records.slice(0, max);
+  el.innerHTML = mostrar.map(r => {
+    const f = r.fields;
+    const prioridad = f.prioridad || 'Media';
+    const cls = prioridad === 'Urgente' ? 'urgent-task' : prioridad === 'Alta' ? 'warn-task' : '';
+    const badgeCls = prioridad === 'Urgente' ? 'badge-danger' : prioridad === 'Alta' ? 'badge-warn' : prioridad === 'Baja' ? 'badge-n' : 'badge-accent';
+    const dotCls = prioridad === 'Urgente' ? 'dot-danger' : prioridad === 'Alta' ? 'dot-warn' : 'dot-n';
+    const clienteRefs = f['cliente(s)'] || f.cliente || [];
+    const clienteId = Array.isArray(clienteRefs) ? clienteRefs[0] : null;
+    const clienteNombre = nombreClienteDesdeRefs(clienteRefs);
+    return `<div class="task-item ${cls}" onclick="abrirActividad('${r.id}')">
+      <div class="task-check" id="check-${r.id}" onclick="completarTarea(event,'${r.id}')"></div>
+      <div class="task-body">
+        <div class="task-name">${f.tipo || 'Actividad'} — ${clienteId ? linkCliente(clienteId, clienteNombre) : '—'}</div>
+        <div class="task-meta">
+          <span class="dot ${dotCls}"></span>
+          <span>${prioridad}</span>
+          ${f.fecha_limite ? `· <span style="font-family:'JetBrains Mono',monospace">${f.fecha_limite}</span>` : ''}
+          ${f.descripcion ? `· <span style="color:var(--t3)">${truncar(f.descripcion,40)}</span>` : ''}
+        </div>
+      </div>
+      <div class="task-right">
+        <span class="badge ${badgeCls}">${f.estado || 'Abierta'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  if (records.length > max) {
+    el.innerHTML += `<div style="font-size:11px;color:var(--t2);text-align:center;padding:8px">+${records.length - max} más · <a href="#" onclick="showPage('tareas',null);return false" style="color:var(--accent)">Ver todas</a></div>`;
+  }
+}
+
+function renderTareasMock() {
+  const mock = [
+    {id:'m1',fields:{tipo:'Renovación',prioridad:'Urgente',estado:'Abierta',cliente:['Jorge Herrera'],fecha_limite:'2026-06-12'}},
+    {id:'m2',fields:{tipo:'Llamada',prioridad:'Alta',estado:'En progreso',cliente:['María Suárez'],fecha_limite:'2026-06-11'}},
+    {id:'m3',fields:{tipo:'Cotización',prioridad:'Media',estado:'Abierta',cliente:['Roberto Castillo']}},
+  ];
+  renderTareas(document.getElementById('tareas-hoy'), mock, 3);
+}
+
+/* ──────────────────────
+   CLIENTES ALERTA
+────────────────────── */
+async function cargarClientesAlerta() {
+  try {
+    const res = await at(CFG.T_CLIENTES, `?filterByFormula={dias_sin_contacto}>10&sort[0][field]=dias_sin_contacto&sort[0][direction]=desc&maxRecords=5`);
+    renderClientesAlerta(res.records || []);
+  } catch {
+    renderClientesAlertaMock();
+  }
+}
+
+function renderClientesAlerta(records) {
+  const el = document.getElementById('clientes-alerta');
+  if (!records.length) { el.innerHTML = `<div class="empty">Sin alertas activas</div>`; return; }
+  el.innerHTML = records.map(r => {
+    const f = r.fields;
+    const dias = f.dias_sin_contacto || 0;
+    const cls = dias > 20 ? 'urgent' : dias > 10 ? 'alert' : '';
+    const dotCls = dias > 20 ? 'dot-danger' : dias > 10 ? 'dot-warn' : 'dot-ok';
+    return `<div class="client-card ${cls}" onclick="abrirFichaCliente('${r.id}')">
+      <div class="cc-header">
+        <div class="cc-name">${linkCliente(r.id, f.nombre_completo || 'Sin nombre')}</div>
+        <span class="dot ${dotCls}"></span>
+      </div>
+      <div class="cc-meta">
+        <span class="cc-dias">${dias}d sin contacto</span>
+        <span>·</span>
+        <span>${f.etapa_journey || 'Sin etapa'}</span>
+      </div>
+      <div class="cc-footer">
+        <span style="font-size:11px;color:var(--t2)">${f.documento || ''}</span>
+        <div class="cc-actions">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();abrirModalActividad('${r.id}','${f.nombre_completo}')">+ Actividad</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderClientesAlertaMock() {
+  renderClientesAlerta([
+    {id:'c1',fields:{nombre_completo:'Jorge Herrera',dias_sin_contacto:22,etapa_journey:'En_negociacion',documento:'79234567'}},
+    {id:'c2',fields:{nombre_completo:'Claudia Vega',dias_sin_contacto:14,etapa_journey:'Cotizacion_enviada',documento:'52891234'}},
+  ]);
+}
+
+/* ──────────────────────
+   JOURNEY KANBAN
+────────────────────── */
+const ETAPAS = [
+  { id:'Prospecto',           label:'Prospecto',          color:'var(--t2)',    dias:3  },
+  { id:'Cotizacion_enviada',  label:'Cotización enviada', color:'var(--accent)',dias:3  },
+  { id:'En_negociacion',      label:'En negociación',     color:'var(--warning)',dias:5 },
+  { id:'Cliente_activo',      label:'Cliente activo',     color:'var(--success)',dias:90},
+  { id:'En_renovacion',       label:'En renovación',      color:'var(--danger)', dias:7 },
+  { id:'Retenido',            label:'Retenido',           color:'var(--success)',dias:999},
+];
+
+async function cargarJourney() {
+  try {
+    const res = await at(CFG.T_CLIENTES, `?fields[]=nombre_completo&fields[]=etapa_journey&fields[]=dias_sin_contacto&fields[]=agente_asignado&maxRecords=100`);
+    Estado.clientes = res.records || [];
+    renderJourney();
+  } catch {
+    renderJourneyMock();
+  }
+}
+
+function renderJourney() {
+  const kanban = document.getElementById('journey-kanban');
+  const cols = ETAPAS.map(etapa => {
+    const cards = Estado.clientes.filter(r => r.fields.etapa_journey === etapa.id);
+    return `<div class="kb-col">
+      <div class="kb-col-hd">
+        <span class="dot" style="background:${etapa.color}"></span>
+        <div class="kb-col-title">${etapa.label}</div>
+        <div class="kb-col-count">${cards.length}</div>
+      </div>
+      <div class="kb-cards">
+        ${cards.length ? cards.map(r => renderClienteCard(r, etapa)).join('') : `<div class="empty" style="padding:16px 8px">Sin clientes</div>`}
+      </div>
+    </div>`;
+  });
+  kanban.innerHTML = cols.join('');
+  document.getElementById('journey-filtro').textContent = `${Estado.clientes.length} clientes`;
+}
+
+function renderClienteCard(r, etapa) {
+  const f = r.fields;
+  const dias = f.dias_sin_contacto || 0;
+  const cls = dias > etapa.dias ? 'urgent' : dias > (etapa.dias * 0.7) ? 'alert' : '';
+  const dotCls = dias > etapa.dias ? 'dot-danger' : dias > (etapa.dias * 0.7) ? 'dot-warn' : 'dot-ok';
+  return `<div class="client-card ${cls}" onclick="abrirFichaCliente('${r.id}')">
+    <div class="cc-header">
+      <div class="cc-name" style="font-size:12px">${linkCliente(r.id, f.nombre_completo || 'Sin nombre')}</div>
+      <span class="dot ${dotCls}" title="${dias} días sin contacto"></span>
+    </div>
+    <div class="cc-meta">
+      <span class="cc-dias">${dias}d</span>
+    </div>
+    <div class="cc-actions" style="opacity:1;margin-top:6px">
+      <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();abrirMoverEtapa('${r.id}','${f.nombre_completo}')">Mover</button>
+      <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();abrirModalActividad('${r.id}','${f.nombre_completo}')">+Act</button>
+    </div>
+  </div>`;
+}
+
+function renderJourneyMock() {
+  Estado.clientes = [
+    {id:'c1',fields:{nombre_completo:'Roberto Castillo',etapa_journey:'Prospecto',dias_sin_contacto:1}},
+    {id:'c2',fields:{nombre_completo:'Familia Ríos',etapa_journey:'Prospecto',dias_sin_contacto:2}},
+    {id:'c3',fields:{nombre_completo:'Jorge Herrera',etapa_journey:'Cotizacion_enviada',dias_sin_contacto:3}},
+    {id:'c4',fields:{nombre_completo:'Ana Martínez',etapa_journey:'En_negociacion',dias_sin_contacto:4}},
+    {id:'c5',fields:{nombre_completo:'Luis Pedraza',etapa_journey:'Cliente_activo',dias_sin_contacto:15}},
+    {id:'c6',fields:{nombre_completo:'Claudia Vega',etapa_journey:'En_renovacion',dias_sin_contacto:6}},
+    {id:'c7',fields:{nombre_completo:'Mario Torres',etapa_journey:'En_renovacion',dias_sin_contacto:9}},
+    {id:'c8',fields:{nombre_completo:'Sandra López',etapa_journey:'Retenido',dias_sin_contacto:30}},
+  ];
+  renderJourney();
+}
+
+/* mover etapa */
+let _moverClienteId = null;
+function abrirMoverEtapa(clienteId, nombre) {
+  _moverClienteId = clienteId;
+  document.getElementById('mover-cliente-info').textContent = `Cliente: ${nombre}`;
+  abrirModal('modal-mover-etapa');
+}
+async function confirmarMoverEtapa() {
+  const etapa = document.getElementById('mover-etapa-sel').value;
+  if (!_moverClienteId) return;
+  try {
+    if (CFG.AIRTABLE_TOKEN !== 'TU_TOKEN_AQUI') {
+      await atUpdate(CFG.T_CLIENTES, _moverClienteId, { etapa_journey: etapa });
+    }
+    const r = Estado.clientes.find(c => c.id === _moverClienteId);
+    if (r) r.fields.etapa_journey = etapa;
+    renderJourney();
+    cerrarModal('modal-mover-etapa');
+    toast(`Movido a ${etapa.replace(/_/g,' ')}`, 'ok');
+  } catch(e) {
+    toast('Error al actualizar', 'err');
+  }
+}
+
+/* ──────────────────────
+   AGENTES — LOG
+────────────────────── */
+async function cargarAgentes() {
+  try {
+    const res = await at(CFG.T_LOG_WORKFLOWS, `?sort[0][field]=timestamp&sort[0][direction]=desc&maxRecords=20`);
+    const logs = res.records || [];
+    renderAgenteLogs(logs);
+  } catch {
+    renderAgentesMock();
+  }
+}
+
+function renderAgenteLogs(logs) {
+  const vigia = logs.filter(r => (r.fields.workflow || '').toLowerCase().includes('vigía') || (r.fields.workflow || '').toLowerCase().includes('renovacion') || (r.fields.agente || '').toLowerCase().includes('a'));
+  const journey = logs.filter(r => (r.fields.workflow || '').toLowerCase().includes('journey') || (r.fields.agente || '').toLowerCase().includes('b'));
+  const todos = logs;
+
+  renderLogSection('vigia-log', 'vigia-status', vigia.length ? vigia : todos.slice(0,5));
+  renderLogSection('journey-agent-log', 'journey-agent-status', journey.length ? journey : []);
+}
+
+function renderLogSection(containerId, statusId, logs) {
+  const el = document.getElementById(containerId);
+  const statusEl = document.getElementById(statusId);
+
+  if (!logs.length) {
+    el.innerHTML = `<div class="empty">Sin ejecuciones registradas</div>`;
+    statusEl.className = 'badge badge-n';
+    statusEl.textContent = 'sin datos';
+    return;
+  }
+
+  const tieneUrgentes = logs.some(r => (r.fields.urgentes || 0) > 0);
+  const tieneErrores = logs.some(r => (r.fields.errores || '') !== '');
+  statusEl.className = tieneErrores ? 'badge badge-danger' : tieneUrgentes ? 'badge badge-warn' : 'badge badge-ok';
+  statusEl.textContent = tieneErrores ? 'con errores' : tieneUrgentes ? 'alertas activas' : 'operando';
+
+  el.innerHTML = logs.slice(0,5).map(r => {
+    const f = r.fields;
+    const ts = f.timestamp ? new Date(f.timestamp).toLocaleString('es-CO',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '—';
+    const urgentes = f.urgentes || 0;
+    const procesadas = f.polizas_procesadas || f.procesadas || 0;
+    const creadas = f.actividades_creadas || 0;
+    const dotCls = urgentes > 0 ? 'dot-warn' : 'dot-ok';
+    return `<div class="agent-row">
+      <span class="dot ${dotCls}" style="margin-top:5px"></span>
+      <div class="agent-row-body">
+        <div class="agent-row-name">${f.workflow || f.agente || 'Workflow automático'}</div>
+        <div class="agent-row-detail">
+          ${procesadas} procesadas · ${creadas} actividades creadas
+          ${urgentes ? `· <span style="color:var(--warning)">${urgentes} urgentes</span>` : ''}
+        </div>
+      </div>
+      <div class="agent-row-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAgentesMock() {
+  const mock = [
+    {id:'l1',fields:{workflow:'P2 — Vigía Renovaciones',timestamp:new Date(Date.now()-3600000).toISOString(),polizas_procesadas:28,actividades_creadas:4,urgentes:2}},
+    {id:'l2',fields:{workflow:'P2 — Vigía Renovaciones',timestamp:new Date(Date.now()-90000000).toISOString(),polizas_procesadas:31,actividades_creadas:3,urgentes:1}},
+    {id:'l3',fields:{workflow:'P4 — Siniestro Urgente',timestamp:new Date(Date.now()-7200000).toISOString(),polizas_procesadas:1,actividades_creadas:1,urgentes:1}},
+  ];
+  renderAgenteLogs(mock);
+}
+
+/* ──────────────────────
+   NOTIFICACIONES
+────────────────────── */
+async function cargarNotifAsesor() {
+  try {
+    const res = await at(CFG.T_ALERTAS, `?sort[0][field]=timestamp&sort[0][direction]=desc&maxRecords=3`);
+    renderNotifItems(document.getElementById('notif-asesor'), res.records || [], true);
+    Estado.alertas = res.records || [];
+    const noLeidas = (res.records || []).filter(r => !r.fields.notificacion_enviada).length;
+    document.getElementById('notif-badge').style.display = noLeidas > 0 ? 'block' : 'none';
+  } catch {
+    document.getElementById('notif-asesor').innerHTML = `<div class="notif-item">
+      <div class="notif-dot-wrap"><span class="dot dot-accent"></span></div>
+      <div class="notif-body"><div class="notif-title">Póliza de Jorge Herrera vence en 7 días</div><div class="notif-sub">Requiere acción urgente — Renovación pendiente</div></div>
+      <div class="notif-time">08:00</div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot-wrap"><span class="dot dot-warn"></span></div>
+      <div class="notif-body"><div class="notif-title">Póliza de Claudia Vega vence en 22 días</div><div class="notif-sub">Crear actividad de renovación</div></div>
+      <div class="notif-time">08:00</div>
+    </div>`;
+  }
+}
+
+async function cargarNotifFull() {
+  try {
+    const res = await at(CFG.T_ALERTAS, `?sort[0][field]=timestamp&sort[0][direction]=desc&maxRecords=30`);
+    renderNotifItems(document.getElementById('notif-full'), res.records || [], false);
+  } catch {
+    document.getElementById('notif-full').innerHTML = `<div class="empty">Sin conexión con Airtable</div>`;
+  }
+}
+
+function renderNotifItems(el, records, compact) {
+  if (!records.length) { el.innerHTML = `<div class="empty">Sin notificaciones</div>`; return; }
+  el.innerHTML = records.map(r => {
+    const f = r.fields;
+    const tipo = f.tipo || 'Alerta';
+    const dotCls = tipo.includes('venc') ? 'dot-danger' : tipo.includes('contacto') ? 'dot-warn' : 'dot-accent';
+    const ts = f.timestamp ? new Date(f.timestamp).toLocaleString('es-CO',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="notif-item">
+      <div class="notif-dot-wrap"><span class="dot ${dotCls}"></span></div>
+      <div class="notif-body">
+        <div class="notif-title">${tipo}</div>
+        ${f.accion ? `<div class="notif-sub">${truncar(f.accion, 80)}</div>` : ''}
+      </div>
+      <div class="notif-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+
+function marcarTodasLeidas() {
+  document.getElementById('notif-badge').style.display = 'none';
+  toast('Notificaciones marcadas como leídas', 'ok');
+}
+
+/* ──────────────────────
+   TRABAJADORES
+────────────────────── */
+async function cargarTrabajadores() {
+  try {
+    const res = await at(CFG.T_TRABAJADORES, `?filterByFormula={activo}=1`);
+    Estado.trabajadores = res.records || [];
+    const sel = document.getElementById('cliente-asesor');
+    Estado.trabajadores.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.fields.nombre || r.id;
+      sel.appendChild(opt);
+    });
+  } catch { /* sin conexión */ }
+}
+
+/* ──────────────────────
+   MODAL CLIENTE
+────────────────────── */
+function abrirClienteModal(clienteId) {
+  const r = Estado.clientes.find(c => c.id === clienteId);
+  if (!r) { abrirModal('modal-cliente'); return; }
+  const f = r.fields;
+  document.getElementById('modal-cliente-titulo').textContent = 'Editar cliente';
+  document.getElementById('cliente-id').value = clienteId;
+  document.getElementById('cliente-nombre').value = f.nombre_completo || '';
+  document.getElementById('cliente-doc').value = f.documento || '';
+  document.getElementById('cliente-tel').value = f.telefono || '';
+  document.getElementById('cliente-email').value = f.email || '';
+  document.getElementById('cliente-estado').value = f.estado || 'Prospecto';
+  document.getElementById('cliente-etapa').value = f.etapa_journey || 'Prospecto';
+  abrirModal('modal-cliente');
+}
+
+async function guardarCliente() {
+  const btn = document.getElementById('btn-guardar-cliente');
+  const id = document.getElementById('cliente-id').value;
+  const fields = {
+    nombre_completo: document.getElementById('cliente-nombre').value.trim(),
+    documento:       document.getElementById('cliente-doc').value.trim(),
+    telefono:        document.getElementById('cliente-tel').value.trim(),
+    email:           document.getElementById('cliente-email').value.trim(),
+    estado:          document.getElementById('cliente-estado').value,
+    etapa_journey:   document.getElementById('cliente-etapa').value,
+  };
+  if (!fields.nombre_completo) { toast('Nombre requerido', 'err'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Guardando...`;
+
+  try {
+    if (CFG.AIRTABLE_TOKEN === 'TU_TOKEN_AQUI') throw new Error('demo');
+    if (id) {
+      await atUpdate(CFG.T_CLIENTES, id, fields);
+      toast('Cliente actualizado', 'ok');
+    } else {
+      await atCreate(CFG.T_CLIENTES, fields);
+      toast('Cliente creado', 'ok');
+    }
+    cerrarModal('modal-cliente');
+    await cargarClientesAlerta();
+  } catch {
+    toast(CFG.AIRTABLE_TOKEN === 'TU_TOKEN_AQUI' ? 'Demo: configura AIRTABLE_TOKEN para guardar' : 'Error al guardar', 'err');
+    cerrarModal('modal-cliente');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar cliente';
+  }
+}
+
+/* ──────────────────────
+   MODAL ACTIVIDAD
+────────────────────── */
+function abrirModalActividad(clienteId, nombre) {
+  document.getElementById('act-cliente-id').value = clienteId || '';
+  document.getElementById('act-cliente').value = nombre || '';
+  document.getElementById('act-descripcion').value = '';
+  // fecha límite default: mañana
+  const manana = new Date(); manana.setDate(manana.getDate() + 1);
+  document.getElementById('act-fecha-limite').value = manana.toISOString().split('T')[0];
+  abrirModal('modal-actividad');
+}
+
+async function registrarActividad() {
+  const btn = document.getElementById('btn-registrar-act');
+  const clienteId = document.getElementById('act-cliente-id').value;
+  const tipo = document.getElementById('act-tipo').value;
+  const resultado = document.getElementById('act-resultado').value;
+  const descripcion = document.getElementById('act-descripcion').value.trim();
+  const prioridad = document.getElementById('act-prioridad').value;
+  const fechaLimite = document.getElementById('act-fecha-limite').value;
+
+  const esSiniestro = tipo === 'Siniestro';
+  const fields = {
+    tipo,
+    resultado,
+    descripcion,
+    prioridad: esSiniestro ? 'Urgente' : prioridad,
+    fecha_limite: fechaLimite || undefined,
+    estado: 'Abierta',
+    fecha_creacion: new Date().toISOString(),
+  };
+  if (clienteId) fields.cliente = [clienteId];
+
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Registrando...`;
+
+  try {
+    if (CFG.AIRTABLE_TOKEN !== 'TU_TOKEN_AQUI') {
+      await atCreate(CFG.T_ACTIVIDADES, fields);
+    }
+    toast(`Actividad registrada +20 XP`, 'ok');
+    cerrarModal('modal-actividad');
+    subirXP(20);
+    await cargarKPIs();
+  } catch {
+    toast('Error al registrar — revisa token', 'err');
+    cerrarModal('modal-actividad');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Registrar +XP';
+  }
+}
+
+/* ──────────────────────
+   AUTOCOMPLETE CLIENTES
+────────────────────── */
+let _autoTimeout;
+async function buscarClienteAuto(q) {
+  clearTimeout(_autoTimeout);
+  const list = document.getElementById('autocomplete-list');
+  if (q.length < 2) { list.classList.remove('open'); return; }
+  _autoTimeout = setTimeout(async () => {
+    try {
+      const formula = `OR(SEARCH("${q.toLowerCase()}",LOWER({nombre_completo})),SEARCH("${q}",{documento}))`;
+      const res = await at(CFG.T_CLIENTES, `?filterByFormula=${encodeURIComponent(formula)}&maxRecords=8`);
+      const items = (res.records || []);
+      if (!items.length) { list.classList.remove('open'); return; }
+      list.innerHTML = items.map(r => `<div class="autocomplete-item" onclick="seleccionarCliente('${r.id}','${escape(r.fields.nombre_completo || '')}')">
+        <strong>${r.fields.nombre_completo || 'Sin nombre'}</strong>
+        <span>${r.fields.documento || ''} · ${r.fields.etapa_journey || ''}</span>
+      </div>`).join('');
+      list.classList.add('open');
+    } catch {
+      // mock
+      list.innerHTML = `<div class="autocomplete-item" onclick="seleccionarCliente('mock','Jorge Herrera')"><strong>Jorge Herrera</strong><span>79234567 · En negociación</span></div>`;
+      list.classList.add('open');
+    }
+  }, 300);
+}
+
+function seleccionarCliente(id, nombre) {
+  document.getElementById('act-cliente').value = unescape(nombre);
+  document.getElementById('act-cliente-id').value = id;
+  document.getElementById('autocomplete-list').classList.remove('open');
+}
+
+/* ──────────────────────
+   INSIGHT IA
+────────────────────── */
+function cargarInsight() {
+  // sin conexión API de Claude — insight pre-generado o mock
+  const insights = [
+    '3 pólizas vencen esta semana. Priorizar llamadas a Jorge Herrera y Mario Torres antes del jueves.',
+    'Claudia Vega lleva 14 días sin contacto en etapa Cotización. Riesgo de perder negociación.',
+    'Semana sin tareas vencidas. +100 XP si mantienes el ritmo hasta el viernes.',
+  ];
+  const idx = Math.floor(Math.random() * insights.length);
+  document.getElementById('insight-content').innerHTML = `<div style="font-size:12px;color:var(--t2);line-height:1.6">${insights[idx]}</div>`;
+}
+
+/* ──────────────────────
+   XP LOCAL
+────────────────────── */
+let xpActual = 620;
+function subirXP(puntos) {
+  xpActual += puntos;
+  const pct = Math.min(100, Math.round((xpActual % 1000) / 10));
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-label').textContent = `${xpActual} XP`;
+  if (xpActual >= 1000) document.getElementById('nivel-badge').textContent = 'Asesor Senior Nv.3';
+}
+
+/* ──────────────────────
+   COMPLETAR TAREA
+────────────────────── */
+async function completarTarea(e, id) {
+  e.stopPropagation();
+  const check = document.getElementById('check-' + id);
+  check.classList.add('done');
+  check.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" fill="none" stroke="#fff" stroke-width="1.8"/></svg>`;
+  try {
+    if (CFG.AIRTABLE_TOKEN !== 'TU_TOKEN_AQUI') {
+      await atUpdate(CFG.T_ACTIVIDADES, id, { estado: 'Completada', fecha_cierre: new Date().toISOString() });
+    }
+    toast('+50 XP — Tarea completada', 'ok');
+    subirXP(50);
+    setTimeout(() => cargarTareasHoy(), 800);
+  } catch { toast('Error al completar', 'err'); }
+}
+
+/* ──────────────────────
+   HELPERS UI
+────────────────────── */
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function togglePanel(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('collapsed');
+}
+
+let _toastTimeout;
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimeout);
+  _toastTimeout = setTimeout(() => t.className = '', 2800);
+}
+
+function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function truncar(str, n) { return str.length > n ? str.slice(0, n) + '…' : str; }
+function escape(s) { return s.replace(/'/g,"&#39;"); }
+
+// cerrar modales al click en overlay
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+});
+
+// cerrar autocomplete al click fuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('open'));
+  }
+});
+</script>
+</body>
+</html>

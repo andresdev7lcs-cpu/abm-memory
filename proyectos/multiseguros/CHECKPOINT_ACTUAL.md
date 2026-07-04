@@ -1,5 +1,12 @@
 # CHECKPOINT — Estado actual del proyecto Multiseguros del Sur
-Fecha: 2026-06-22 | Fuente única de verdad de estado. ESTADO_REAL.md eliminado.
+Fecha: 2026-07-03 | Fuente única de verdad de estado. ESTADO_REAL.md eliminado.
+
+## SESIÓN 2026-07-03 — ARQUITECTURA MILESTONE A ✅
+- Diseño completo entregado en `arquitectura/`: PLAN_ARQUITECTURA_MSDS.md + DECISIONES_PENDIENTES.md + RIESGOS.md
+- 7 system prompts en `system-prompts/` (MasterBot, Gerencia, Supervisor, 4 coordinadores)
+- DDL Milestone A (bots, casos, sla_config+seeds, puntos_asesores, ALTER actividades/comunicaciones) **validado contra Supabase con BEGIN/ROLLBACK** — listo para aplicar, NO aplicado aún
+- Correcciones al master doc: FKs bigint (no uuid), casos NO reemplaza comunicaciones, ALTER actividades recomendado sobre v2, watchdog SLA consolidado (1 cron vs 5)
+- ⚠️ BLOQUEANTE: AP debe responder los 7 ítems de DECISIONES_PENDIENTES.md antes de que CC/Codex construyan
 
 ---
 
@@ -36,6 +43,19 @@ Fecha: 2026-06-22 | Fuente única de verdad de estado. ESTADO_REAL.md eliminado.
   - Restricción confirmada: JS Task Runner 2.8.3 bloquea $env, fetch(), $http — solo HTTP Request nativos
 - ABM reorganizado: andy-rol/ separado de proyectos/multiseguros/
 - Voz (Whisper): ❌ no implementado todavía
+
+### Bloque 5: Componente Comunicaciones (Módulo Comercial) ✅ BASE CONSTRUIDA (2026-07-01)
+- Tabla `comunicaciones` creada en Supabase (canal, direccion, remitente, asunto, mensaje, estado, ref_externa + FKs cliente/asesor/poliza + 4 índices)
+  - SQL: `sql/03_crear_tabla_comunicaciones.sql` — aplicado vía psycopg2 directo (host `db.ekarbxdoaoqrtlmfzgyj.supabase.co:5432`, IPv6)
+- gerencia.html: nueva tab "Comunicaciones" — KPIs (hoy / sin responder / WhatsApp 30d / Email 30d), bandeja con filtros canal/estado/dirección, modal registrar manual con vínculo a cliente por nombre (ilike), acciones Respondida/Cerrar, link a ficha cliente
+- Workflow n8n: `workflows/P5_Comunicaciones_Inbox.json` — Webhook POST `/msds-comunicaciones` → Normalizar → INSERT Supabase (HTTP Request nativo, key placeholder) → Telegram gerente (8695082898) → 200 OK
+  - ⚠️ Pendiente: importar en n8n UI, reemplazar `SUPABASE_ANON_KEY_AQUI` (Bitwarden), asignar credencial Telegram, activar
+  - ⚠️ Pendiente: conectar Evolution API (WhatsApp) al webhook — decisión 2026-06-12: Evolution para piloto, 360dialog para producción
+- Bugs corregidos en gerencia.html durante desarrollo:
+  - `sp()` enviaba header `Range: 0-0` → TODA lista quedaba truncada a 1 fila (verificado con curl). Header eliminado.
+  - `spUpdate()` hacía `r.json()` sobre respuesta vacía de PATCH `return=minimal` → lanzaba error aunque el update funcionara. Ahora retorna `true`.
+- Test end-to-end 2026-07-01: 4 comunicaciones demo insertadas (ids 1-4), KPIs/filtros/PATCH/búsqueda ilike verificados vía REST
+- Dato aprendido: PostgREST bulk INSERT exige keys idénticas en todos los objetos (error `PGRST102`)
 
 ---
 
@@ -74,9 +94,12 @@ proyectos/multiseguros/
 ## PRÓXIMAS ACCIONES (en orden)
 
 1. Rotar service_role key de Supabase MSDS (hallazgo auditoría — pendiente desde 2026-06-21)
-2. Exportar P2 y P3 desde n8n UI → guardar en /workflows/ con nombre y fecha
-3. Eliminar footer n8n en Easypanel
-4. Continuar sprint A1 (próxima sesión)
+2. Importar P5_Comunicaciones_Inbox.json en n8n → key desde Bitwarden + credencial Telegram → activar → test webhook
+3. Abrir gerencia.html en browser y validar tab Comunicaciones (4 demos cargadas, ids 1-4)
+4. Conectar Evolution API (WhatsApp piloto) al webhook P5
+5. Exportar P2 y P3 desde n8n UI → guardar en /workflows/ con nombre y fecha
+6. Eliminar footer n8n en Easypanel
+7. Continuar sprint A1 (próxima sesión)
 
 ---
 

@@ -21,4 +21,6 @@ herramientas/n8n-skills/skills.png
 # Workflows con credenciales hardcodeadas — solo uso local
 proyectos/multiseguros/workflows/AndyBot_Personal.json
 andy-rol/AndyBot_Personal.json
+andy-rol/AndyBot_AI_Agent.json
+andy-rol/AndyBot_Personal_FINAL.json
 *test_supabase*.json
