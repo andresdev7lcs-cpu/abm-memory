@@ -1,7 +1,7 @@
 # MSDS — Checklist Maestra de Construcción
 **Fuente de verdad para Codex y CC**
 **Árbitro de arquitectura: Fable**
-**Última actualización:** 2026-07-04 (D8/D9/D10 confirmadas)
+**Última actualización:** 2026-07-06 (DDL Milestone A ejecutado en producción, asesores/bots reales insertados)
 
 ---
 
@@ -24,20 +24,20 @@
 
 ### Fase A0 — Infraestructura de base de datos
 
-- [ ] A0.1: Ejecutar DDL tabla `bots`
-- [ ] A0.2: Ejecutar DDL tabla `casos`
-- [ ] A0.3: Ejecutar DDL tabla `sla_config` + seeds confirmados
-- [ ] A0.4: Ejecutar DDL tabla `puntos_asesores`
-- [ ] A0.5: Ejecutar ALTER tabla `actividades` (según recomendación Fable — DECISIONES #1)
-- [ ] A0.6: Ejecutar ALTER tabla `comunicaciones` (vincular con casos)
-- [ ] A0.7: Validar DDL completo en Supabase — verificar que no rompe P4 ni P5
+- [x] A0.1: Ejecutar DDL tabla `bots` ✅ (2026-07-06, producción)
+- [x] A0.2: Ejecutar DDL tabla `casos` ✅ (2026-07-06, producción)
+- [x] A0.3: Ejecutar DDL tabla `sla_config` + seeds confirmados ✅ (6 seeds, incluye gestion_cobro)
+- [x] A0.4: Ejecutar DDL tabla `puntos_asesores` ✅ (2026-07-06, producción)
+- [x] A0.5: Ejecutar ALTER tabla `actividades` (según recomendación Fable — DECISIONES #1) ✅
+- [x] A0.6: Ejecutar ALTER tabla `comunicaciones` (vincular con casos) ✅
+- [x] A0.7: Validar DDL completo en Supabase — verificar que no rompe P4 ni P5 ✅ (siniestros/comunicaciones/polizas/actividades → HTTP 200)
 - [ ] A0.8: Confirmar rotación de service_role key expuesta (DECISIONES #7 — validar antigua revocada)
-- [ ] A0.9: Ejecutar DDL tabla vendedores_externos
-- [ ] A0.10: Ejecutar ALTER polizas (vendedor_tipo, vendedor_interno_id, vendedor_externo_id, vendedor_externo_nombre)
+- [x] A0.9: Ejecutar DDL tabla vendedores_externos ✅
+- [x] A0.10: Ejecutar ALTER polizas (vendedor_tipo, vendedor_interno_id, vendedor_externo_id, vendedor_externo_nombre) ✅
 - [ ] A0.11: Verificar que pagador_id en polizas es legacy — documentar o deprecar
-- [ ] A0.12: ALTER TABLE polizas ADD COLUMN estado_cobro
-- [ ] A0.13: ALTER TABLE asesores ADD COLUMN telegram_chat_id + telegram_username
-- [ ] A0.14: Insertar 10 asesores reales en tabla asesores (requiere B6 + chat IDs)
+- [x] A0.12: ALTER TABLE polizas ADD COLUMN estado_cobro ✅
+- [x] A0.13: ALTER TABLE asesores ADD COLUMN telegram_chat_id + telegram_username ✅
+- [x] A0.14: Insertar 10 asesores reales en tabla asesores ✅ (parcial — 11 filas insertadas, solo Fabio/gerencia_neiva tiene chat_id real; resto pendiente B2. Demos ids 1-3 NO borrados: actividades.id=12 tiene FK activa a asesor_id=1, purga es tarea aparte R7)
 
 ### Fase A1 — System prompts
 
@@ -51,16 +51,20 @@
 
 ### Fase A2 — Tokens y credenciales
 
-- [ ] A2.1: Crear @MSDS_Master_bot en BotFather → token en Bitwarden
-- [ ] A2.2: Crear @MSDS_Gerencia_bot en BotFather → token en Bitwarden
-- [ ] A2.3: Crear @MSDS_Supervisor_bot en BotFather → token en Bitwarden
-- [ ] A2.4: Crear @MSDS_Siniestros_bot en BotFather → token en Bitwarden
-- [ ] A2.5: Crear @MSDS_Autos_bot en BotFather → token en Bitwarden
-- [ ] A2.6: Crear @MSDS_Vida_bot en BotFather → token en Bitwarden
-- [ ] A2.7: Crear @MSDS_Cotiza_bot en BotFather → token en Bitwarden
-- [ ] A2.8: Cargar los 7 tokens como credenciales en n8n
-- [ ] A2.9: Cargar token @MSDS_Cartera_bot en Bitwarden + n8n
-- [ ] A2.10: Cargar token @MSDS_Comisiones_bot en Bitwarden + n8n
+- [ ] A2.1: Crear @MSDS_Master_bot ✅ (ya creado)
+- [ ] A2.2: Crear @MSDS_Gerencia_N_bot ✅ (ya creado como @MSDS_Gerencia_bot — verificar si handle coincide o recrear)
+- [ ] A2.3: Crear @MSDS_Gerencia_B_bot — pendiente BotFather
+- [ ] A2.4: Crear @MSDS_Autos_N_bot — pendiente BotFather
+- [ ] A2.5: Crear @MSDS_Autos_R_bot ✅ (ya creado como @MSDS_Autos_bot — verificar)
+- [ ] A2.6: Crear @MSDS_Cartera_bot — pendiente BotFather (límite diario)
+- [ ] A2.7: Crear @MSDS_Caja_bot — pendiente BotFather
+- [ ] A2.8: Crear @MSDS_Generales_bot ✅ (ya creado como @MSDS_Vida_bot — verificar)
+- [ ] A2.9: Crear @MSDS_Cumplimiento_bot — pendiente BotFather
+- [ ] A2.10: Crear @MSDS_Siniestros_bot ✅ (ya creado)
+- [ ] A2.11: Crear @MSDS_Comisiones_bot — pendiente BotFather (límite diario)
+- [ ] A2.12: Crear @MSDS_Supervisor_bot ✅ (ya creado)
+- [ ] A2.13: Cargar todos los tokens en Bitwarden con nomenclatura: "MSDS Telegram — [Handle]"
+- [ ] A2.14: Cargar todos los tokens como credenciales en n8n
 
 ### Fase A3 — Workflows n8n
 

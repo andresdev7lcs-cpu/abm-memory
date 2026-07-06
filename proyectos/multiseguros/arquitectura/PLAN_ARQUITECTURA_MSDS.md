@@ -286,17 +286,26 @@ Cada archivo especifica: identidad · qué PUEDE y qué NO PUEDE · comandos con
 
 ---
 
-## 5. Bots en BotFather (acción manual de AP)
+## 5. Bots en BotFather — tabla definitiva (AP, 2026-07-04)
 
-| Bot | Handle sugerido | Token → Bitwarden como | n8n Credential |
-|---|---|---|---|
-| MasterBot MSDS | `@MSDS_Master_bot` | "MSDS Telegram Master" | `TG_MASTER` |
-| Gerencia Bot | `@MSDS_Gerencia_bot` | "MSDS Telegram Gerencia" | `TG_GERENCIA` |
-| Supervisor Bot | `@MSDS_Supervisor_bot` | "MSDS Telegram Supervisor" | `TG_SUPERVISOR` |
-| Coordinador Siniestros | `@MSDS_Siniestros_bot` | "MSDS Telegram Siniestros" | `TG_SINIESTROS` |
-| Coordinador Autos | `@MSDS_Autos_bot` | "MSDS Telegram Autos" | `TG_AUTOS` |
-| Coordinador Vida | `@MSDS_Vida_bot` | "MSDS Telegram Vida" | `TG_VIDA` |
-| Coordinador Cotizaciones | `@MSDS_Cotiza_bot` | "MSDS Telegram Cotiza" | `TG_COTIZA` |
+**Reemplaza la tabla original de 7 bots.** Handles y asignación de asesores redefinidos por AP.
+
+| Bot | Nombre Telegram | Handle | Asesor | Rol | Token → Bitwarden como |
+|---|---|---|---|---|---|
+| MasterBot | MSDS Master | `@MSDS_Master_bot` | OpenAI | Coordinador central | "MSDS Telegram — @MSDS_Master_bot" |
+| Gerencia Neiva | MSDS Gerencia N | `@MSDS_Gerencia_N_bot` | Fabio | Gerencia Neiva | "MSDS Telegram — @MSDS_Gerencia_N_bot" |
+| Gerencia Bogotá | MSDS Gerencia B | `@MSDS_Gerencia_B_bot` | Santiago | Gerencia Bogotá | "MSDS Telegram — @MSDS_Gerencia_B_bot" |
+| Autos N | MSDS Autos Nuevos | `@MSDS_Autos_N_bot` | Gabriel | Coordinador autos nuevos | "MSDS Telegram — @MSDS_Autos_N_bot" |
+| Autos R | MSDS Autos Ren | `@MSDS_Autos_R_bot` | Valentina | Coordinador autos renovaciones | "MSDS Telegram — @MSDS_Autos_R_bot" |
+| Cartera | MSDS Cartera | `@MSDS_Cartera_bot` | Geraldin | Coordinador cartera | "MSDS Telegram — @MSDS_Cartera_bot" |
+| Caja | MSDS Caja | `@MSDS_Caja_bot` | Natalia | Coordinador caja | "MSDS Telegram — @MSDS_Caja_bot" |
+| Generales | MSDS Generales | `@MSDS_Generales_bot` | Aida | Coordinador generales | "MSDS Telegram — @MSDS_Generales_bot" |
+| Cumplimiento | MSDS Cumplimiento | `@MSDS_Cumplimiento_bot` | Leonela | Coordinador cumplimiento | "MSDS Telegram — @MSDS_Cumplimiento_bot" |
+| Siniestros | MSDS Siniestros | `@MSDS_Siniestros_bot` | Oscar | Coordinador siniestros | "MSDS Telegram — @MSDS_Siniestros_bot" |
+| Comisiones | MSDS Comisiones | `@MSDS_Comisiones_bot` | Yamaira | Coordinador comisiones | "MSDS Telegram — @MSDS_Comisiones_bot" |
+| Supervisor | MSDS Supervisor | `@MSDS_Supervisor_bot` | Jorge | Coordinador técnico | "MSDS Telegram — @MSDS_Supervisor_bot" |
+
+Son 12 bots (no 7) — la arquitectura original (sección 1-3, W01/W02/W03/W10) sigue vigente, solo cambia el mapeo handle↔área↔persona. Áreas "Vida" y "Cotizaciones" del diseño original quedan absorbidas/renombradas en "Generales" y las nuevas áreas Cartera/Caja/Cumplimiento/Comisiones (ver ADDENDUM_01).
 
 Si un handle está tomado, sufijo `_msds` — registrar el definitivo en tabla `bots`.
 `SCMSDS_bot` se mantiene vivo, fuera de producción (recepcionista Fase 3).

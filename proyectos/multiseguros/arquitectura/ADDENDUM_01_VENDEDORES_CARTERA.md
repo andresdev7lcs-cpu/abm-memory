@@ -70,6 +70,7 @@ create index idx_polizas_vendedor_interno on polizas(vendedor_interno_id);
 create index idx_polizas_vendedor_externo on polizas(vendedor_externo_id);
 
 -- 3. MINI-AGENTES Cartera y Comisiones (misma tabla bots del plan original)
+-- Handles definitivos confirmados AP 2026-07-04 — ver PLAN_ARQUITECTURA_MSDS.md sección 5
 insert into bots (nombre, tipo, area, telegram_handle, token_ref, system_prompt_file, chat_id_destino) values
   ('Coordinador Cartera',    'mini_agente', 'cartera',    '@MSDS_Cartera_bot',    'TG_CARTERA',    'system-prompts/MINI_CARTERA_SYSTEM.md',    null),
   ('Coordinador Comisiones', 'mini_agente', 'comisiones', '@MSDS_Comisiones_bot', 'TG_COMISIONES', 'system-prompts/MINI_COMISIONES_SYSTEM.md', null);

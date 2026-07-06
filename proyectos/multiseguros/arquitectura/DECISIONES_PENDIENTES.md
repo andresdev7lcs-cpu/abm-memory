@@ -47,3 +47,5 @@ Bitwarden registra "MSDS Supabase service_role — ACTIVA 2026-06-30". Confirmar
 - **D8 (2026-07-04):** corte de comisión = Opción B, `estado_cobro = 'pagado_por_aseguradora'`. Ver ADDENDUM_01_VENDEDORES_CARTERA.md sección 8.
 - **D9 (2026-07-04):** trigger W11 = Opción A, dispara en INSERT `polizas`, crea tarea automática en `actividades` (tipo `gestion_cobro`, SLA 48h). Ver ADDENDUM_01 sección 8.
 - **D10 (2026-07-04):** chat IDs individuales confirmados — cada asesor físico tiene `telegram_chat_id` + `telegram_username` propios en tabla `asesores`. Ver ADDENDUM_01 sección 8.
+
+**Nota (2026-07-04):** Handles de bots redefinidos por AP el 2026-07-04. 7 bots ya creados en BotFather con handles originales — verificar cuáles coinciden con tabla definitiva y cuáles necesitan recrearse mañana. Ver PLAN_ARQUITECTURA_MSDS.md sección 5 (tabla de 12 bots) y MSDS_CHECKLIST_MAESTRA.md fase A2.
