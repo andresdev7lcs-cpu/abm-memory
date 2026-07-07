@@ -1,0 +1,449 @@
+{
+  "name": "W01 - MasterBot Classifier",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "n106",
+      "name": "Telegram Trigger Master",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Master"
+        }
+      },
+      "webhookId": "telegram-trigger-master"
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $json.message || {};\nconst texto = String(m.text || m.caption || '').trim();\nconst sys = \"Clasificador de Multiseguros del Sur (seguros, Colombia). Responde SOLO JSON: {\\\"tipo_requerimiento\\\": \\\"siniestro|cotizacion|renovacion|consulta\\\", \\\"area\\\": \\\"siniestros|autos_nuevos|autos_renovaciones|generales|cumplimiento\\\", \\\"prioridad\\\": \\\"urgente|alta|normal|baja\\\", \\\"resumen\\\": \\\"max 140 chars\\\", \\\"confianza\\\": 0.0}. siniestro: choque, robo, dano, accidente -> area siniestros, urgente si ocurrio hoy o hay heridos. cotizacion de auto nuevo -> autos_nuevos. renovacion de poliza auto -> autos_renovaciones. polizas de hogar, vida, empresa -> generales. polizas de cumplimiento/contratos -> cumplimiento. Si dudas: consulta/generales/normal con confianza baja.\";\nreturn [{ json: {\n  texto, chat_origen: String(m.chat.id), ref: 'tg-' + m.message_id,\n  remitente: (m.from && (m.from.username || m.from.first_name)) || 'desconocido',\n  oai_body: { model: 'gpt-4o-mini', temperature: 0,\n    response_format: { type: 'json_object' },\n    messages: [{ role: 'system', content: sys }, { role: 'user', content: texto }] }\n} }];"
+      },
+      "id": "n107",
+      "name": "Preparar Clasificacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer OPENAI_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.oai_body) }}"
+      },
+      "id": "n108",
+      "name": "GPT Clasificar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const TIPOS = ['siniestro','cotizacion','renovacion','consulta'];\nconst AREAS = ['siniestros','autos_nuevos','autos_renovaciones','generales','cumplimiento'];\nconst PRIOS = ['urgente','alta','normal','baja'];\nlet r = {};\ntry { r = JSON.parse($json.choices[0].message.content); } catch (e) {}\nconst p = $('Preparar Clasificacion').first().json;\nconst texto = (p.texto || '').toLowerCase();\nlet tipo = TIPOS.includes(r.tipo_requerimiento) ? r.tipo_requerimiento : 'consulta';\nlet area = AREAS.includes(r.area) ? r.area : 'generales';\nlet prioridad = PRIOS.includes(r.prioridad) ? r.prioridad : 'normal';\nlet confianza = typeof r.confianza === 'number' ? r.confianza : 0;\n// palabra clave dura (RIESGOS R2): senal de siniestro que GPT no clasifico\nconst kw = /(choqu|accident|rob(o|aron)|herid|colision|estrell)/;\nlet nota = confianza < 0.6 ? 'REVISAR: confianza baja (' + confianza + ')' : null;\nif (kw.test(texto) && tipo !== 'siniestro') {\n  tipo = 'siniestro'; area = 'siniestros'; prioridad = 'urgente';\n  nota = 'REVISAR: forzado a siniestro por palabra clave';\n}\nreturn [{ json: { tipo, area, prioridad, confianza, nota,\n  resumen: String(r.resumen || texto.slice(0, 140)),\n  texto: p.texto, chat_origen: p.chat_origen, ref: p.ref, remitente: p.remitente } }];"
+      },
+      "id": "n109",
+      "name": "Validar Clasificacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/sla_config?tipo_requerimiento=eq.' + $json.tipo + '&activo=eq.true&limit=1' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n110",
+      "name": "GET SLA Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $input.first().json;\nconst alerta = (s && s.sla_alerta_minutos) || 240;\nconst escala = (s && s.sla_escalar_minutos) || 480;\nconst now = Date.now();\nconst v = $('Validar Clasificacion').first().json;\nreturn [{ json: { ...v,\n  sla_alerta_at: new Date(now + alerta * 60000).toISOString(),\n  sla_escalar_at: new Date(now + escala * 60000).toISOString() } }];"
+      },
+      "id": "n111",
+      "name": "Calcular SLA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/asesores?ramo=eq.' + $json.area + '&activo=eq.true&select=id,nombre,telegram_chat_id&order=id' }}}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n112",
+      "name": "GET Asesores Area",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const asesores = $input.all().map(i => i.json).filter(a => a && a.id !== undefined);\nconst v = $('Calcular SLA').first().json;\n// preferir asesor con chat_id; si el area no tiene asesor -> supervisor queda a cargo via alerta\nconst a = asesores.find(x => x.telegram_chat_id) || asesores[0] || null;\nconst notas = [v.nota, a ? null : 'SIN ASESOR DE AREA - requiere asignacion manual'].filter(Boolean).join(' | ') || null;\nreturn [{ json: { ...v, asesor_id: a ? a.id : null,\n  asesor_nombre: a ? a.nombre : 'sin asignar',\n  asesor_chat: a && a.telegram_chat_id ? String(a.telegram_chat_id) : '',\n  caso_body: { canal_origen: 'telegram', tipo_requerimiento: v.tipo, area: v.area,\n    estado: 'abierto', prioridad: v.prioridad, asesor_id: a ? a.id : null,\n    sla_alerta_at: v.sla_alerta_at, sla_escalar_at: v.sla_escalar_at,\n    ref_externa: v.ref, resumen: v.resumen, notas } } }];"
+      },
+      "id": "n113",
+      "name": "Elegir Asesor y Armar Caso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/casos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.caso_body) }}"
+      },
+      "id": "n114",
+      "name": "Crear Caso",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/comunicaciones",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ canal: 'telegram', direccion: 'entrante', remitente: $('Elegir Asesor y Armar Caso').first().json.remitente, mensaje: $('Elegir Asesor y Armar Caso').first().json.texto, estado: 'nueva', caso_id: $json.id, ref_externa: $('Elegir Asesor y Armar Caso').first().json.ref }) }}"
+      },
+      "id": "n115",
+      "name": "Registrar Comunicacion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/msds-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ area: $('Elegir Asesor y Armar Caso').first().json.area, chat_id: $('Elegir Asesor y Armar Caso').first().json.asesor_chat, texto: 'Nuevo caso #' + $('Crear Caso').first().json.id + ' - ' + $('Elegir Asesor y Armar Caso').first().json.tipo + ' (' + $('Elegir Asesor y Armar Caso').first().json.prioridad + ')\\n' + $('Elegir Asesor y Armar Caso').first().json.resumen + '\\nAsesor: ' + $('Elegir Asesor y Armar Caso').first().json.asesor_nombre }) }}"
+      },
+      "id": "n116",
+      "name": "Notificar Area",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Elegir Asesor y Armar Caso').first().json.chat_origen }}",
+        "text": "={{ 'Recibido. Tu solicitud quedo registrada como caso #' + $('Crear Caso').first().json.id + '. El area de ' + $('Elegir Asesor y Armar Caso').first().json.area.replace('_', ' ') + ' te contactara pronto.' }}",
+        "additionalFields": {}
+      },
+      "id": "n117",
+      "name": "Confirmar Remitente",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2200,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Master"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger Master": {
+      "main": [
+        [
+          {
+            "node": "Preparar Clasificacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Clasificacion": {
+      "main": [
+        [
+          {
+            "node": "GPT Clasificar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT Clasificar": {
+      "main": [
+        [
+          {
+            "node": "Validar Clasificacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Clasificacion": {
+      "main": [
+        [
+          {
+            "node": "GET SLA Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET SLA Config": {
+      "main": [
+        [
+          {
+            "node": "Calcular SLA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular SLA": {
+      "main": [
+        [
+          {
+            "node": "GET Asesores Area",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Asesores Area": {
+      "main": [
+        [
+          {
+            "node": "Elegir Asesor y Armar Caso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir Asesor y Armar Caso": {
+      "main": [
+        [
+          {
+            "node": "Crear Caso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Caso": {
+      "main": [
+        [
+          {
+            "node": "Registrar Comunicacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Comunicacion": {
+      "main": [
+        [
+          {
+            "node": "Notificar Area",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Area": {
+      "main": [
+        [
+          {
+            "node": "Confirmar Remitente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "msds",
+    "nota": "Clasifica GPT-4o-mini -> crea caso con SLA -> notifica area via W00 -> confirma al remitente."
+  },
+  "tags": []
+}

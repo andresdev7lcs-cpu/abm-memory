@@ -1,0 +1,334 @@
+{
+  "name": "W11 - Cartera Notifier",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "msds-cartera-notify",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "n127",
+      "name": "Webhook Poliza Nueva",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "msds-cartera-notify"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/polizas?id=eq.' + encodeURIComponent(String($json.body.poliza_id || 0)) + '&select=id,numero,prima,aseguradora,ramo,vendedor_tipo,vendedor_externo_nombre,cliente:clientes!polizas_cliente_id_fkey(nombre)' }}}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n128",
+      "name": "GET Poliza",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/asesores?ramo=eq.cartera&activo=eq.true&limit=1&select=id,nombre,telegram_chat_id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n129",
+      "name": "GET Asesor Cartera",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('GET Poliza').first().json;\nconst a = $input.first().json;\nif (!p || p.id === undefined) return [{ json: { ok: false, error: 'poliza no encontrada' } }];\nconst cliente = (p.cliente && p.cliente.nombre) || 'sin cliente';\nconst prima = p.prima ? '$' + Number(p.prima).toLocaleString('es-CO') : 'sin prima';\nreturn [{ json: { ok: true,\n  asesor_id: (a && a.id) || null,\n  chat_id: a && a.telegram_chat_id ? String(a.telegram_chat_id) : '',\n  hoy: new Date().toISOString().slice(0, 10),\n  descripcion: 'Gestionar pago prima poliza ' + (p.numero || p.id) + ' - cliente ' + cliente,\n  texto: 'PENDIENTE COBRO\\nPoliza ' + (p.numero || '#' + p.id) + ' (' + (p.ramo || '?') + ')' +\n    '\\nCliente: ' + cliente + '\\nPrima: ' + prima +\n    '\\nAseguradora: ' + (p.aseguradora || '?') +\n    '\\nVendedor: ' + (p.vendedor_tipo || 'sin registrar') +\n    (p.vendedor_externo_nombre ? ' (' + p.vendedor_externo_nombre + ')' : '') +\n    '\\nSLA primer contacto: 48h' } }];"
+      },
+      "id": "n130",
+      "name": "Armar Gestion Cobro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "n131",
+              "leftValue": "={{ $json.ok ? \"si\" : \"no\" }}",
+              "rightValue": "si",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n132",
+      "name": "Poliza OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/actividades",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ asesor_id: $json.asesor_id, clase: 'gestion_cobro', descripcion: $json.descripcion, estado: 'pendiente', sla_horas: 48, fecha_inicio: $json.hoy }) }}"
+      },
+      "id": "n133",
+      "name": "Crear Actividad Cobro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/msds-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ area: 'cartera', chat_id: $('Armar Gestion Cobro').first().json.chat_id, texto: $('Armar Gestion Cobro').first().json.texto }) }}"
+      },
+      "id": "n134",
+      "name": "Notificar Cartera",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        200
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\": true}",
+        "options": {}
+      },
+      "id": "n135",
+      "name": "Respuesta OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\": false, \"error\": \"poliza no encontrada\"}",
+        "options": {}
+      },
+      "id": "n136",
+      "name": "Respuesta Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        420
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Poliza Nueva": {
+      "main": [
+        [
+          {
+            "node": "GET Poliza",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Poliza": {
+      "main": [
+        [
+          {
+            "node": "GET Asesor Cartera",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Asesor Cartera": {
+      "main": [
+        [
+          {
+            "node": "Armar Gestion Cobro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar Gestion Cobro": {
+      "main": [
+        [
+          {
+            "node": "Poliza OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poliza OK": {
+      "main": [
+        [
+          {
+            "node": "Crear Actividad Cobro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Actividad Cobro": {
+      "main": [
+        [
+          {
+            "node": "Notificar Cartera",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Cartera": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "msds",
+    "nota": "INSERT polizas -> POST {poliza_id} a este webhook -> tarea gestion_cobro (48h) + notificacion a Cartera. D9 opcion A, D12: columna clase."
+  },
+  "tags": []
+}

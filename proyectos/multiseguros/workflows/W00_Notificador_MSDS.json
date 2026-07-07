@@ -1,0 +1,890 @@
+{
+  "name": "W00 - Notificador MSDS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "msds-notify",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "n001",
+      "name": "Webhook Notify",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "webhookId": "msds-notify"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body || {};\nreturn [{ json: {\n  area: String(b.area || 'gerencia_neiva'),\n  chat_id: String(b.chat_id || '') || '8695082898',\n  texto: String(b.texto || '(sin texto)')\n} }];"
+      },
+      "id": "n002",
+      "name": "Normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n003",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "gerencia_neiva",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "gerencia_neiva"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n004",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "gerencia_bogota",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "gerencia_bogota"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n005",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "autos_nuevos",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "autos_nuevos"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n006",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "autos_renovaciones",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "autos_renovaciones"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n007",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "cartera",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cartera"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n008",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "caja",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "caja"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n009",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "generales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "generales"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n010",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "cumplimiento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cumplimiento"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n011",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "siniestros",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "siniestros"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n012",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "comisiones",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "comisiones"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n013",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "supervisor",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "supervisor"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n014",
+                    "leftValue": "={{ $json.area }}",
+                    "rightValue": "master",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "master"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "n015",
+      "name": "Switch Area",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        420,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\": true}",
+        "options": {}
+      },
+      "id": "n016",
+      "name": "Respuesta OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n017",
+      "name": "TG gerencia_neiva",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        60
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Gerencia N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n018",
+      "name": "TG gerencia_bogota",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        130
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Gerencia B"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n019",
+      "name": "TG autos_nuevos",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Autos N"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n020",
+      "name": "TG autos_renovaciones",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        270
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Autos R"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n021",
+      "name": "TG cartera",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        340
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Cartera"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n022",
+      "name": "TG caja",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        410
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Caja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n023",
+      "name": "TG generales",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        480
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Generales"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n024",
+      "name": "TG cumplimiento",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        550
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Cumplimiento"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n025",
+      "name": "TG siniestros",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        620
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Siniestros"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n026",
+      "name": "TG comisiones",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        690
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Comisiones"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n027",
+      "name": "TG supervisor",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        760
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Supervisor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n028",
+      "name": "TG master",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        830
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Master"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8695082898",
+        "text": "={{ \"[área desconocida: \" + $json.area + \"] \" + $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n029",
+      "name": "TG fallback Gerencia N",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        900
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Gerencia N"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Notify": {
+      "main": [
+        [
+          {
+            "node": "Normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar": {
+      "main": [
+        [
+          {
+            "node": "Switch Area",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Area": {
+      "main": [
+        [
+          {
+            "node": "TG gerencia_neiva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG gerencia_bogota",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG autos_nuevos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG autos_renovaciones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG cartera",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG caja",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG generales",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG cumplimiento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG siniestros",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG comisiones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG supervisor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG master",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TG fallback Gerencia N",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG gerencia_neiva": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG gerencia_bogota": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG autos_nuevos": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG autos_renovaciones": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG cartera": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG caja": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG generales": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG cumplimiento": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG siniestros": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG comisiones": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG supervisor": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG master": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG fallback Gerencia N": {
+      "main": [
+        [
+          {
+            "node": "Respuesta OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "msds",
+    "nota": "Router central de notificaciones Telegram. 12 credenciales, una por bot. D11."
+  },
+  "tags": []
+}

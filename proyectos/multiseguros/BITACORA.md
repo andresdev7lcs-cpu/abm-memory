@@ -25,3 +25,12 @@ Pendiente: subir a GitHub, montar Bitwarden, decidir Supabase, importar P2.
 ## 2026-06-11
 Sprint Final MVP. P3 y P4 activos. P2 con JSON listo pero sin importar.
 Supabase Sprint Tracker configurado.
+
+## 2026-07-07 — Sesión ejecutor Milestone A (Fable)
+
+- Tokens 12 bots validados con getMe: 11 OK, handles coinciden con tabla `bots`. **@MSDS_Caja_bot token truncado — AP debe re-copiar/regenerar.**
+- 6 workflows construidos y validados (JSON en /workflows/): W00 Notificador (nuevo, D11), W01 MasterBot, W02 Gerencia, W03 Supervisor, W10 SLA Watchdog, W11 Cartera.
+- Tests DB-level pasados: P4/P5 tablas 200 OK; embeds asesores/clientes OK (FK desambiguada en polizas); ciclo SLA completo con caso sintético (alerta→escala→exclusión→delete).
+- Desviaciones registradas D11-D13 en DECISIONES_PENDIENTES.md (W00 por credencial dinámica imposible; columna `clase` no `tipo`; no duplicar area/bot_handle en asesores).
+- BLOQUEANTES para activar: (1) AP carga 12 credenciales en n8n UI (sin API key no se puede automatizar), (2) reemplazar placeholders SUPABASE_KEY_AQUI/OPENAI_KEY_AQUI/SUPERVISOR_CHAT_ID_AQUI, (3) Fabio debe dar /start a @MSDS_Gerencia_N_bot (getChat: chat not found), (4) token Caja.
+- Tests en vivo (A4: /pendientes de Fabio, SLA 15/30 min real, póliza→Cartera) requieren workflows importados y activos — no ejecutables desde local.

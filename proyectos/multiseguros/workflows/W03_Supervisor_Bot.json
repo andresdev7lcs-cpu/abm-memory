@@ -1,0 +1,1183 @@
+{
+  "name": "W03 - Supervisor Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "n068",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        500
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Supervisor"
+        }
+      },
+      "webhookId": "telegram-trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "n069",
+              "leftValue": "={{ String($json.message.chat.id) }}",
+              "rightValue": "SUPERVISOR_CHAT_ID_AQUI",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n070",
+      "name": "Autorizado",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "No autorizado.",
+        "additionalFields": {}
+      },
+      "id": "n071",
+      "name": "No Autorizado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        700
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Supervisor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "n072",
+              "leftValue": "={{ $json.message.voice ? \"si\" : \"no\" }}",
+              "rightValue": "si",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n073",
+      "name": "Es Voz",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "n074",
+      "name": "Descargar Voz",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        600,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Supervisor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer OPENAI_KEY_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n075",
+      "name": "Whisper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { texto: $json.text || '' } }];"
+      },
+      "id": "n076",
+      "name": "Texto de Voz",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { texto: $json.message.text || '' } }];"
+      },
+      "id": "n077",
+      "name": "Texto Directo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const t = String($json.texto || '').trim();\nlet cmd = 'libre', arg = '';\nconst m = t.match(/^\\/(\\w+)\\s*(.*)$/);\nif (m) {\n  const c = m[1].toLowerCase();\n  if (['pendientes','proceso','criticos','resumen'].includes(c)) { cmd = c; arg = m[2].trim(); }\n}\nreturn [{ json: { cmd, arg, texto: t } }];"
+      },
+      "id": "n078",
+      "name": "Detectar Comando",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n079",
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "pendientes",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pendientes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n080",
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "proceso",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "proceso"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n081",
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "criticos",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "criticos"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "n082",
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "resumen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resumen"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "n083",
+      "name": "Switch Comando",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1400,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/actividades?estado=in.(pendiente,abierta)&order=fecha_inicio.asc&limit=15&select=id,clase,descripcion,estado,fecha_inicio,asesores(nombre)",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n084",
+      "name": "GET Pendientes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        100
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.id !== undefined);\nif (!rows.length) return [{ json: { texto: 'Sin tareas pendientes.' } }];\nconst L = rows.map(a => '#' + a.id + ' - ' + (a.clase || 'tarea') + ' - ' +\n  String(a.descripcion || '').slice(0, 60) + ' - ' + ((a.asesores && a.asesores.nombre) || 'sin asesor'));\nreturn [{ json: { texto: 'Tareas pendientes (' + rows.length + '):\\n' + L.join('\\n') } }];"
+      },
+      "id": "n085",
+      "name": "Formato Pendientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/casos?id=eq.' + encodeURIComponent($json.arg) + '&select=*,asesores(nombre),clientes(nombre)' }}}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n086",
+      "name": "GET Proceso",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        260
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nif (!c || c.id === undefined) return [{ json: { texto: 'No encuentro ese caso. Uso: /proceso 123' } }];\nconst t = ['Caso #' + c.id + ' - ' + c.tipo_requerimiento + ' (' + c.area + ')',\n 'Estado: ' + c.estado + ' - prioridad ' + c.prioridad,\n 'Cliente: ' + ((c.clientes && c.clientes.nombre) || 'sin identificar'),\n 'Asesor: ' + ((c.asesores && c.asesores.nombre) || 'sin asignar'),\n 'Abierto: ' + (c.creado_en || '').slice(0, 16).replace('T', ' '),\n 'SLA escala: ' + (c.sla_escalar_at || '-').slice(0, 16).replace('T', ' '),\n c.escalado ? 'ESCALADO' : (c.alertado ? 'Alertado' : 'En tiempo'),\n c.resumen ? 'Resumen: ' + c.resumen : ''].filter(Boolean);\nreturn [{ json: { texto: t.join('\\n') } }];"
+      },
+      "id": "n087",
+      "name": "Formato Proceso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/casos?escalado=eq.true&estado=neq.cerrado&order=creado_en.asc&select=id,area,tipo_requerimiento,prioridad,creado_en,asesores(nombre)&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n088",
+      "name": "GET Criticos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        420
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.id !== undefined);\nif (!rows.length) return [{ json: { texto: 'Sin casos criticos. Todo en orden.' } }];\nconst now = Date.now();\nconst L = rows.map(c => {\n  const h = Math.round((now - new Date(c.creado_en).getTime()) / 3600000);\n  return '#' + c.id + ' - ' + c.tipo_requerimiento + ' (' + c.area + ') - ' + h + 'h abierto - ' +\n    ((c.asesores && c.asesores.nombre) || 'sin asesor');\n});\nreturn [{ json: { texto: 'CRITICOS (' + rows.length + '):\\n' + L.join('\\n') } }];"
+      },
+      "id": "n089",
+      "name": "Formato Criticos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/casos?select=estado,prioridad,alertado,escalado,creado_en,cerrado_en&limit=1000",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n090",
+      "name": "GET Resumen Casos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        580
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.estado !== undefined);\nconst hoy = new Date().toISOString().slice(0, 10);\nconst abiertos = rows.filter(c => ['abierto','en_curso','escalado'].includes(c.estado));\nconst cerradosHoy = rows.filter(c => (c.cerrado_en || '').slice(0, 10) === hoy);\nconst urgentes = abiertos.filter(c => c.prioridad === 'urgente');\nconst sinResp = abiertos.filter(c => c.alertado);\nconst t = ['Resumen ' + hoy + ':',\n '- Casos abiertos: ' + abiertos.length,\n '- Cerrados hoy: ' + cerradosHoy.length,\n '- Urgentes abiertos: ' + urgentes.length,\n '- Con SLA vencido (sin respuesta): ' + sinResp.length,\n '- Escalados activos: ' + abiertos.filter(c => c.escalado).length];\nreturn [{ json: { texto: t.join('\\n') } }];"
+      },
+      "id": "n091",
+      "name": "Formato Resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "SUPERVISOR_CHAT_ID_AQUI",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {}
+      },
+      "id": "n092",
+      "name": "Responder",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2250,
+        340
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "__PENDIENTE__",
+          "name": "MSDS Bot — Supervisor"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sys = \"Eres el asistente del gerente de Multiseguros del Sur (seguros, Colombia). Analiza su mensaje y responde SOLO un JSON: {\\\"es_tarea\\\": true|false, \\\"asesor_nombre\\\": \\\"\\\", \\\"descripcion\\\": \\\"\\\", \\\"prioridad\\\": \\\"urgente|alta|normal\\\", \\\"respuesta\\\": \\\"\\\"}. es_tarea=true si pide crear una tarea, reunion, recordatorio o asignacion para alguien del equipo (Fabio, Santiago, Gabriel, Valentina, Geraldin, Natalia, Aida, Leonela, Oscar, Yamaira, Jorge). Si es consulta o charla: es_tarea=false y llena respuesta con contestacion breve en espanol, texto plano. Nunca inventes datos del CRM: si pide datos que no tienes, sugiere usar /pendientes /criticos /resumen /proceso.\";\nreturn [{ json: { texto: $json.texto, oai_body: {\n  model: 'gpt-4o-mini', temperature: 0,\n  response_format: { type: 'json_object' },\n  messages: [{ role: 'system', content: sys }, { role: 'user', content: $json.texto }]\n} } }];"
+      },
+      "id": "n093",
+      "name": "Preparar GPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer OPENAI_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.oai_body) }}"
+      },
+      "id": "n094",
+      "name": "GPT Interpretar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1850,
+        760
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "let r = { es_tarea: false, respuesta: 'No pude interpretar el mensaje. Intenta con /pendientes, /criticos, /resumen o /proceso [id].' };\ntry { r = JSON.parse($json.choices[0].message.content); } catch (e) {}\nreturn [{ json: {\n  es_tarea: !!r.es_tarea,\n  asesor_nombre: String(r.asesor_nombre || ''),\n  descripcion: String(r.descripcion || ''),\n  prioridad: ['urgente','alta','normal'].includes(r.prioridad) ? r.prioridad : 'normal',\n  respuesta: String(r.respuesta || 'Listo.')\n} }];"
+      },
+      "id": "n095",
+      "name": "Parsear GPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "n096",
+              "leftValue": "={{ $json.es_tarea ? \"si\" : \"no\" }}",
+              "rightValue": "si",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n097",
+      "name": "Es Tarea",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2250,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { texto: $json.respuesta } }];"
+      },
+      "id": "n098",
+      "name": "Respuesta Libre",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2450,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/asesores?nombre=ilike.*' + encodeURIComponent($json.asesor_nombre) + '*&activo=eq.true&limit=1&select=id,nombre,ramo,telegram_chat_id' }}}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n099",
+      "name": "Buscar Asesor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2450,
+        660
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\nconst g = $('Parsear GPT').first().json;\nif (!a || a.id === undefined) return [{ json: { ok: false,\n  texto: 'No encontre al asesor \"' + g.asesor_nombre + '\". Tarea NO creada.' } }];\nreturn [{ json: { ok: true, asesor_id: a.id, asesor_nombre: a.nombre, area: a.ramo,\n  chat_id: a.telegram_chat_id ? String(a.telegram_chat_id) : '',\n  descripcion: g.descripcion, prioridad: g.prioridad,\n  hoy: new Date().toISOString().slice(0, 10),\n  texto: 'Tarea creada para ' + a.nombre + ': ' + g.descripcion } }];"
+      },
+      "id": "n100",
+      "name": "Armar Tarea",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2650,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "n101",
+              "leftValue": "={{ $json.ok ? \"si\" : \"no\" }}",
+              "rightValue": "si",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n102",
+      "name": "Asesor OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2850,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/actividades",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer SUPABASE_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ asesor_id: $json.asesor_id, clase: 'tarea', descripcion: $json.descripcion + ' [prioridad: ' + $json.prioridad + ']', estado: 'pendiente', fecha_inicio: $json.hoy }) }}"
+      },
+      "id": "n103",
+      "name": "Crear Actividad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3050,
+        560
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/msds-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ area: $('Armar Tarea').first().json.area, chat_id: $('Armar Tarea').first().json.chat_id, texto: 'Nueva tarea de gerencia: ' + $('Armar Tarea').first().json.descripcion }) }}"
+      },
+      "id": "n104",
+      "name": "Notificar Asesor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3250,
+        560
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { texto: $('Armar Tarea').first().json.texto + ' Notificado.' } }];"
+      },
+      "id": "n105",
+      "name": "Confirmacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3450,
+        560
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizado": {
+      "main": [
+        [
+          {
+            "node": "Es Voz",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Voz": {
+      "main": [
+        [
+          {
+            "node": "Descargar Voz",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Texto Directo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar Voz": {
+      "main": [
+        [
+          {
+            "node": "Whisper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper": {
+      "main": [
+        [
+          {
+            "node": "Texto de Voz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texto de Voz": {
+      "main": [
+        [
+          {
+            "node": "Detectar Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texto Directo": {
+      "main": [
+        [
+          {
+            "node": "Detectar Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Comando": {
+      "main": [
+        [
+          {
+            "node": "Switch Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Comando": {
+      "main": [
+        [
+          {
+            "node": "GET Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Proceso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Criticos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Resumen Casos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Formato Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Proceso": {
+      "main": [
+        [
+          {
+            "node": "Formato Proceso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Criticos": {
+      "main": [
+        [
+          {
+            "node": "Formato Criticos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Resumen Casos": {
+      "main": [
+        [
+          {
+            "node": "Formato Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato Proceso": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato Criticos": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato Resumen": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar GPT": {
+      "main": [
+        [
+          {
+            "node": "GPT Interpretar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT Interpretar": {
+      "main": [
+        [
+          {
+            "node": "Parsear GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear GPT": {
+      "main": [
+        [
+          {
+            "node": "Es Tarea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Tarea": {
+      "main": [
+        [
+          {
+            "node": "Buscar Asesor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta Libre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta Libre": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Asesor": {
+      "main": [
+        [
+          {
+            "node": "Armar Tarea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar Tarea": {
+      "main": [
+        [
+          {
+            "node": "Asesor OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asesor OK": {
+      "main": [
+        [
+          {
+            "node": "Crear Actividad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Actividad": {
+      "main": [
+        [
+          {
+            "node": "Notificar Asesor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Asesor": {
+      "main": [
+        [
+          {
+            "node": "Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "msds",
+    "nota": "Comandos: /pendientes /proceso [id] /criticos /resumen + mensaje libre (GPT) + voz (Whisper)."
+  },
+  "tags": []
+}

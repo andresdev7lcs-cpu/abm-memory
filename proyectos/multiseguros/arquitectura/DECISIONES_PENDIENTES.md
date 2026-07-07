@@ -49,3 +49,12 @@ Bitwarden registra "MSDS Supabase service_role — ACTIVA 2026-06-30". Confirmar
 - **D10 (2026-07-04):** chat IDs individuales confirmados — cada asesor físico tiene `telegram_chat_id` + `telegram_username` propios en tabla `asesores`. Ver ADDENDUM_01 sección 8.
 
 **Nota (2026-07-04):** Handles de bots redefinidos por AP el 2026-07-04. 7 bots ya creados en BotFather con handles originales — verificar cuáles coinciden con tabla definitiva y cuáles necesitan recrearse mañana. Ver PLAN_ARQUITECTURA_MSDS.md sección 5 (tabla de 12 bots) y MSDS_CHECKLIST_MAESTRA.md fase A2.
+
+---
+
+## Desviaciones de construcción (Fable ejecutor — 2026-07-07)
+
+- **D11 — W00 Notificador (nuevo workflow):** n8n no permite seleccionar credencial Telegram dinámicamente por item. Solución: workflow interno `W00 Notificador` — webhook `POST /msds-notify` con `{area, chat_id, texto}` → Switch por área → 12 nodos Telegram, cada uno con su credencial fija. W01/W02/W03/W10/W11 notifican vía este webhook. Un solo lugar concentra las 12 credenciales; agregar bot = un branch nuevo. Fallback: área desconocida o `chat_id` vacío → Gerencia N (8695082898).
+- **D12 — Columna `clase`, no `tipo`:** ADDENDUM_01 sección 8 (D9) escribe `insert into actividades (tipo, ...)` pero la columna real es `clase` (schema 01). W11 usa `clase='gestion_cobro'`.
+- **D13 — No se agregan columnas `area`/`bot_handle` a `asesores`:** `ramo` ya contiene el área (gerencia_neiva, autos_nuevos, …) y el handle se resuelve vía `bots.area = asesores.ramo`. Duplicar la columna crearía deriva de datos. Verificado 2026-07-07: filas reales usan `ramo` con los valores de área.
+- **Hallazgo — token Caja inválido (2026-07-07):** getMe devuelve `Unauthorized`; el token entregado está truncado (27 chars tras `:`, lo normal ~35). AP: re-copiar token completo de @MSDS_Caja_bot en BotFather (o regenerarlo) → Bitwarden → credencial n8n "MSDS Bot — Caja". Los otros 11 tokens validados OK y sus handles coinciden con la tabla `bots`.

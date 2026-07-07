@@ -1,7 +1,7 @@
 # MSDS — Checklist Maestra de Construcción
 **Fuente de verdad para Codex y CC**
 **Árbitro de arquitectura: Fable**
-**Última actualización:** 2026-07-06 (DDL Milestone A ejecutado en producción, asesores/bots reales insertados)
+**Última actualización:** 2026-07-07 (6 workflows construidos y validados a nivel DB; tokens 11/12 verificados; pendiente importación manual en n8n UI)
 
 ---
 
@@ -51,35 +51,30 @@
 
 ### Fase A2 — Tokens y credenciales
 
-- [ ] A2.1: Crear @MSDS_Master_bot ✅ (ya creado)
-- [ ] A2.2: Crear @MSDS_Gerencia_N_bot ✅ (ya creado como @MSDS_Gerencia_bot — verificar si handle coincide o recrear)
-- [ ] A2.3: Crear @MSDS_Gerencia_B_bot — pendiente BotFather
-- [ ] A2.4: Crear @MSDS_Autos_N_bot — pendiente BotFather
-- [ ] A2.5: Crear @MSDS_Autos_R_bot ✅ (ya creado como @MSDS_Autos_bot — verificar)
-- [ ] A2.6: Crear @MSDS_Cartera_bot — pendiente BotFather (límite diario)
-- [ ] A2.7: Crear @MSDS_Caja_bot — pendiente BotFather
-- [ ] A2.8: Crear @MSDS_Generales_bot ✅ (ya creado como @MSDS_Vida_bot — verificar)
-- [ ] A2.9: Crear @MSDS_Cumplimiento_bot — pendiente BotFather
-- [ ] A2.10: Crear @MSDS_Siniestros_bot ✅ (ya creado)
-- [ ] A2.11: Crear @MSDS_Comisiones_bot — pendiente BotFather (límite diario)
-- [ ] A2.12: Crear @MSDS_Supervisor_bot ✅ (ya creado)
-- [ ] A2.13: Cargar todos los tokens en Bitwarden con nomenclatura: "MSDS Telegram — [Handle]"
-- [ ] A2.14: Cargar todos los tokens como credenciales en n8n
+- [x] A2.1–A2.12: 12 bots creados en BotFather ✅ (2026-07-07: getMe verificado — 11 tokens válidos, handles coinciden exacto con tabla `bots`)
+  - ⚠️ **Token @MSDS_Caja_bot INVÁLIDO** — truncado (27 chars tras `:`, normal ~35). AP: re-copiar de BotFather o regenerar.
+- [ ] A2.13: Cargar todos los tokens en Bitwarden con nomenclatura: "MSDS Bot — [Nombre]" (manual AP)
+- [ ] A2.14: Cargar tokens como credenciales Telegram en n8n UI (manual AP — no hay API key de n8n disponible). Nombres EXACTOS (los workflows los referencian así):
+  `MSDS Bot — Master` · `MSDS Bot — Gerencia N` · `MSDS Bot — Gerencia B` · `MSDS Bot — Autos N` · `MSDS Bot — Autos R` · `MSDS Bot — Cartera` · `MSDS Bot — Caja` · `MSDS Bot — Generales` · `MSDS Bot — Cumplimiento` · `MSDS Bot — Siniestros` · `MSDS Bot — Comisiones` · `MSDS Bot — Supervisor`
+- [ ] A2.15: **NUEVO BLOQUEANTE** — Fabio debe abrir @MSDS_Gerencia_N_bot y presionar Start (getChat 2026-07-07 → "chat not found"; sin /start el bot no puede escribirle). Ídem cada asesor con el bot de su área.
 
 ### Fase A3 — Workflows n8n
 
-- [ ] A3.1: W01 MasterBot Classifier — construir y probar
-- [ ] A3.2: W02 Gerencia Bot — construir y probar
-- [ ] A3.3: W03 Supervisor Bot — construir y probar
-- [ ] A3.4: W10 SLA Watchdog — construir y probar (unificado, absorbe W04–W07)
+**Estado 2026-07-07:** 6 JSONs construidos en `/workflows/`, queries validadas contra Supabase real (caso SLA sintético: alerta → escala → exclusión → limpieza ✅). Falta: importar en n8n UI, asignar credenciales, reemplazar placeholders (`SUPABASE_KEY_AQUI`, `OPENAI_KEY_AQUI`, `SUPERVISOR_CHAT_ID_AQUI` en W03), activar y probar en vivo.
+
+- [ ] A3.0: **NUEVO** — W00 Notificador (router central: webhook /msds-notify → Switch área → 12 nodos Telegram; ver D11). Construido ✅ JSON, pendiente importar. **Importar y activar PRIMERO** — todos los demás notifican a través de él.
+- [ ] A3.1: W01 MasterBot Classifier — construido ✅ JSON (clasifica GPT + keyword-guard siniestros + SLA desde sla_config + caso + comunicación + notifica + confirma) — pendiente importar y probar
+- [ ] A3.2: W02 Gerencia Bot — construido ✅ JSON (/pendientes /proceso /criticos /resumen + libre GPT→tarea + voz Whisper + guardia chat_id 8695082898) — pendiente importar y probar
+- [ ] A3.3: W03 Supervisor Bot — construido ✅ JSON (clon W02; requiere chat_id de Jorge → placeholder SUPERVISOR_CHAT_ID_AQUI) — pendiente importar y probar
+- [ ] A3.4: W10 SLA Watchdog — construido ✅ JSON (cron 5 min, alerta→supervisor / escala→gerencia, lote 50; queries validadas con caso sintético) — pendiente importar y probar
 - [ ] A3.5: W08 Gmail Monitor — construir y probar (requiere B5 resuelto)
 - [ ] A3.6: W09 Gamification Engine — construir y probar
-- [ ] A3.7: W11 Cartera Notifier — construir y probar
+- [ ] A3.7: W11 Cartera Notifier — construido ✅ JSON (webhook poliza_id → tarea gestion_cobro 48h + notifica Cartera; embed cliente validado) — pendiente importar y probar
 - [ ] A3.8: W12 Reporte Comisiones — construir y probar (CSV descargable)
 
 ### Fase A4 — Mini-agentes
 
-- [ ] A4.1: Insertar 4 filas en tabla `bots` para mini-agentes (Siniestros, Autos, Vida, Cotizaciones)
+- [x] A4.1: Filas en tabla `bots` ✅ (2026-07-07 verificado: 12 filas, ids 1-12, incluye Cartera y Comisiones — cubre también A4.6/A4.7)
 - [ ] A4.2: Validar que W10 SLA Watchdog los enruta correctamente por área
 - [ ] A4.3: Test SLA siniestro: caso abierto → 15 min → alerta Supervisor_bot
 - [ ] A4.4: Test SLA siniestro: caso abierto → 30 min → escala Gerencia_bot
