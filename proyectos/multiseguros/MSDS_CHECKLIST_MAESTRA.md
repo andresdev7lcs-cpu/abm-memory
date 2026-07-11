@@ -1,7 +1,7 @@
 # MSDS — Checklist Maestra de Construcción
 **Fuente de verdad para Codex y CC**
 **Árbitro de arquitectura: Fable**
-**Última actualización:** 2026-07-07 (6 workflows construidos y validados a nivel DB; tokens 11/12 verificados; pendiente importación manual en n8n UI)
+**Última actualización:** 2026-07-11 (6 workflows ACTIVOS en n8n vía API; único bloqueante operativo: /start del equipo — A2.15)
 
 ---
 
@@ -60,16 +60,16 @@
 
 ### Fase A3 — Workflows n8n
 
-**Estado 2026-07-07:** 6 JSONs construidos en `/workflows/`, queries validadas contra Supabase real (caso SLA sintético: alerta → escala → exclusión → limpieza ✅). Falta: importar en n8n UI, asignar credenciales, reemplazar placeholders (`SUPABASE_KEY_AQUI`, `OPENAI_KEY_AQUI`, `SUPERVISOR_CHAT_ID_AQUI` en W03), activar y probar en vivo.
+**Estado 2026-07-11:** los 6 workflows **ACTIVOS en n8n** (activados vía API; AP había importado + credenciales + placeholders). Webhooks verificados: /msds-notify y /msds-cartera-notify registrados; triggers Telegram de Master/Gerencia N/Supervisor apuntando a n8n. E2E de W00 llega hasta el envío Telegram — falla solo por A2.15 (/start pendiente). Tests en vivo completos (A4/A6) desbloquean con el /start.
 
-- [ ] A3.0: **NUEVO** — W00 Notificador (router central: webhook /msds-notify → Switch área → 12 nodos Telegram; ver D11). Construido ✅ JSON, pendiente importar. **Importar y activar PRIMERO** — todos los demás notifican a través de él.
-- [ ] A3.1: W01 MasterBot Classifier — construido ✅ JSON (clasifica GPT + keyword-guard siniestros + SLA desde sla_config + caso + comunicación + notifica + confirma) — pendiente importar y probar
-- [ ] A3.2: W02 Gerencia Bot — construido ✅ JSON (/pendientes /proceso /criticos /resumen + libre GPT→tarea + voz Whisper + guardia chat_id 8695082898) — pendiente importar y probar
-- [ ] A3.3: W03 Supervisor Bot — construido ✅ JSON (clon W02; requiere chat_id de Jorge → placeholder SUPERVISOR_CHAT_ID_AQUI) — pendiente importar y probar
-- [ ] A3.4: W10 SLA Watchdog — construido ✅ JSON (cron 5 min, alerta→supervisor / escala→gerencia, lote 50; queries validadas con caso sintético) — pendiente importar y probar
+- [x] A3.0: W00 Notificador — ACTIVO ✅ (2026-07-11; routing E2E verificado hasta nodo Telegram)
+- [x] A3.1: W01 MasterBot Classifier — ACTIVO ✅ (webhook Telegram registrado; prueba funcional pendiente de A2.15)
+- [x] A3.2: W02 Gerencia Bot — ACTIVO ✅ (ídem)
+- [x] A3.3: W03 Supervisor Bot — ACTIVO ✅ (colisión webhookId corregida 2026-07-11; chat TEST=Andrés, cambiar a Jorge cuando dé /start)
+- [x] A3.4: W10 SLA Watchdog — ACTIVO ✅ (cron 5 min corriendo; casos vacía = sin ruido)
 - [ ] A3.5: W08 Gmail Monitor — construir y probar (requiere B5 resuelto)
 - [ ] A3.6: W09 Gamification Engine — construir y probar
-- [ ] A3.7: W11 Cartera Notifier — construido ✅ JSON (webhook poliza_id → tarea gestion_cobro 48h + notifica Cartera; embed cliente validado) — pendiente importar y probar
+- [x] A3.7: W11 Cartera Notifier — ACTIVO ✅ (webhook registrado; test con póliza real pendiente A4.8)
 - [ ] A3.8: W12 Reporte Comisiones — construir y probar (CSV descargable)
 
 ### Fase A4 — Mini-agentes
