@@ -22,7 +22,7 @@
           "name": "MSDS Bot — Supervisor"
         }
       },
-      "webhookId": "telegram-trigger"
+      "webhookId": "msds-supervisor-trigger"
     },
     {
       "parameters": {

@@ -54,7 +54,7 @@
 - [x] A2.1–A2.12: 12 bots creados en BotFather ✅ (2026-07-07: getMe verificado — 11 tokens válidos, handles coinciden exacto con tabla `bots`)
   - ⚠️ **Token @MSDS_Caja_bot INVÁLIDO** — truncado (27 chars tras `:`, normal ~35). AP: re-copiar de BotFather o regenerar.
 - [ ] A2.13: Cargar todos los tokens en Bitwarden con nomenclatura: "MSDS Bot — [Nombre]" (manual AP)
-- [ ] A2.14: Cargar tokens como credenciales Telegram en n8n UI (manual AP — no hay API key de n8n disponible). Nombres EXACTOS (los workflows los referencian así):
+- [x] A2.14: 12 credenciales cargadas en n8n ✅ (verificado vía API 2026-07-11). Nombres:
   `MSDS Bot — Master` · `MSDS Bot — Gerencia N` · `MSDS Bot — Gerencia B` · `MSDS Bot — Autos N` · `MSDS Bot — Autos R` · `MSDS Bot — Cartera` · `MSDS Bot — Caja` · `MSDS Bot — Generales` · `MSDS Bot — Cumplimiento` · `MSDS Bot — Siniestros` · `MSDS Bot — Comisiones` · `MSDS Bot — Supervisor`
 - [ ] A2.15: **NUEVO BLOQUEANTE** — Fabio debe abrir @MSDS_Gerencia_N_bot y presionar Start (getChat 2026-07-07 → "chat not found"; sin /start el bot no puede escribirle). Ídem cada asesor con el bot de su área.
 
