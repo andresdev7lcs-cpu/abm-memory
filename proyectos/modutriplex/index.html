@@ -674,7 +674,6 @@
       background: #08080f;
       position: relative;
       padding-bottom: 56.25%;
-      cursor: pointer;
     }
     .video-vsl {
       position: absolute;
@@ -683,42 +682,6 @@
       height: 100%;
       object-fit: cover;
       background: #08080f;
-    }
-    .video-placeholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 16px;
-      transition: background 0.2s;
-    }
-    .video-wrapper:hover .video-placeholder { background: rgba(255,255,255,0.03); }
-    .play-btn { width: 72px; height: 72px; transition: transform 0.2s; }
-    .video-wrapper:hover .play-btn { transform: scale(1.08); }
-    .video-label { font-size: 15px; color: #666; font-weight: 500; letter-spacing: 0.03em; }
-    .video-sublabel { font-size: 12px; color: #444; letter-spacing: 0.08em; text-transform: uppercase; }
-    .video-overlay {
-      position: absolute; inset: 0;
-      background: rgba(8,8,15,0.96);
-      display: none; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 24px; text-align: center;
-      padding: 32px; border-radius: 12px;
-    }
-    .video-overlay.active { display: flex; }
-    .video-overlay p { color: #ccc; font-size: 18px; font-weight: 600; max-width: 360px; line-height: 1.5; }
-    .video-overlay .btn-cotizar {
-      background: var(--red); color: #fff; border: none;
-      padding: 14px 32px; border-radius: 4px;
-      font-size: 14px; font-weight: 800;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      cursor: pointer; transition: background 0.2s;
-      font-family: 'Inter', sans-serif;
-    }
-    .video-overlay .btn-cotizar:hover { background: #c4211a; }
-    .video-overlay .cerrar {
-      position: absolute; top: 14px; right: 18px;
-      background: none; border: none;
-      color: #555; font-size: 20px; cursor: pointer; line-height: 1;
     }
     .badges-section { padding: 0 24px 60px; }
     .badges-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 900px; margin: 0 auto; }
@@ -1528,15 +1491,10 @@
     <button class="btn-primary" id="btn-como-funciona-cotizar" onclick="track('hero_cta_click',{location:'como_funciona'});if(typeof openGate!=='undefined')openGate();return false;">Cotizar proyecto</button>
   </div>
   <div class="video-outer">
-    <div class="video-wrapper" id="video-placeholder" role="button" aria-label="Ver video Modutriplex" tabindex="0">
+    <div class="video-wrapper">
       <video class="video-vsl" controls playsinline preload="metadata" poster="assets/img/invitacion.webp">
         <source src="assets/video/vsl.mp4" type="video/mp4">
       </video>
-      <div class="video-overlay" id="video-overlay" role="dialog" aria-modal="true">
-        <button class="cerrar" id="cerrar-overlay" aria-label="Cerrar">✕</button>
-        <p>Video en producción. Mientras tanto, cotiza ahora →</p>
-        <button class="btn-cotizar" id="btn-ir-cotizador">Cotizar ahora →</button>
-      </div>
     </div>
   </div>
 </section>
@@ -2198,35 +2156,10 @@
 </script>
 
 <!-- ════════════════════════════════════════
-     JS — B3: Video overlay + FAQ accordion
+     JS — B3: FAQ accordion
 ════════════════════════════════════════ -->
 <script>
 (function() {
-  const placeholder = document.getElementById('video-placeholder');
-  const overlay     = document.getElementById('video-overlay');
-  const cerrar      = document.getElementById('cerrar-overlay');
-  const btnOverlay  = document.getElementById('btn-ir-cotizador');
-
-  placeholder.addEventListener('click', function() {
-    if (!overlay.classList.contains('active')) overlay.classList.add('active');
-  });
-  placeholder.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') overlay.classList.add('active');
-  });
-  cerrar.addEventListener('click', function(e) {
-    e.stopPropagation();
-    overlay.classList.remove('active');
-  });
-
-  function irCotizador(e) {
-    e && e.stopPropagation();
-    overlay.classList.remove('active');
-    const el = document.getElementById('cotizador');
-    el ? el.scrollIntoView({ behavior: 'smooth' })
-       : window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  }
-
-  btnOverlay.addEventListener('click', irCotizador);
 
   const faqs = document.querySelectorAll('.faq-item');
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
