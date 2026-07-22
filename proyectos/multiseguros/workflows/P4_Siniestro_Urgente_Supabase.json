@@ -1,15 +1,21 @@
 {
-  "name": "P4 - Siniestro Urgente (Supabase)",
+  "updatedAt": "2026-07-07T14:46:09.627Z",
+  "createdAt": "2026-06-20T21:41:57.378Z",
+  "id": "Q8H5suEeZ15ynSqk",
+  "name": "P4",
+  "description": null,
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
-      "id": "node-webhook",
+      "id": "5872af0b-d56c-4e50-80fb-98423a493f54",
       "name": "Manual Trigger P4",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        304
+        -1344,
+        144
       ],
       "webhookId": "2bbec713-6746-4376-98a3-967706aece15"
     },
@@ -20,13 +26,13 @@
             {
               "id": "assign-poliza-id",
               "name": "poliza_id",
-              "value": "POL-20250015",
+              "value": "POL-0001",
               "type": "string"
             },
             {
               "id": "assign-descripcion",
               "name": "descripcion",
-              "value": "Siniestro demo: colisión menor en parqueadero",
+              "value": "Siniestro demo: colisi\u00f3n menor en parqueadero",
               "type": "string"
             },
             {
@@ -39,49 +45,67 @@
         },
         "options": {}
       },
-      "id": "node-simular-siniestro-demo",
+      "id": "10a200f2-985b-41a8-b80e-a624754686fa",
       "name": "Simular Siniestro Demo",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        224,
-        304
+        -1120,
+        144
       ]
     },
     {
       "parameters": {
-        "javaScriptCode": "const polizaId = $json.poliza_id;\nconst supabaseUrl = 'https://ekarbxdoaoqrtlmfzgyj.supabase.co';\nconst supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM';\n\nconst url = `${supabaseUrl}/rest/v1/polizas?numero=eq.${polizaId}`;\nconst response = await fetch(url, {\n  method: 'GET',\n  headers: {\n    'Authorization': `Bearer ${supabaseKey}`,\n    'Content-Type': 'application/json',\n    'apikey': supabaseKey\n  }\n});\n\nconst data = response.ok ? await response.json() : [];\nreturn { records: data };"
-      },
-      "id": "node-buscar-poliza",
-      "name": "Buscar Poliza (Supabase)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        224,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
+        "url": "=https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/polizas?numero=eq.{{ $json.poliza_id }}",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "id": "assign-records",
-              "name": "records",
-              "value": "={{ Array.isArray($json) ? $json : [$json] }}",
-              "type": "array"
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM"
             }
           ]
         },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        },
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "a8e37720-e04e-4cae-ba9d-56fe98954f7f",
+      "name": "Buscar Poliza (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        144
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aYmtlN1fa0kFregP",
+          "name": "Supabase MSDS Service Role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "records",
         "options": {}
       },
-      "id": "node-aggregate",
-      "name": "Mapear Respuesta Supabase",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "id": "ffa7f9c8-0514-4761-ae04-dc96fb197207",
+      "name": "Agregar Resultados",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
       "position": [
-        448,
-        304
+        -672,
+        144
       ]
     },
     {
@@ -116,13 +140,13 @@
         },
         "options": {}
       },
-      "id": "node-set-context",
+      "id": "c0f6ec9c-606f-42cd-a769-c8f47affcca9",
       "name": "Preservar Contexto",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        672,
-        304
+        -448,
+        144
       ]
     },
     {
@@ -148,47 +172,99 @@
         },
         "options": {}
       },
-      "id": "node-if-poliza",
+      "id": "a2a22d75-57cd-49d5-af50-2af895d8a9e4",
       "name": "Poliza existe?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        880,
-        304
+        -224,
+        144
       ]
     },
     {
       "parameters": {
-        "javaScriptCode": "const supabaseUrl = 'https://ekarbxdoaoqrtlmfzgyj.supabase.co';\nconst supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM';\n\nconst records = $json.records;\nif (!records || records.length === 0) {\n  return { error: 'No poliza found' };\n}\n\nconst poliza = records[0];\nconst today = new Date().toISOString().split('T')[0];\nconst payload = {\n  poliza_id: poliza.id,\n  asegurado: String(poliza.cliente_id || ''),\n  fecha_ocurrencia: today,\n  descripcion: $json.descripcion,\n  estado: 'avisado'\n};\n\nconst url = `${supabaseUrl}/rest/v1/siniestros`;\nconst response = await fetch(url, {\n  method: 'POST',\n  headers: {\n    'Authorization': `Bearer ${supabaseKey}`,\n    'Content-Type': 'application/json',\n    'apikey': supabaseKey,\n    'Prefer': 'return=representation'\n  },\n  body: JSON.stringify(payload)\n});\n\nconst data = response.ok ? await response.json() : { error: await response.text() };\nreturn data;"
+        "method": "POST",
+        "url": "https://ekarbxdoaoqrtlmfzgyj.supabase.co/rest/v1/siniestros",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            },
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "poliza_id",
+              "value": "={{ $json.records[0].id }}"
+            },
+            {
+              "name": "asegurado",
+              "value": "={{ String($json.records[0].cliente_id || '') }}"
+            },
+            {
+              "name": "fecha_ocurrencia",
+              "value": "={{ new Date().toISOString().split('T')[0] }}"
+            },
+            {
+              "name": "descripcion",
+              "value": "={{ $json.descripcion }}"
+            },
+            {
+              "name": "estado",
+              "value": "avisado"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "node-crear-siniestro",
+      "id": "95b811ff-8a59-4eb2-bc89-47376ce00a07",
       "name": "Crear Siniestro (Supabase)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        1104,
-        160
-      ]
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aYmtlN1fa0kFregP",
+          "name": "Supabase MSDS Service Role"
+        }
+      }
     },
     {
       "parameters": {
         "chatId": "8695082898",
-        "text": "={{ \"🚨 SINIESTRO URGENTE\\nPóliza: \" + $(\"Preservar Contexto\").item.json.poliza_id + \"\\nDescripción: \" + $(\"Preservar Contexto\").item.json.descripcion + \"\\nAsesor: \" + $(\"Preservar Contexto\").item.json.asesor }}",
+        "text": "={{ \"\ud83d\udea8 SINIESTRO URGENTE\\nP\u00f3liza: \" + $(\"Preservar Contexto\").item.json.poliza_id + \"\\nDescripci\u00f3n: \" + $(\"Preservar Contexto\").item.json.descripcion + \"\\nAsesor: \" + $(\"Preservar Contexto\").item.json.asesor }}",
         "additionalFields": {}
       },
-      "id": "node-telegram",
+      "id": "d23e6b1e-25fc-40a1-8309-f16ad96e1e48",
       "name": "Notificar Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1328,
-        160
+        224,
+        0
       ],
       "webhookId": "b2953e42-ece4-4002-8191-e3f18deac49b",
       "credentials": {
         "telegramApi": {
           "id": "S5pOddjIrEv0wzS1",
-          "name": "Telegram account"
+          "name": "Telegram scmsds_bot"
         }
       }
     },
@@ -218,13 +294,13 @@
         },
         "options": {}
       },
-      "id": "node-resp-ok",
+      "id": "db9f01a0-578d-43d1-afe2-2c83b9630aec",
       "name": "Respuesta 200 OK",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1552,
-        160
+        448,
+        0
       ]
     },
     {
@@ -240,24 +316,23 @@
             {
               "id": "assign-message-err",
               "name": "message",
-              "value": "Póliza no encontrada",
+              "value": "P\u00f3liza no encontrada",
               "type": "string"
             }
           ]
         },
         "options": {}
       },
-      "id": "node-resp-error",
+      "id": "c6fc1ad7-2b81-49f7-9f16-0c3a526b134d",
       "name": "Respuesta 400 Error",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1104,
-        464
+        0,
+        304
       ]
     }
   ],
-  "pinData": {},
   "connections": {
     "Manual Trigger P4": {
       "main": [
@@ -355,17 +430,38 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "",
-    "availableInMCP": false
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "ac65460f-0c40-4303-915c-656f999d9e87",
-  "meta": {
-    "instanceId": "59945276d6cf3267079d58d165a03395ca6794e5061c1c7ccad77a12bce43c1e"
-  },
-  "tags": ["supabase", "v2"]
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b9515c3e-8fb1-46cf-bd80-1c77f411c4b9",
+  "activeVersionId": null,
+  "versionCounter": 13,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-06-20T21:41:57.380Z",
+      "createdAt": "2026-06-20T21:41:57.380Z",
+      "role": "workflow:owner",
+      "workflowId": "Q8H5suEeZ15ynSqk",
+      "projectId": "OUhdLWaXz4hiaK50",
+      "project": {
+        "updatedAt": "2026-06-06T22:36:09.027Z",
+        "createdAt": "2026-02-26T17:41:31.723Z",
+        "id": "OUhdLWaXz4hiaK50",
+        "name": "Andr\u00e9s Palomares <afpalomaresr@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "4807d4fb-95bf-4b19-97db-51297d18d3dc"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
 }

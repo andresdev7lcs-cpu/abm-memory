@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FIRE PASS — Dashboard Kanban</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --card: #ffffff;
+    --border: #dde1e6;
+    --text: #1c1c1c;
+    --muted: #6b7280;
+    --accent: #ff6b35;
+    --accent-2: #6c3fa0;
+    --ok: #22c55e;
+    --bad: #ef4444;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --panel: #171922;
+      --card: #20232e;
+      --border: #2c3040;
+      --text: #e6e6e6;
+      --muted: #9aa0aa;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+  }
+  .col {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 200px;
+  }
+  .col h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0 0 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .card .hito { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .card .id { font-weight: 700; color: var(--accent-2); }
+  .card .title { font-weight: 600; margin: 2px 0 6px; }
+  .card .desc { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .deps { font-size: 11px; margin-bottom: 6px; }
+  .dep-ok { color: var(--ok); }
+  .dep-bad { color: var(--bad); }
+  .row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  select, button {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover, select:hover { border-color: var(--accent); }
+  .links { font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .links button { padding: 3px 8px; }
+
+  #overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center;
+    z-index: 10;
+    padding: 20px;
+  }
+  #overlay .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    width: 520px;
+    max-width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  #overlay pre, #overlay textarea {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    width: 100%;
+    color: var(--text);
+  }
+  #overlay .close { float: right; }
+  .comment { border-bottom: 1px solid var(--border); padding: 6px 0; font-size: 12px; }
+  .comment .meta { color: var(--muted); font-size: 10px; }
+  #commentInput { width: 100%; margin-top: 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px; }
+</style>
+</head>
+<body>
+<h1>FIRE PASS — Tablero de Ejecución</h1>
+<div class="subtitle">Kanban local — lee/escribe <code>fire-pass-roadmap.md</code> y <code>fire-pass-status.md</code></div>
+
+<div class="board" id="board">
+  <div class="col" data-status="todo"><h2><span>Por hacer</span><span>⬜</span></h2><div class="cards"></div></div>
+  <div class="col" data-status="doing"><h2><span>En curso</span><span>🔄</span></h2><div class="cards"></div></div>
+  <div class="col" data-status="blocked"><h2><span>Bloqueado</span><span>🚫</span></h2><div class="cards"></div></div>
+  <div class="col" data-status="done"><h2><span>Completado</span><span>✅</span></h2><div class="cards"></div></div>
+</div>
+
+<div id="overlay">
+  <div class="panel">
+    <button class="close" onclick="closeOverlay()">Cerrar</button>
+    <div id="overlayContent"></div>
+  </div>
+</div>
+
+<script>
+const MODELS = ['Fable', 'Sonnet', 'Codex'];
+const ESTADOS = ['⬜ Por hacer', '🔄 En curso', '🚫 Bloqueado', '✅ Completado'];
+
+function classify(estado) {
+  if (!estado) return 'todo';
+  if (estado.includes('✅') || /completado/i.test(estado)) return 'done';
+  if (estado.includes('🔄') || /curso/i.test(estado)) return 'doing';
+  if (estado.includes('🚫') || /bloque/i.test(estado)) return 'blocked';
+  return 'todo';
+}
+
+function depBadgeHtml(depId, tickets) {
+  const dep = tickets.find((t) => t.id === depId);
+  const ok = dep ? classify(dep.estado) === 'done' : false;
+  return `<span class="${ok ? 'dep-ok' : 'dep-bad'}">${depId} ${ok ? '✅' : '❌'}</span>`;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function cardHtml(t, tickets) {
+  const depsHtml = t.dependencias.length
+    ? t.dependencias.map((d) => depBadgeHtml(d, tickets)).join(' ')
+    : '<span class="dep-ok">sin dependencias</span>';
+  const modelSel = MODELS.map((m) => `<option value="${m}" ${m.toLowerCase() === (t.modelo || '').toLowerCase() ? 'selected' : ''}>${m}</option>`).join('');
+  const estadoSel = ESTADOS.map((e) => `<option value="${e}" ${e === t.estado ? 'selected' : ''}>${e}</option>`).join('');
+  const descTrunc = (t.descripcion || '').length > 140 ? t.descripcion.slice(0, 140) + '…' : (t.descripcion || '');
+  return `
+    <div class="card" data-id="${t.id}">
+      <div class="hito">${escapeHtml(t.hito || '')}</div>
+      <div class="id">${t.id}</div>
+      <div class="title">${escapeHtml(t.titulo)}</div>
+      <div class="desc">${escapeHtml(descTrunc)}</div>
+      <div class="deps">Dependencias: ${depsHtml}</div>
+      <div class="row">
+        <select id="estado-${t.id}" onchange="changeStatus('${t.id}')">${estadoSel}</select>
+      </div>
+      <div class="row">
+        <select id="model-${t.id}">${modelSel}</select>
+      </div>
+      <div class="links">
+        <button onclick="viewCommand('${t.id}')">Ver comando</button>
+        <button onclick="viewLogs('${t.id}')">Logs</button>
+        <button onclick="viewComments('${t.id}')">Comentarios</button>
+      </div>
+    </div>`;
+}
+
+let ticketsCache = [];
+
+async function refresh() {
+  const res = await fetch('/api/tickets');
+  const tickets = await res.json();
+  ticketsCache = tickets;
+  const cols = { todo: [], doing: [], blocked: [], done: [] };
+  for (const t of tickets) cols[classify(t.estado)].push(t);
+  for (const [status, list] of Object.entries(cols)) {
+    const el = document.querySelector(`.col[data-status="${status}"] .cards`);
+    el.innerHTML = list.map((t) => cardHtml(t, tickets)).join('') || '<div style="color:var(--muted);font-size:12px;">(vacío)</div>';
+  }
+}
+
+async function changeStatus(ticketId) {
+  const estado = document.getElementById(`estado-${ticketId}`).value;
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (data.error) alert(data.error);
+  refresh();
+}
+
+function openOverlay(html) {
+  document.getElementById('overlayContent').innerHTML = html;
+  document.getElementById('overlay').style.display = 'flex';
+}
+function closeOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+async function viewCommand(ticketId) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/command`, { method: 'POST' });
+  const data = await res.json();
+  const cmd = data.command || data.error || '(sin comando)';
+  openOverlay(`
+    <h3>${ticketId} — comando sugerido</h3>
+    <p style="font-size:12px;color:var(--muted);">Este comando NO se ejecuta automáticamente. Copialo y corrélo manualmente en tu terminal.</p>
+    <textarea id="cmdText" rows="4" readonly>${escapeHtml(cmd)}</textarea>
+    <button onclick="copyCommand()">Copiar</button>
+  `);
+}
+
+function copyCommand() {
+  const ta = document.getElementById('cmdText');
+  ta.select();
+  document.execCommand('copy');
+}
+
+async function viewLogs(ticketId) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/logs`);
+  const data = await res.json();
+  const text = data.text || '(sin logs)';
+  openOverlay(`<h3>${ticketId} — logs</h3><pre>${escapeHtml(text)}</pre>`);
+}
+
+async function viewComments(ticketId) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/comments`);
+  const comments = await res.json();
+  const html = comments.map((c) => `<div class="comment"><div class="meta">${c.timestamp}</div>${escapeHtml(c.text)}</div>`).join('') || '<div style="color:var(--muted);font-size:12px;">(sin comentarios)</div>';
+  openOverlay(`
+    <h3>${ticketId} — comentarios</h3>
+    <div>${html}</div>
+    <input id="commentInput" placeholder="Agregar comentario... (Enter para enviar)" onkeydown="if(event.key==='Enter') addComment('${ticketId}')" />
+  `);
+}
+
+async function addComment(ticketId) {
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  viewComments(ticketId);
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clientes — Panel-Ops</title>
+    <style>
+      :root {
+        --bg: #f5efe7;
+        --panel: #fffaf3;
+        --ink: #1f2a37;
+        --muted: #5f6b7a;
+        --accent: #b85c38;
+        --accent-2: #2d6a4f;
+        --line: rgba(31, 42, 55, 0.12);
+        --danger: #b3261e;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 0 0 20px;
+      }
+      .card {
+        background: rgba(255, 250, 243, 0.95);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 12px 40px rgba(31, 42, 55, 0.08);
+        margin-bottom: 24px;
+      }
+      .card h2 {
+        margin-top: 0;
+        font-size: 18px;
+      }
+      form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(200px, 1fr));
+        gap: 12px 16px;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 13px;
+        color: var(--muted);
+        gap: 4px;
+      }
+      input, select {
+        font-size: 14px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        font-family: inherit;
+      }
+      .actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      button {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent-2);
+        color: #fff;
+      }
+      button.secondary {
+        background: #fff;
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+      .search-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .search-row input {
+        flex: 1;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .warning {
+        color: var(--danger);
+        font-weight: 700;
+      }
+      .msg {
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .msg.error { color: var(--danger); }
+      .msg.ok { color: var(--accent-2); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Clientes</h1>
+
+      <section class="card">
+        <h2 id="form-title">Nuevo cliente</h2>
+        <form id="customer-form">
+          <input type="hidden" id="customer_id" value="">
+          <label>Razón social / Nombre*
+            <input type="text" id="legal_name" required>
+          </label>
+          <label>Tipo de persona*
+            <select id="person_type" required>
+              <option value="">Seleccione</option>
+              <option value="individual">Natural</option>
+              <option value="legal_entity">Jurídica</option>
+            </select>
+          </label>
+          <label>Tipo de identificación*
+            <select id="id_type" required>
+              <option value="">Seleccione</option>
+              <option value="CC">CC</option>
+              <option value="NIT">NIT</option>
+              <option value="CE">CE</option>
+              <option value="PASSPORT">Pasaporte</option>
+            </select>
+          </label>
+          <label>Número de identificación*
+            <input type="text" id="id_number" required>
+          </label>
+          <label>Teléfono*
+            <input type="text" id="phone" required>
+          </label>
+          <label>Correo*
+            <input type="email" id="email" required>
+          </label>
+          <label>Nombre de contacto*
+            <input type="text" id="contact_name" required>
+          </label>
+          <label>Notas
+            <input type="text" id="notes">
+          </label>
+          <div class="actions">
+            <button type="submit" class="primary" id="save-btn">Guardar</button>
+            <button type="button" class="secondary" id="reset-btn">Limpiar</button>
+          </div>
+        </form>
+        <div class="msg" id="form-msg"></div>
+      </section>
+
+      <section class="card">
+        <h2>Buscar / listar clientes</h2>
+        <div class="search-row">
+          <input type="text" id="search-input" placeholder="Buscar por nombre, identificación, teléfono o correo">
+          <button type="button" class="secondary" id="search-btn">Buscar</button>
+          <button type="button" class="secondary" id="list-btn">Listar activos</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Identificación</th>
+              <th>Teléfono</th>
+              <th>Correo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="customers-tbody"></tbody>
+        </table>
+        <div class="msg" id="list-msg"></div>
+      </section>
+    </main>
+
+    <script>
+      var formEl = document.getElementById('customer-form');
+      var formMsg = document.getElementById('form-msg');
+      var listMsg = document.getElementById('list-msg');
+      var tbody = document.getElementById('customers-tbody');
+
+      function fieldIds() {
+        return ['legal_name', 'person_type', 'id_type', 'id_number', 'phone', 'email', 'contact_name', 'notes'];
+      }
+
+      function readForm() {
+        var record = {};
+        fieldIds().forEach(function (id) {
+          record[id] = document.getElementById(id).value;
+        });
+        return record;
+      }
+
+      function resetForm() {
+        document.getElementById('customer_id').value = '';
+        document.getElementById('form-title').textContent = 'Nuevo cliente';
+        fieldIds().forEach(function (id) {
+          document.getElementById(id).value = '';
+        });
+        formMsg.textContent = '';
+        formMsg.className = 'msg';
+      }
+
+      function renderRows(rows) {
+        tbody.innerHTML = '';
+        (rows || []).forEach(function (row) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + row.customer_id + '</td>' +
+            '<td>' + row.legal_name + '</td>' +
+            '<td>' + row.id_type + ' ' + row.id_number + '</td>' +
+            '<td>' + row.phone + '</td>' +
+            '<td>' + row.email + '</td>' +
+            '<td></td>';
+          var actionsCell = tr.lastElementChild;
+
+          var editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'secondary';
+          editBtn.textContent = 'Editar';
+          editBtn.onclick = function () { loadIntoForm(row); };
+          actionsCell.appendChild(editBtn);
+
+          var deactivateBtn = document.createElement('button');
+          deactivateBtn.type = 'button';
+          deactivateBtn.className = 'secondary';
+          deactivateBtn.textContent = 'Desactivar';
+          deactivateBtn.onclick = function () { deactivateCustomer(row.customer_id); };
+          actionsCell.appendChild(deactivateBtn);
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      function loadIntoForm(row) {
+        document.getElementById('customer_id').value = row.customer_id;
+        document.getElementById('form-title').textContent = 'Editar cliente ' + row.customer_id;
+        fieldIds().forEach(function (id) {
+          document.getElementById(id).value = row[id] || '';
+        });
+      }
+
+      function deactivateCustomer(customerId) {
+        if (!confirm('¿Desactivar este cliente?')) {
+          return;
+        }
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result.ok) {
+              listMsg.className = 'msg error';
+              listMsg.textContent = result.error || 'No se pudo desactivar el cliente';
+              return;
+            }
+            listMsg.className = 'msg ok';
+            listMsg.textContent = 'Cliente desactivado';
+            listActiveCustomers();
+          })
+          .withFailureHandler(function (err) {
+            listMsg.className = 'msg error';
+            listMsg.textContent = String(err);
+          })
+          .customersDeactivate(customerId, 'desactivado desde UI');
+      }
+
+      function listActiveCustomers() {
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result.ok) {
+              listMsg.className = 'msg error';
+              listMsg.textContent = result.error || 'No se pudo listar clientes';
+              return;
+            }
+            listMsg.className = 'msg';
+            listMsg.textContent = result.rows.length + ' cliente(s)';
+            renderRows(result.rows);
+          })
+          .withFailureHandler(function (err) {
+            listMsg.className = 'msg error';
+            listMsg.textContent = String(err);
+          })
+          .customersList({});
+      }
+
+      document.getElementById('list-btn').addEventListener('click', listActiveCustomers);
+
+      document.getElementById('search-btn').addEventListener('click', function () {
+        var query = document.getElementById('search-input').value;
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result.ok) {
+              listMsg.className = 'msg error';
+              listMsg.textContent = result.error || 'No se pudo buscar';
+              return;
+            }
+            listMsg.className = 'msg';
+            listMsg.textContent = result.rows.length + ' resultado(s)';
+            renderRows(result.rows);
+          })
+          .withFailureHandler(function (err) {
+            listMsg.className = 'msg error';
+            listMsg.textContent = String(err);
+          })
+          .customersSearch(query);
+      });
+
+      document.getElementById('reset-btn').addEventListener('click', resetForm);
+
+      formEl.addEventListener('submit', function (evt) {
+        evt.preventDefault();
+        var customerId = document.getElementById('customer_id').value;
+        var record = readForm();
+
+        function handleResult(result) {
+          if (!result.ok) {
+            formMsg.className = 'msg error';
+            formMsg.textContent = (result.error || 'Error al guardar') +
+              (result.fields ? ' (' + result.fields.join(', ') + ')' : '');
+            return;
+          }
+          formMsg.className = result.duplicateWarning ? 'msg warning' : 'msg ok';
+          formMsg.textContent = result.duplicateWarning
+            ? 'Guardado, pero ya existe otro cliente con la misma identificación'
+            : 'Cliente guardado';
+          resetForm();
+          listActiveCustomers();
+        }
+
+        function handleFailure(err) {
+          formMsg.className = 'msg error';
+          formMsg.textContent = String(err);
+        }
+
+        if (customerId) {
+          google.script.run.withSuccessHandler(handleResult).withFailureHandler(handleFailure)
+            .customersUpdate(customerId, record);
+        } else {
+          google.script.run.withSuccessHandler(handleResult).withFailureHandler(handleFailure)
+            .customersCreate(record);
+        }
+      });
+
+      listActiveCustomers();
+    </script>
+  </body>
+</html>

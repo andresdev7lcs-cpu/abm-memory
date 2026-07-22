@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSDS-CRM Progress Dashboard</title>
+  <style>
+    :root{
+      --bg:#061018;
+      --panel:#101b27;
+      --panel2:#162335;
+      --text:#edf4ff;
+      --muted:#8ea2bc;
+      --line:#24364a;
+      --pending:#7a8597;
+      --progress:#4fa5ff;
+      --done:#37c77a;
+      --blocked:#ff5e6b;
+      --backlog:#f0c24a;
+      --shadow:0 18px 50px rgba(0,0,0,.34);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(79,165,255,.18), transparent 28%),
+        radial-gradient(circle at 85% 10%, rgba(55,199,122,.12), transparent 22%),
+        linear-gradient(180deg, #050b12 0%, #08111b 40%, #09131d 100%);
+      min-height:100vh;
+    }
+    .wrap{max-width:1280px;margin:0 auto;padding:16px 14px 36px}
+    .hero,.section,.panel{
+      background:linear-gradient(180deg, rgba(16,27,39,.96), rgba(13,22,33,.94));
+      border:1px solid rgba(142,162,188,.16);
+      box-shadow:var(--shadow);
+      border-radius:24px;
+    }
+    .hero{padding:18px;overflow:hidden;position:relative}
+    .hero:before{
+      content:"";position:absolute;inset:auto -8% -60% auto;width:320px;height:320px;border-radius:50%;
+      background:radial-gradient(circle, rgba(79,165,255,.16), transparent 68%);pointer-events:none;
+    }
+    .topbar{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    h1{margin:0;font-size:clamp(28px,4vw,44px);line-height:1.02}
+    .sub{margin:8px 0 0;color:var(--muted);max-width:1000px}
+    .chips,.filters{display:flex;flex-wrap:wrap;gap:8px}
+    .button{
+      border:1px solid rgba(142,162,188,.18);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:12px;
+      cursor:pointer;
+      transition:.15s transform,.15s border-color,.15s background;
+    }
+    .button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.26)}
+    .button.active{background:rgba(79,165,255,.16);border-color:rgba(79,165,255,.45)}
+    .meta{
+      border:1px solid rgba(142,162,188,.18);background:rgba(255,255,255,.04);border-radius:16px;
+      padding:10px 12px;min-width:220px
+    }
+    .metrics{margin-top:16px;display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+    .panel{padding:14px;border-radius:18px;background:rgba(255,255,255,.03)}
+    .label-row{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;margin-bottom:6px}
+    .bar{height:14px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+    .bar > div{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--progress),#85c2ff);width:0%}
+    .bar.done > div{background:linear-gradient(90deg,var(--done),#91efb8)}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .stat{background:rgba(255,255,255,.03);border:1px solid rgba(142,162,188,.12);border-radius:16px;padding:12px}
+    .stat .k{color:var(--muted);font-size:12px}
+    .stat .v{margin-top:4px;font-size:24px;font-weight:800}
+    .section{margin-top:14px;padding:16px}
+    .section-head{display:flex;justify-content:space-between;gap:10px;align-items:end;flex-wrap:wrap}
+    .section h2,.section h3{margin:0}
+    .small{color:var(--muted);font-size:12px}
+    .next-list,.tasks{display:grid;gap:10px;margin-top:12px}
+    .next-item,.task{
+      background:rgba(255,255,255,.03);border:1px solid rgba(142,162,188,.12);border-radius:16px;
+    }
+    .next-item{padding:12px 14px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .next-item strong{display:block}
+    .next-item span{color:var(--muted);font-size:12px}
+    .task{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:14px}
+    .task.pending{border-left:4px solid var(--pending)}
+    .task.progress{border-left:4px solid var(--progress)}
+    .task.done{border-left:4px solid var(--done)}
+    .task.blocked{border-left:4px solid var(--blocked)}
+    .task.backlog{border-left:4px solid var(--backlog)}
+    .task input[type="checkbox"]{width:22px;height:22px;margin-top:2px;accent-color:var(--done);cursor:pointer}
+    .task h4{margin:0;font-size:15px}
+    .task p{margin:4px 0 0;color:var(--muted)}
+    .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .tag{
+      font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.07)
+    }
+    .tag.codex{background:rgba(79,165,255,.14)}
+    .tag.cc{background:rgba(240,194,74,.14)}
+    .tag.ap{background:rgba(55,199,122,.14)}
+    .tag.claude{background:rgba(255,165,79,.14)}
+    .tag.pending{color:var(--pending)}
+    .tag.progress{color:var(--progress)}
+    .tag.done{color:var(--done)}
+    .tag.blocked{color:var(--blocked)}
+    .tag.backlog{color:var(--backlog)}
+    .task-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .mini{
+      border:1px solid rgba(142,162,188,.18);background:rgba(255,255,255,.04);color:var(--text);
+      border-radius:10px;padding:7px 10px;font-size:12px;cursor:pointer
+    }
+    .mini.blocked-on{background:rgba(255,94,107,.12);border-color:rgba(255,94,107,.35)}
+    details{margin-top:12px}
+    summary{
+      cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;
+      user-select:none;color:var(--text);font-weight:700
+    }
+    summary::-webkit-details-marker{display:none}
+    .legend{margin-top:14px;color:var(--muted);font-size:12px}
+    .rules{border:1px solid rgba(255,88,88,.8);background:rgba(255,52,52,.07)}
+    .rules h3{color:#ffd3d5}
+    .rules ul,.context ul{margin:8px 0 0;padding-left:18px}
+    .context h3{margin:0 0 8px;font-size:16px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .kpi{padding:12px;border:1px solid rgba(142,162,188,.12);border-radius:16px;background:rgba(255,255,255,.03)}
+    .kpi .n{font-size:22px;font-weight:800;margin-top:4px}
+    @media (max-width: 860px){
+      .metrics{grid-template-columns:1fr}
+      .stats,.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .task{grid-template-columns:auto 1fr}
+      .task-actions{grid-column:2;justify-content:flex-start}
+    }
+    @media (max-width: 520px){
+      .stats,.kpi-grid{grid-template-columns:1fr}
+      .meta{min-width:unset;width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="topbar">
+        <div>
+          <h1>MSDS-CRM Progress Dashboard</h1>
+          <p class="sub">Fuente de verdad: <code>MSDS_CHECKLIST_MAESTRA.md</code>. Stack real: Supabase + n8n + VPS + OpenAI + Telegram. No Airtable.</p>
+          <div class="chips" style="margin-top:14px">
+            <button class="button active" data-filter="all">All</button>
+            <button class="button" data-filter="Codex">Codex</button>
+            <button class="button" data-filter="CC">CC</button>
+            <button class="button" data-filter="AP">AP</button>
+            <button class="button" data-filter="Claude">Claude</button>
+            <button class="button" id="exportBtn">Export markdown</button>
+          </div>
+        </div>
+        <div class="meta">
+          <div><strong>Last updated:</strong> <span id="lastUpdated">—</span></div>
+          <div style="margin-top:6px;color:var(--muted)">Click checkbox to cycle Pending → In Progress → Done.</div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="panel">
+          <div class="label-row"><span>Overall progress</span><span id="overallText">0/0</span></div>
+          <div class="bar done"><div id="overallBar"></div></div>
+          <div class="legend" id="overallDetail">0 completed, 0 in progress, 0 blocked, 0 pending</div>
+        </div>
+        <div class="panel">
+          <div class="label-row"><span>Task states</span><span>Live</span></div>
+          <div class="stats">
+            <div class="stat"><div class="k">Pending</div><div class="v" id="pendingCount">0</div></div>
+            <div class="stat"><div class="k">In progress</div><div class="v" id="inProgressCount">0</div></div>
+            <div class="stat"><div class="k">Done</div><div class="v" id="doneCount">0</div></div>
+            <div class="stat"><div class="k">Blocked</div><div class="v" id="blockedCount">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="section-head">
+          <h2>What's next</h2>
+          <div class="small">Next 3 pending blocking tasks across all milestones</div>
+        </div>
+        <div class="next-list" id="nextList"></div>
+      </div>
+    </section>
+
+    <section class="section context">
+      <h3>Project Context</h3>
+      <ul>
+        <li>Stack: Supabase + n8n + VPS Hostinger + OpenAI + Telegram</li>
+        <li>Supabase MSDS: <a href="https://ekarbxdoaoqrtlmfzgyj.supabase.co" target="_blank" rel="noreferrer">ekarbxdoaoqrtlmfzgyj.supabase.co</a></li>
+        <li>n8n: <a href="https://no-26feb-n8n.ydlmwq.easypanel.host/" target="_blank" rel="noreferrer">https://no-26feb-n8n.ydlmwq.easypanel.host/</a></li>
+        <li>Active client: Multiseguros del Sur (MSDS)</li>
+        <li>Gerente: Fabio (Telegram 8695082898)</li>
+        <li>CRITICAL RULE: n8n Code nodes cannot use <code>$env</code>, <code>fetch()</code>, or <code>$http</code>; use HTTP Request nodes only.</li>
+      </ul>
+    </section>
+
+    <section class="section rules">
+      <h3>Critical Standing Rules</h3>
+      <ul>
+        <li>n8n 2.8.3: NO <code>$env</code>, <code>fetch()</code>, or <code>$http</code> in Code nodes</li>
+        <li>Supabase REST: always send <code>apikey</code> and <code>Authorization: Bearer</code> headers together</li>
+        <li>JWT service_role key (<code>eyJ...</code>) required for REST</li>
+        <li>Never hardcode tokens in workflow JSONs</li>
+        <li>Supabase service_role key rotated 2026-06-30, stored in Bitwarden as "MSDS Supabase service_role"</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>Milestones</h2>
+          <div class="small">Color coding: gray pending, blue in progress, green done, red blocked, yellow backlog.</div>
+        </div>
+      </div>
+      <div id="milestones"></div>
+    </section>
+
+    <section class="section">
+      <details open>
+        <summary>BACKLOG - Annual contract (do not touch in sprint)</summary>
+        <div class="small" style="margin-top:6px">Collapsed by default behavior is preserved on first load and can be expanded by the user.</div>
+        <div class="tasks" id="backlog"></div>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'msds_progress_v2';
+    const tasks = [
+      {id:'B1', milestone:'BLOCKERS', title:'Mapeo asesores reales → ramos', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B2', milestone:'BLOCKERS', title:'Recolectar telegram_chat_id de los 10 asesores físicos', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B3', milestone:'BLOCKERS', title:'Crear 7 bots en BotFather y guardar tokens en Bitwarden', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B4', milestone:'BLOCKERS', title:'Confirmar estrategia reset gamificación', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B5', milestone:'BLOCKERS', title:'Confirmar cuenta Gmail a monitorear', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B6', milestone:'BLOCKERS', title:'Nombres reales de los 10 asesores', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B7', milestone:'BLOCKERS', title:'Crear @MSDS_Cartera_bot en BotFather', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+      {id:'B8', milestone:'BLOCKERS', title:'Crear @MSDS_Comisiones_bot en BotFather', owner:'AP', blocking:true, bucket:'blocker', status:'blocked'},
+
+      {id:'A0.1', milestone:'HITO A', title:'DDL tabla bots', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.2', milestone:'HITO A', title:'DDL tabla casos', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.3', milestone:'HITO A', title:'DDL tabla sla_config + seeds', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.4', milestone:'HITO A', title:'DDL tabla puntos_asesores', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.5', milestone:'HITO A', title:'ALTER tabla actividades', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.6', milestone:'HITO A', title:'ALTER tabla comunicaciones', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.7', milestone:'HITO A', title:'Validar DDL completo en Supabase', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.8', milestone:'HITO A', title:'Confirmar rotación de service_role key expuesta', owner:'AP', blocking:true, bucket:'milestone', status:'blocked'},
+      {id:'A0.9', milestone:'HITO A', title:'DDL tabla vendedores_externos', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.10', milestone:'HITO A', title:'ALTER polizas con vendor fields', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.11', milestone:'HITO A', title:'Verificar pagador_id legacy', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'A0.12', milestone:'HITO A', title:'ALTER polizas ADD estado_cobro', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.13', milestone:'HITO A', title:'ALTER asesores ADD telegram_chat_id + telegram_username', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A0.14', milestone:'HITO A', title:'Insertar 10 asesores reales en tabla asesores', owner:'AP', blocking:true, bucket:'milestone', status:'done'},
+      {id:'A1.1', milestone:'HITO A', title:'MASTERBOT_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A1.2', milestone:'HITO A', title:'GERENCIA_BOT_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A1.3', milestone:'HITO A', title:'SUPERVISOR_BOT_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A1.4', milestone:'HITO A', title:'MINI_SINIESTROS_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A1.5', milestone:'HITO A', title:'MINI_AUTOS_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A1.6', milestone:'HITO A', title:'MINI_VIDA_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A1.7', milestone:'HITO A', title:'MINI_COTIZACIONES_SYSTEM.md revisar y aprobar', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A2.1-12', milestone:'HITO A', title:'12 bots creados en BotFather', owner:'AP', blocking:true, bucket:'milestone', status:'done'},
+      {id:'A2.13', milestone:'HITO A', title:'Cargar tokens en Bitwarden', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A2.14', milestone:'HITO A', title:'Cargar tokens como credenciales Telegram en n8n UI', owner:'AP', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A2.15', milestone:'HITO A', title:'Fabio y asesores presionan /start en su bot', owner:'AP', blocking:true, bucket:'milestone', status:'blocked'},
+      {id:'A3.0', milestone:'HITO A', title:'W00 Notificador router central', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A3.1', milestone:'HITO A', title:'W01 MasterBot Classifier', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A3.2', milestone:'HITO A', title:'W02 Gerencia Bot', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A3.3', milestone:'HITO A', title:'W03 Supervisor Bot', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A3.4', milestone:'HITO A', title:'W10 SLA Watchdog', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A3.5', milestone:'HITO A', title:'W08 Gmail Monitor', owner:'CC', blocking:true, bucket:'milestone', status:'blocked'},
+      {id:'A3.6', milestone:'HITO A', title:'W09 Gamification Engine', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A3.7', milestone:'HITO A', title:'W11 Cartera Notifier', owner:'CC', blocking:true, bucket:'milestone', status:'done'},
+      {id:'A3.8', milestone:'HITO A', title:'W12 Reporte Comisiones', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A4.1', milestone:'HITO A', title:'Filas en tabla bots', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A4.2', milestone:'HITO A', title:'Validar que W10 enruta por área', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A4.3', milestone:'HITO A', title:'Test SLA siniestro 15 min', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A4.4', milestone:'HITO A', title:'Test SLA siniestro 30 min', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A4.5', milestone:'HITO A', title:'Test SLA cotización 2h/4h', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A4.6', milestone:'HITO A', title:'Insertar mini-agente Cartera', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A4.7', milestone:'HITO A', title:'Insertar mini-agente Comisiones', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A4.8', milestone:'HITO A', title:'Póliza nueva → notificación Cartera', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A4.9', milestone:'HITO A', title:'Reporte mensual CSV vendedor interno vs externo', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A5.1', milestone:'HITO A', title:'Trigger cierre tarea → W09 → puntos', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'A5.2', milestone:'HITO A', title:'Tab Asesores en gerencia.html con ranking', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'A5.3', milestone:'HITO A', title:'Caso cerrado antes SLA → +10 pts', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'A6.1', milestone:'HITO A', title:'E2E mensaje Telegram → MasterBot → caso creado', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A6.2', milestone:'HITO A', title:'E2E gerente → Gerencia_bot → tarea creada', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A6.3', milestone:'HITO A', title:'E2E email → caso creado → asesor notificado', owner:'CC', blocking:true, bucket:'milestone', status:'blocked'},
+      {id:'A6.4', milestone:'HITO A', title:'P4 sigue operativo', owner:'Codex', blocking:false, bucket:'milestone', status:'done'},
+      {id:'A6.5', milestone:'HITO A', title:'P5 sigue operativo', owner:'Codex', blocking:false, bucket:'milestone', status:'blocked'},
+      {id:'A6.6', milestone:'HITO A', title:'Dashboard gerencia.html muestra datos correctos post-DDL', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'A6.7', milestone:'HITO A', title:'Clasificación ≥ 90 % acierto', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A6.8', milestone:'HITO A', title:'Correo sobrevive caída simulada W01', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'A6.9', milestone:'HITO A', title:'Alerta SLA llega en ≤ 10 min', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+
+      {id:'B_1', milestone:'HITO B', title:'P2 vencimientos - cron diario alertas pólizas por vencer', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'B_2', milestone:'HITO B', title:'Card cliente 4 tabs en gerencia.html', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'B_3', milestone:'HITO B', title:'P3 cotizador conversacional básico', owner:'CC', blocking:true, bucket:'milestone', status:'done'},
+      {id:'B_4', milestone:'HITO B', title:'Filtros por ramo en dashboard', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+
+      {id:'C_1', milestone:'HITO C', title:'Tabla comisiones en Supabase', owner:'Codex', blocking:true, bucket:'milestone', status:'blocked'},
+      {id:'C_2', milestone:'HITO C', title:'Fórmula comisiones por ramo', owner:'Codex', blocking:true, bucket:'milestone', status:'blocked'},
+      {id:'C_3', milestone:'HITO C', title:'KPIs financieros en gerencia.html', owner:'Codex', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'C_4', milestone:'HITO C', title:'Reporte CSV exportable', owner:'Codex', blocking:true, bucket:'milestone', status:'pending'},
+
+      {id:'D_1', milestone:'HITO D', title:'Estrategia de contenidos aprobada', owner:'Claude', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'D_2', milestone:'HITO D', title:'Calendario editorial 3 meses', owner:'Claude', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'D_3', milestone:'HITO D', title:'Landing page MSDS', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+      {id:'D_4', milestone:'HITO D', title:'Automatización publicaciones n8n', owner:'CC', blocking:true, bucket:'milestone', status:'pending'},
+      {id:'D_5', milestone:'HITO D', title:'Formulario web → MasterBot → CRM', owner:'Codex', blocking:false, bucket:'milestone', status:'pending'},
+
+      {id:'BL1', milestone:'BACKLOG', title:'P5 DocuSign — Ley 527/99', owner:'Codex', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL2', milestone:'BACKLOG', title:'Client portal Supabase', owner:'Codex', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL3', milestone:'BACKLOG', title:'Financial commissions/payments module', owner:'Codex', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL4', milestone:'BACKLOG', title:'Automated insurer report downloads', owner:'AP', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL5', milestone:'BACKLOG', title:'Conversational gerente NLP bot', owner:'CC', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL6', milestone:'BACKLOG', title:'Telegram voice note broadcast', owner:'CC', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL7', milestone:'BACKLOG', title:'HTML client onboarding form', owner:'Codex', blocking:false, bucket:'backlog', status:'pending'},
+      {id:'BL8', milestone:'BACKLOG', title:'Separate vehicles module', owner:'AP', blocking:false, bucket:'backlog', status:'pending'},
+    ];
+
+    const milestoneOrder = ['BLOCKERS','HITO A','HITO B','HITO C','HITO D'];
+    const state = loadState();
+    let activeFilter = 'all';
+
+    function loadState(){
+      try{return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};}catch{return {};}
+    }
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY + '_updated', new Date().toISOString());
+    }
+    function getStatus(id){ return state[id] || tasks.find(t => t.id === id)?.status || 'pending'; }
+    function setStatus(id, status){
+      state[id] = status;
+      saveState();
+      render();
+    }
+    function cycleStatus(current){
+      if(current === 'pending') return 'progress';
+      if(current === 'progress') return 'done';
+      return 'pending';
+    }
+    function statusLabel(status){
+      if(status === 'progress') return '[→] In Progress';
+      if(status === 'done') return '[✅] Done';
+      if(status === 'blocked') return '[!] Blocked';
+      if(status === 'backlog') return '[ ] Backlog';
+      return '[ ] Pending';
+    }
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+    }
+    function ownerClass(owner){
+      return owner === 'Codex' ? 'codex' : owner === 'CC' ? 'cc' : owner === 'AP' ? 'ap' : 'claude';
+    }
+    function matchesFilter(task){
+      return activeFilter === 'all' || task.owner === activeFilter;
+    }
+    function fmtTime(ts){
+      return new Intl.DateTimeFormat([], {dateStyle:'medium', timeStyle:'short'}).format(new Date(ts || Date.now()));
+    }
+    function render(){
+      const visible = tasks.filter(t => t.bucket !== 'backlog' || true);
+      const done = visible.filter(t => getStatus(t.id) === 'done').length;
+      const progress = visible.filter(t => getStatus(t.id) === 'progress').length;
+      const blocked = visible.filter(t => getStatus(t.id) === 'blocked').length;
+      const pending = visible.length - done - progress - blocked;
+      const pct = visible.length ? Math.round(done / visible.length * 100) : 0;
+      document.getElementById('overallText').textContent = `${done}/${visible.length} complete`;
+      document.getElementById('overallBar').style.width = `${pct}%`;
+      document.getElementById('pendingCount').textContent = pending;
+      document.getElementById('inProgressCount').textContent = progress;
+      document.getElementById('doneCount').textContent = done;
+      document.getElementById('blockedCount').textContent = blocked;
+      document.getElementById('overallDetail').textContent = `${done} completed, ${progress} in progress, ${blocked} blocked, ${pending} pending`;
+      document.getElementById('lastUpdated').textContent = fmtTime(localStorage.getItem(STORAGE_KEY + '_updated'));
+      renderNext();
+      renderMilestones();
+      renderBacklog();
+      updateFilterUI();
+    }
+    function renderNext(){
+      const next = tasks.filter(t => t.bucket !== 'backlog' && t.blocking && getStatus(t.id) === 'pending').slice(0,3);
+      const host = document.getElementById('nextList');
+      host.innerHTML = next.length ? next.map(task => `
+        <div class="next-item">
+          <div>
+            <strong>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</strong>
+            <span>${escapeHtml(task.milestone)} · Owner: ${escapeHtml(task.owner)}</span>
+          </div>
+          <span>Blocking</span>
+        </div>
+      `).join('') : `<div class="next-item"><div><strong>No pending blocking tasks</strong><span>All blocking milestone items are done, in progress, or blocked.</span></div></div>`;
+    }
+    function renderMilestones(){
+      const host = document.getElementById('milestones');
+      host.innerHTML = milestoneOrder.map(milestone => {
+        const sectionTasks = tasks.filter(t => t.milestone === milestone && t.bucket !== 'backlog');
+        const visible = sectionTasks.filter(matchesFilter);
+        const done = sectionTasks.filter(t => getStatus(t.id) === 'done').length;
+        const total = sectionTasks.length;
+        const pct = total ? Math.round(done/total*100) : 0;
+        return `
+          <section class="section" style="margin-top:14px">
+            <div class="section-head">
+              <div>
+                <h2>${escapeHtml(milestone)}</h2>
+                <div class="small">${total} tasks · ${done} complete · ${visible.length} shown with current filter</div>
+              </div>
+              <div class="small">${pct}% complete</div>
+            </div>
+            <div style="margin-top:10px">
+              <div class="label-row"><span>Milestone progress</span><span>${done}/${total}</span></div>
+              <div class="bar ${pct === 100 ? 'done' : ''}"><div style="width:${pct}%"></div></div>
+            </div>
+            <div class="tasks">
+              ${visible.map(renderTask).join('')}
+            </div>
+          </section>`;
+      }).join('');
+      bindTaskEvents(host);
+    }
+    function renderBacklog(){
+      const host = document.getElementById('backlog');
+      const sectionTasks = tasks.filter(t => t.bucket === 'backlog');
+      const visible = sectionTasks.filter(matchesFilter);
+      host.innerHTML = visible.map(renderTask).join('');
+      bindTaskEvents(host);
+    }
+    function renderTask(task){
+      const status = getStatus(task.id);
+      const cls = status === 'done' ? 'done' : status === 'progress' ? 'progress' : status === 'blocked' ? 'blocked' : task.bucket === 'backlog' ? 'backlog' : 'pending';
+      const checked = status !== 'pending' && status !== 'blocked' ? 'checked' : '';
+      const backlogTag = task.bucket === 'backlog' ? '<span class="tag backlog">Backlog</span>' : '';
+      return `
+        <div class="task ${cls}" data-task-id="${escapeHtml(task.id)}">
+          <input type="checkbox" data-id="${escapeHtml(task.id)}" ${checked} aria-label="${escapeHtml(task.id)} ${escapeHtml(task.title)}">
+          <div>
+            <h4>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</h4>
+            <p>${escapeHtml(task.milestone)}</p>
+            <div class="tags">
+              <span class="tag ${ownerClass(task.owner)}">${escapeHtml(task.owner)}</span>
+              <span class="tag ${cls}">${statusLabel(status)}</span>
+              <span class="tag">Blocking: ${task.blocking ? 'yes' : 'no'}</span>
+              ${backlogTag}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="mini" data-action="toggle-status" data-id="${escapeHtml(task.id)}">Toggle</button>
+            <button class="mini blocked-on" data-action="toggle-blocked" data-id="${escapeHtml(task.id)}">${status === 'blocked' ? 'Unblock' : 'Block'}</button>
+          </div>
+        </div>`;
+    }
+    function bindTaskEvents(host){
+      host.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', e => {
+          const id = e.target.dataset.id;
+          setStatus(id, cycleStatus(getStatus(id)));
+        });
+      });
+      host.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const id = e.currentTarget.dataset.id;
+          const action = e.currentTarget.dataset.action;
+          if(action === 'toggle-status') setStatus(id, cycleStatus(getStatus(id)));
+          if(action === 'toggle-blocked') setStatus(id, getStatus(id) === 'blocked' ? 'pending' : 'blocked');
+        });
+      });
+    }
+    function updateFilterUI(){
+      document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === activeFilter));
+    }
+    function exportMarkdown(){
+      const lines = [];
+      lines.push('# MSDS-CRM Progress Dashboard');
+      lines.push('');
+      lines.push('## Stack real');
+      lines.push('- Supabase + n8n + VPS + OpenAI + Telegram');
+      lines.push('- Supabase MSDS: ekarbxdoaoqrtlmfzgyj.supabase.co');
+      lines.push('- n8n: https://no-26feb-n8n.ydlmwq.easypanel.host/');
+      lines.push('');
+      milestoneOrder.forEach(milestone => {
+        lines.push(`## ${milestone}`);
+        tasks.filter(t => t.milestone === milestone && t.bucket !== 'backlog').forEach(task => {
+          const st = getStatus(task.id);
+          lines.push(`- ${statusLabel(st)} ${task.id} ${task.title} | Owner: ${task.owner} | Blocking: ${task.blocking ? 'yes' : 'no'}`);
+        });
+        lines.push('');
+      });
+      lines.push('## BACKLOG');
+      tasks.filter(t => t.bucket === 'backlog').forEach(task => {
+        const st = getStatus(task.id);
+        lines.push(`- ${statusLabel(st)} ${task.id} ${task.title} | Owner: ${task.owner}`);
+      });
+      const md = lines.join('\n');
+      navigator.clipboard.writeText(md).then(() => alert('Markdown copied to clipboard.')).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = md;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        alert('Markdown copied to clipboard.');
+      });
+    }
+    document.querySelector('.chips').addEventListener('click', e => {
+      const btn = e.target.closest('[data-filter]');
+      if(!btn) return;
+      activeFilter = btn.dataset.filter;
+      render();
+    });
+    document.getElementById('exportBtn').addEventListener('click', exportMarkdown);
+    render();
+  </script>
+</body>
+</html>

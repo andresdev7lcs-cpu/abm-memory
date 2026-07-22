@@ -988,19 +988,27 @@ async function cargarKPIs() {
     const hoy = new Date().toISOString().split('T')[0];
     const fecha30 = new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0];
 
-    const [totalActs, totalPolizas, totalClientes, totalSiniestros, cartera] = await Promise.all([
-      spCount('actividades', '?estado=neq.Completada'),
+    const fecha7 = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
+    const fecha15 = new Date(new Date().setDate(new Date().getDate() - 15)).toISOString().split('T')[0];
+
+    const [totalActs, totalPolizas, totalClientes, totalSiniestros, totalUrgentes, totalCompletadas, contactadosRecientes] = await Promise.all([
+      spCount('actividades', '?estado=eq.abierta'),
       spCount('polizas', `?estado=eq.vigente&fecha_vencimiento=gte.${hoy}&fecha_vencimiento=lte.${fecha30}`),
       spCount('clientes', ''),
       spCount('siniestros', '?estado=neq.cerrado'),
-      spSum('polizas', 'prima', '?estado=eq.vigente'),
+      spCount('actividades', '?estado=eq.abierta&sla_horas=not.is.null'),
+      spCount('actividades', `?estado=eq.completada&fecha_fin=gte.${fecha7}`),
+      sp('actividades', `?fecha_inicio=gte.${fecha15}&select=cliente_id`),
     ]);
 
+    const clientesContactados = new Set((contactadosRecientes || []).map(r => r.cliente_id)).size;
+    const sinContacto = Math.max(totalClientes - clientesContactados, 0);
+
     set('g-clientes-total', totalClientes);
-    set('g-urgentes', cartera > 0 ? '$ ' + cartera.toLocaleString('es-CO', {maximumFractionDigits: 0}) : '—');
+    set('g-urgentes', totalUrgentes);
     set('g-pendientes', totalActs);
-    set('g-completadas', '—');
-    set('g-sin-contacto', '—');
+    set('g-completadas', totalCompletadas);
+    set('g-sin-contacto', sinContacto);
     set('g-polizas-vencer', totalPolizas);
     set('g-siniestros', totalSiniestros);
   } catch (e) {
@@ -1014,7 +1022,7 @@ async function cargarKPIs() {
 /* DASH URGENTES */
 async function cargarDashUrgentes() {
   try {
-    const res = await sp('actividades', '?estado=eq.urgente&order=fecha_inicio.desc&limit=5&select=*');
+    const res = await sp('actividades', '?estado=eq.abierta&sla_horas=not.is.null&order=fecha_inicio.desc&limit=5&select=*');
     renderActividadesList('dash-urgentes', res||[], true);
   } catch (e) {
     console.error('cargarDashUrgentes:', e);

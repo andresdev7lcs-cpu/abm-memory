@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Panel-Ops — Roadmap Execution Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1216;
+    --panel: #171b21;
+    --panel-2: #1e232b;
+    --border: #2a3038;
+    --text: #e6e9ee;
+    --muted: #8a94a3;
+    --accent: #4f8cff;
+    --green: #35c46a;
+    --yellow: #e0b93d;
+    --red: #e0554f;
+    --blue: #4f8cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .meta { font-size: 12px; color: var(--muted); }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(260px, 1fr));
+    gap: 14px;
+    padding: 16px;
+    align-items: start;
+  }
+  .column {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 200px;
+  }
+  .column h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 4px 6px 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .card .id-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .card .id { font-weight: 700; color: var(--accent); font-size: 12.5px; }
+  .card .model {
+    font-size: 10.5px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 6px;
+  }
+  .card .title { font-weight: 600; margin-bottom: 6px; }
+  .card .desc { color: var(--muted); font-size: 12px; margin-bottom: 8px; line-height: 1.4; }
+  .card .deps { font-size: 11.5px; margin-bottom: 8px; }
+  .dep-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    margin: 2px 3px 0 0;
+    border: 1px solid var(--border);
+  }
+  .dep-pill.done { color: var(--green); border-color: var(--green); }
+  .dep-pill.pending { color: var(--yellow); border-color: var(--yellow); }
+  .badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .badge.pending { background: #3a3620; color: var(--yellow); }
+  .badge.in_progress { background: #1d2f45; color: var(--blue); }
+  .badge.completed { background: #17331f; color: var(--green); }
+  .badge.blocked, .badge.failed { background: #3a1c1c; color: var(--red); }
+  .human-task-badge {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #2a2438;
+    color: #c79bf0;
+    border: 1px solid #4a3a63;
+  }
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  select, button, input, textarea {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 11.5px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #06101f; font-weight: 600; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.small { padding: 3px 8px; }
+  .card-footer-links {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+  }
+  .link {
+    color: var(--muted);
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    display: none; align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    width: min(720px, 92vw); max-height: 82vh; overflow: auto; padding: 16px;
+  }
+  .modal h3 { margin-top: 0; font-size: 14px; }
+  .modal pre {
+    background: #0b0e12; padding: 10px; border-radius: 6px; font-size: 11.5px;
+    white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto;
+  }
+  .modal .comment {
+    border-bottom: 1px solid var(--border);
+    padding: 6px 0;
+    font-size: 12px;
+  }
+  .modal .comment .ctop { color: var(--muted); font-size: 10.5px; margin-bottom: 2px; }
+  .modal-close {
+    float: right; cursor: pointer; color: var(--muted); background: none; border: none; font-size: 14px;
+  }
+  .toast {
+    position: fixed; bottom: 16px; right: 16px; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    font-size: 12.5px; max-width: 380px; z-index: 60; display: none;
+  }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.open { display: block; }
+  #status-bar {
+    font-size: 11px; color: var(--muted); padding: 0 20px 10px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Panel-Ops — Roadmap Execution Dashboard (GOV-001)</h1>
+  <div class="meta" id="refresh-meta">cargando…</div>
+</header>
+<div id="status-bar">roadmap.md es solo lectura. Todo estado en tiempo real vive en roadmap-status.md, logs/ y comments/.</div>
+
+<div id="board">
+  <div class="column" data-col="To Do"><h2>To Do <span id="count-todo">0</span></h2><div class="cards"></div></div>
+  <div class="column" data-col="In Progress"><h2>In Progress <span id="count-inprogress">0</span></h2><div class="cards"></div></div>
+  <div class="column" data-col="Blocked"><h2>Blocked <span id="count-blocked">0</span></h2><div class="cards"></div></div>
+  <div class="column" data-col="Completed"><h2>Completed <span id="count-completed">0</span></h2><div class="cards"></div></div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">cerrar ✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const REFRESH_MS = 4000;
+let ticketsCache = [];
+let allowlists = { models: [], runners: [] };
+// FIX-004: survives poll-triggered re-renders (buildCard destroys/rebuilds
+// selects every REFRESH_MS); populated on change, consulted by buildCard().
+const userSelections = new Map(); // ticketId -> { runner, model }
+
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+    else if (v === null || v === undefined || v === false) continue;
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) node.appendChild(c);
+  return node;
+}
+
+function showToast(message, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.className = 'toast open' + (isError ? ' error' : '');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => { t.className = 'toast'; }, 5000);
+}
+
+async function fetchJson(url, opts) {
+  const res = await fetch(url, opts);
+  let body;
+  try { body = await res.json(); } catch { body = null; }
+  if (!res.ok) {
+    const msg = (body && body.error) ? body.error : `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body;
+}
+
+async function loadAllowlists() {
+  try {
+    const data = await fetchJson('/api/allowlists');
+    allowlists = data;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function loadTickets() {
+  try {
+    const data = await fetchJson('/api/tickets');
+    ticketsCache = data.tickets;
+    render();
+    document.getElementById('refresh-meta').textContent =
+      'actualizado ' + new Date().toLocaleTimeString() + ' — ' + data.count + ' tickets';
+  } catch (e) {
+    document.getElementById('refresh-meta').textContent = 'error al refrescar: ' + e.message;
+  }
+}
+
+function depPill(dep) {
+  return el('span', {
+    class: 'dep-pill ' + (dep.completed ? 'done' : 'pending'),
+    text: dep.id + (dep.completed ? ' ✓' : ' …'),
+  });
+}
+
+function buildCard(ticket) {
+  const card = el('div', { class: 'card', 'data-ticket': ticket.id });
+
+  const idRow = el('div', { class: 'id-row' }, [
+    el('span', { class: 'id', text: ticket.id }),
+    el('span', { class: 'model', text: ticket.recommendedModel }),
+  ]);
+  card.appendChild(idRow);
+
+  card.appendChild(el('div', { class: 'title', text: ticket.title }));
+  card.appendChild(el('div', { class: 'desc', text: ticket.description || '(sin objetivo)' }));
+
+  const badgeLabel = ticket.blockerType === 'blocked-external-verification'
+    ? 'bloqueado — verificación externa pendiente'
+    : ticket.rawState;
+  const badge = el('span', {
+    class: 'badge ' + ticket.rawState,
+    text: badgeLabel,
+  });
+  const depsWrap = el('div', { class: 'deps' });
+  if (ticket.dependencies.length === 0) {
+    depsWrap.appendChild(el('span', { class: 'dep-pill done', text: 'sin dependencias' }));
+  } else {
+    ticket.dependencies.forEach((d) => depsWrap.appendChild(depPill(d)));
+  }
+  card.appendChild(depsWrap);
+  card.appendChild(badge);
+
+  // Execute controls — FIX-003: human/business tickets (isHumanTask) get no
+  // runner/model selector and no Execute button, since no agent process can
+  // ever complete them; show an explanatory badge instead.
+  if (ticket.isHumanTask) {
+    card.appendChild(el('span', {
+      class: 'human-task-badge',
+      text: 'tarea humana — no ejecutable',
+    }));
+  } else if (ticket.blockerType === 'blocked-external-verification') {
+    const saved = userSelections.get(ticket.id);
+    const actions = el('div', { class: 'card-actions' });
+    const runnerSelect = el('select', { class: 'runner-select' });
+    (allowlists.runners.length ? allowlists.runners : ['claude', 'codex']).forEach((r) => {
+      runnerSelect.appendChild(el('option', { value: r, text: r }));
+    });
+    if (saved && [...runnerSelect.options].some((o) => o.value === saved.runner)) {
+      runnerSelect.value = saved.runner;
+    }
+
+    const modelSelect = el('select', { class: 'model-select' });
+    function refreshModelOptions() {
+      modelSelect.innerHTML = '';
+      if (runnerSelect.value === 'claude') {
+        modelSelect.disabled = false;
+        (allowlists.models.length ? allowlists.models : ['claude-fable-5','claude-opus-4-8','claude-sonnet-5'])
+          .forEach((m) => modelSelect.appendChild(el('option', { value: m, text: m })));
+      } else {
+        modelSelect.disabled = true;
+        modelSelect.appendChild(el('option', { value: '', text: 'n/a (codex adapter)' }));
+      }
+      if (saved && [...modelSelect.options].some((o) => o.value === saved.model)) {
+        modelSelect.value = saved.model;
+      }
+    }
+    function saveSelection() {
+      userSelections.set(ticket.id, { runner: runnerSelect.value, model: modelSelect.value });
+    }
+    runnerSelect.addEventListener('change', () => { refreshModelOptions(); saveSelection(); });
+    modelSelect.addEventListener('change', saveSelection);
+    refreshModelOptions();
+
+    const ackReason = el('textarea', {
+      class: 'ack-reason',
+      placeholder: '¿Qué condición externa ya está disponible y por qué ahora sí funcionará?',
+      rows: '2',
+      style: 'min-width: 100%;',
+    });
+    const ackAuthor = el('input', {
+      class: 'ack-author',
+      placeholder: 'autor humano',
+      value: 'human',
+      style: 'min-width: 180px;',
+    });
+    const relaunchBtn = el('button', {
+      class: 'primary small',
+      text: 'Reanudar con confirmación',
+      onclick: () => executeTicket(ticket.id, runnerSelect.value, modelSelect.value, {
+        humanAck: true,
+        ackReason: ackReason.value,
+        author: ackAuthor.value,
+      }),
+    });
+
+    actions.appendChild(runnerSelect);
+    actions.appendChild(modelSelect);
+    actions.appendChild(ackAuthor);
+    actions.appendChild(ackReason);
+    actions.appendChild(relaunchBtn);
+    card.appendChild(actions);
+  } else {
+    const saved = userSelections.get(ticket.id);
+    const actions = el('div', { class: 'card-actions' });
+    const runnerSelect = el('select', { class: 'runner-select' });
+    (allowlists.runners.length ? allowlists.runners : ['claude', 'codex']).forEach((r) => {
+      runnerSelect.appendChild(el('option', { value: r, text: r }));
+    });
+    if (saved && [...runnerSelect.options].some((o) => o.value === saved.runner)) {
+      runnerSelect.value = saved.runner;
+    }
+
+    const modelSelect = el('select', { class: 'model-select' });
+    function refreshModelOptions() {
+      modelSelect.innerHTML = '';
+      if (runnerSelect.value === 'claude') {
+        modelSelect.disabled = false;
+        (allowlists.models.length ? allowlists.models : ['claude-fable-5','claude-opus-4-8','claude-sonnet-5'])
+          .forEach((m) => modelSelect.appendChild(el('option', { value: m, text: m })));
+      } else {
+        modelSelect.disabled = true;
+        modelSelect.appendChild(el('option', { value: '', text: 'n/a (codex adapter)' }));
+      }
+      if (saved && [...modelSelect.options].some((o) => o.value === saved.model)) {
+        modelSelect.value = saved.model;
+      }
+    }
+    function saveSelection() {
+      userSelections.set(ticket.id, { runner: runnerSelect.value, model: modelSelect.value });
+    }
+    runnerSelect.addEventListener('change', () => { refreshModelOptions(); saveSelection(); });
+    modelSelect.addEventListener('change', saveSelection);
+    refreshModelOptions();
+
+    const canExecute = ticket.rawState === 'pending' || ticket.rawState === 'blocked' || ticket.rawState === 'failed';
+    const execBtn = el('button', {
+      class: 'primary small',
+      text: ticket.hasActiveRun ? 'ejecutando…' : 'Ejecutar',
+      disabled: (!canExecute || ticket.hasActiveRun) ? 'true' : null,
+      onclick: () => executeTicket(ticket.id, runnerSelect.value, modelSelect.value),
+    });
+    if (!canExecute || ticket.hasActiveRun) execBtn.disabled = true;
+
+    actions.appendChild(runnerSelect);
+    actions.appendChild(modelSelect);
+    actions.appendChild(execBtn);
+    card.appendChild(actions);
+  }
+
+  const footer = el('div', { class: 'card-footer-links' }, [
+    el('button', { class: 'link', text: 'ver log', onclick: () => openLogModal(ticket.id) }),
+    el('button', { class: 'link', text: 'comentarios', onclick: () => openCommentsModal(ticket.id) }),
+  ]);
+  card.appendChild(footer);
+
+  return card;
+}
+
+function render() {
+  const columns = {
+    'To Do': document.querySelector('[data-col="To Do"] .cards'),
+    'In Progress': document.querySelector('[data-col="In Progress"] .cards'),
+    'Blocked': document.querySelector('[data-col="Blocked"] .cards'),
+    'Completed': document.querySelector('[data-col="Completed"] .cards'),
+  };
+  Object.values(columns).forEach((c) => (c.innerHTML = ''));
+  const counts = { 'To Do': 0, 'In Progress': 0, 'Blocked': 0, 'Completed': 0 };
+
+  ticketsCache
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .forEach((t) => {
+      const col = columns[t.runtimeState] || columns['To Do'];
+      col.appendChild(buildCard(t));
+      counts[t.runtimeState] = (counts[t.runtimeState] || 0) + 1;
+    });
+
+  document.getElementById('count-todo').textContent = counts['To Do'];
+  document.getElementById('count-inprogress').textContent = counts['In Progress'];
+  document.getElementById('count-blocked').textContent = counts['Blocked'];
+  document.getElementById('count-completed').textContent = counts['Completed'];
+}
+
+async function executeTicket(ticketId, runner, model, ack = null) {
+  try {
+    const payload = { ticket: ticketId, runner };
+    if (runner === 'claude') payload.model = model;
+    if (ack && ack.humanAck) {
+      payload.humanAck = true;
+      payload.ackReason = ack.ackReason;
+      payload.author = ack.author;
+    }
+    const data = await fetchJson('/api/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (data.state === 'blocked') {
+      showToast(ticketId + ' bloqueado: ' + data.message, true);
+    } else {
+      showToast(ticketId + ' lanzado (' + data.state + ')', false);
+    }
+    loadTickets();
+  } catch (e) {
+    showToast('Error ejecutando ' + ticketId + ': ' + e.message, true);
+  }
+}
+
+function openModal(bodyNode) {
+  const body = document.getElementById('modal-body');
+  body.innerHTML = '';
+  body.appendChild(bodyNode);
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-backdrop').classList.remove('open');
+});
+document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-backdrop') e.currentTarget.classList.remove('open');
+});
+
+async function openLogModal(ticketId) {
+  const wrap = el('div');
+  wrap.appendChild(el('h3', { text: 'Logs — ' + ticketId }));
+  const select = el('select');
+  const pre = el('pre', { text: 'cargando…' });
+  try {
+    const data = await fetchJson('/api/logs?ticket=' + encodeURIComponent(ticketId));
+    if (!data.logs.length) {
+      pre.textContent = '(sin logs todavía)';
+    } else {
+      data.logs.forEach((f) => select.appendChild(el('option', { value: f, text: f })));
+      const loadLog = async () => {
+        pre.textContent = 'cargando…';
+        try {
+          const res = await fetch('/api/log?ticket=' + encodeURIComponent(ticketId) + '&file=' + encodeURIComponent(select.value));
+          pre.textContent = await res.text();
+        } catch (e) {
+          pre.textContent = 'error: ' + e.message;
+        }
+      };
+      select.addEventListener('change', loadLog);
+      wrap.appendChild(select);
+      loadLog();
+    }
+  } catch (e) {
+    pre.textContent = 'error: ' + e.message;
+  }
+  wrap.appendChild(pre);
+  openModal(wrap);
+}
+
+async function openCommentsModal(ticketId) {
+  const wrap = el('div');
+  wrap.appendChild(el('h3', { text: 'Comentarios — ' + ticketId }));
+  const list = el('div');
+  wrap.appendChild(list);
+
+  const form = el('div', { style: 'margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;' });
+  const author = el('input', { placeholder: 'autor', value: 'dashboard-user' });
+  const typeSel = el('select');
+  ['note', 'completion', 'blocked'].forEach((t) => typeSel.appendChild(el('option', { value: t, text: t })));
+  const msg = el('textarea', { placeholder: 'mensaje', rows: '2', style: 'flex:1; min-width:220px;' });
+  const send = el('button', { class: 'primary small', text: 'Agregar' });
+  form.appendChild(author);
+  form.appendChild(typeSel);
+  form.appendChild(msg);
+  form.appendChild(send);
+  wrap.appendChild(form);
+
+  async function refresh() {
+    list.innerHTML = 'cargando…';
+    try {
+      const data = await fetchJson('/api/comments?ticket=' + encodeURIComponent(ticketId));
+      list.innerHTML = '';
+      if (!data.comments.length) {
+        list.appendChild(el('div', { class: 'comment', text: '(sin comentarios)' }));
+      }
+      data.comments.forEach((c) => {
+        const item = el('div', { class: 'comment' });
+        item.appendChild(el('div', { class: 'ctop', text: `${c.timestamp || ''} · ${c.author || '?'} · ${c.type || 'note'}` }));
+        item.appendChild(el('div', { text: c.message || c.raw || '' }));
+        list.appendChild(item);
+      });
+    } catch (e) {
+      list.innerHTML = '';
+      list.appendChild(el('div', { class: 'comment', text: 'error: ' + e.message }));
+    }
+  }
+
+  send.addEventListener('click', async () => {
+    if (!msg.value.trim()) return;
+    try {
+      await fetchJson('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket: ticketId, author: author.value, type: typeSel.value, message: msg.value }),
+      });
+      msg.value = '';
+      refresh();
+    } catch (e) {
+      showToast('Error agregando comentario: ' + e.message, true);
+    }
+  });
+
+  await refresh();
+  openModal(wrap);
+}
+
+async function init() {
+  await loadAllowlists();
+  await loadTickets();
+  setInterval(loadTickets, REFRESH_MS);
+}
+init();
+</script>
+</body>
+</html>

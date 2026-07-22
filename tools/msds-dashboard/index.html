@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MSDS-CRM — Dashboard Kanban</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --card: #ffffff;
+    --border: #dde1e6;
+    --text: #1c1c1c;
+    --muted: #6b7280;
+    --accent: #1d4ed8;
+    --accent-2: #7c3aed;
+    --ok: #22c55e;
+    --bad: #ef4444;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --panel: #171922;
+      --card: #20232e;
+      --border: #2c3040;
+      --text: #e6e6e6;
+      --muted: #9aa0aa;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+  }
+  .col {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 200px;
+  }
+  .col h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0 0 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .card .hito { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .card .id { font-weight: 700; color: var(--accent-2); }
+  .card .title { font-weight: 600; margin: 2px 0 6px; }
+  .ejecutor-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+  }
+  .ejecutor-codex { background: rgba(34,197,94,0.15); color: #16a34a; border: 1px solid rgba(34,197,94,0.4); }
+  .ejecutor-cc { background: rgba(29,78,216,0.15); color: #1d4ed8; border: 1px solid rgba(29,78,216,0.4); }
+  .ejecutor-manual { background: rgba(234,179,8,0.15); color: #a16207; border: 1px solid rgba(234,179,8,0.4); }
+  @media (prefers-color-scheme: dark) {
+    .ejecutor-codex { color: #4ade80; }
+    .ejecutor-cc { color: #60a5fa; }
+    .ejecutor-manual { color: #facc15; }
+  }
+  .prio-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+  }
+  .prio-critica { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid rgba(239,68,68,0.4); }
+  .prio-alta { background: rgba(234,179,8,0.15); color: #a16207; border: 1px solid rgba(234,179,8,0.4); }
+  .prio-media { background: rgba(34,197,94,0.15); color: #16a34a; border: 1px solid rgba(34,197,94,0.4); }
+  @media (prefers-color-scheme: dark) {
+    .prio-critica { color: #f87171; }
+    .prio-alta { color: #facc15; }
+    .prio-media { color: #4ade80; }
+  }
+  .card .desc { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .deps { font-size: 11px; margin-bottom: 6px; }
+  .dep-ok { color: var(--ok); }
+  .dep-bad { color: var(--bad); }
+  .row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  select, button, input[type="text"] {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover, select:hover { border-color: var(--accent); }
+  .links { font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .links button { padding: 3px 8px; }
+  .section {
+    margin-top: 18px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .section-head h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+  .section-head .hint {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .cliente-form {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .cliente-form input, .cliente-form select, .cliente-form textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font: inherit;
+  }
+  .cliente-form textarea {
+    min-height: 76px;
+    grid-column: 1 / -1;
+    resize: vertical;
+  }
+  .cliente-form .span-2 { grid-column: span 2; }
+  .cliente-form .span-4 { grid-column: 1 / -1; }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .table-wrap { overflow: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th, td {
+    border-top: 1px solid var(--border);
+    padding: 8px 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .mini { font-size: 11px; color: var(--muted); }
+  .danger { color: var(--bad); }
+  .timeline-list { display: grid; gap: 10px; }
+  .timeline-item {
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .timeline-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .timeline-title { font-weight: 700; margin-bottom: 4px; }
+  .timeline-desc { font-size: 12px; color: var(--text); margin-bottom: 8px; }
+  .sla-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  .sla-ok { background: rgba(34,197,94,0.15); color: #16a34a; border: 1px solid rgba(34,197,94,0.4); }
+  .sla-alerta { background: rgba(234,179,8,0.15); color: #a16207; border: 1px solid rgba(234,179,8,0.4); }
+  .sla-escalado { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid rgba(239,68,68,0.4); }
+  .sla-cerrado, .sla-sin_datos { background: rgba(107,114,128,0.15); color: var(--muted); border: 1px solid rgba(107,114,128,0.3); }
+  @media (prefers-color-scheme: dark) {
+    .sla-ok { color: #4ade80; }
+    .sla-alerta { color: #facc15; }
+    .sla-escalado { color: #f87171; }
+  }
+
+  #overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center;
+    z-index: 10;
+    padding: 20px;
+  }
+  #overlay .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    width: 520px;
+    max-width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  #overlay pre, #overlay textarea {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    width: 100%;
+    color: var(--text);
+  }
+  #overlay .close { float: right; }
+  .comment { border-bottom: 1px solid var(--border); padding: 6px 0; font-size: 12px; }
+  .comment .meta { color: var(--muted); font-size: 10px; }
+  #commentInput { width: 100%; margin-top: 8px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px; }
+</style>
+</head>
+<body>
+<h1>MSDS-CRM — Tablero de Ejecución</h1>
+<div class="subtitle">Kanban local — lee/escribe <code>msds-roadmap.md</code> y <code>msds-status.md</code></div>
+
+<div class="board" id="board">
+  <div class="col" data-status="todo"><h2><span>Por hacer</span><span>⬜</span></h2><div class="cards"></div></div>
+  <div class="col" data-status="doing"><h2><span>En curso</span><span>🔄</span></h2><div class="cards"></div></div>
+  <div class="col" data-status="blocked"><h2><span>Bloqueado</span><span>🚫</span></h2><div class="cards"></div></div>
+  <div class="col" data-status="done"><h2><span>Completado</span><span>✅</span></h2><div class="cards"></div></div>
+</div>
+
+<div class="section">
+  <div class="section-head">
+    <div>
+      <h2>Clientes</h2>
+      <div class="hint">CRUD completo contra Supabase. Si el server no tiene credenciales, la vista muestra el error en línea.</div>
+    </div>
+    <div class="actions">
+      <button onclick="loadClientes()">Refrescar</button>
+      <button onclick="resetClienteForm()">Nuevo cliente</button>
+    </div>
+  </div>
+
+  <form class="cliente-form" onsubmit="saveCliente(event)">
+    <input type="hidden" id="cliente-id" />
+    <input id="cliente-nombre" class="span-2" placeholder="Nombre completo o razón social" required />
+    <input id="cliente-identificacion" placeholder="Identificación" />
+    <select id="cliente-tipo">
+      <option value="natural">Natural</option>
+      <option value="juridica">Jurídica</option>
+    </select>
+    <select id="cliente-tipo-doc">
+      <option value="CC">CC</option>
+      <option value="NIT">NIT</option>
+      <option value="CE">CE</option>
+      <option value="PA">PA</option>
+    </select>
+    <input id="cliente-primer-apellido" placeholder="Primer apellido" />
+    <input id="cliente-segundo-apellido" placeholder="Segundo apellido" />
+    <input id="cliente-correo" class="span-2" type="email" placeholder="Correo" />
+    <input id="cliente-telefono" placeholder="Teléfono" />
+    <input id="cliente-celular" placeholder="Celular" />
+    <input id="cliente-municipio" placeholder="Municipio" />
+    <input id="cliente-direccion" class="span-2" placeholder="Dirección" />
+    <input id="cliente-profesion" placeholder="Profesión" />
+    <input id="cliente-ocupacion" placeholder="Ocupación" />
+    <input id="cliente-estrato" type="number" min="0" max="10" placeholder="Estrato" />
+    <textarea id="cliente-observaciones" placeholder="Observaciones"></textarea>
+    <div class="actions span-4">
+      <button type="submit">Guardar cliente</button>
+      <button type="button" onclick="deleteClienteSelected()" class="danger">Eliminar seleccionado</button>
+      <span class="mini" id="cliente-form-status"></span>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Doc</th>
+          <th>Contacto</th>
+          <th>Municipio</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="clientes-table">
+        <tr><td colspan="7" class="mini">Cargando clientes...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-head">
+    <div>
+      <h2>Actividades</h2>
+      <div class="hint">Timeline y seguimiento de actividades contra Supabase.</div>
+    </div>
+    <div class="actions">
+      <button onclick="loadActividades()">Refrescar</button>
+      <button onclick="resetActividadForm()">Nueva actividad</button>
+    </div>
+  </div>
+
+  <form class="cliente-form" onsubmit="saveActividad(event)">
+    <input type="hidden" id="actividad-id" />
+    <select id="actividad-cliente" class="span-2" required></select>
+    <input id="actividad-clase" placeholder="Clase (llamada, correo, visita, nota)" />
+    <select id="actividad-estado">
+      <option value="abierta">Abierta</option>
+      <option value="en_progreso">En progreso</option>
+      <option value="cerrada">Cerrada</option>
+    </select>
+    <input id="actividad-asesor-id" placeholder="Asesor ID (opcional)" />
+    <input id="actividad-poliza-id" placeholder="Póliza ID (opcional)" />
+    <input id="actividad-siniestro-id" placeholder="Siniestro ID (opcional)" />
+    <input id="actividad-pendiente-id" placeholder="Pendiente ID (opcional)" />
+    <input id="actividad-fecha-inicio" type="date" />
+    <input id="actividad-fecha-fin" type="date" />
+    <textarea id="actividad-descripcion" placeholder="Descripción"></textarea>
+    <div class="actions span-4">
+      <button type="submit">Guardar actividad</button>
+      <button type="button" class="danger" onclick="deleteActividadSelected()">Eliminar seleccionada</button>
+      <span class="mini" id="actividad-form-status"></span>
+    </div>
+  </form>
+
+  <div id="timeline-empty" class="mini">Cargando actividades...</div>
+  <div class="timeline-list" id="actividades-timeline"></div>
+</div>
+
+<div class="section">
+  <div class="section-head">
+    <div>
+      <h2>Pólizas</h2>
+      <div class="hint">CRUD completo contra Supabase. Si el server no tiene credenciales, la vista muestra el error en línea.</div>
+    </div>
+    <div class="actions">
+      <button onclick="loadPolizas()">Refrescar</button>
+      <button onclick="resetPolizaForm()">Nueva póliza</button>
+    </div>
+  </div>
+
+  <form class="cliente-form" onsubmit="savePoliza(event)">
+    <input type="hidden" id="poliza-id" />
+    <input id="poliza-cliente-id" placeholder="ID cliente (tomador)" required />
+    <input id="poliza-pagador-id" placeholder="ID pagador (si difiere)" />
+    <input id="poliza-vehiculo-id" placeholder="ID vehículo" />
+    <input id="poliza-numero" placeholder="Número de póliza" />
+    <select id="poliza-ramo" required>
+      <option value="">Ramo…</option>
+      <option value="Autos">Autos</option>
+      <option value="Hogar">Hogar</option>
+      <option value="Vida">Vida</option>
+      <option value="Patrimoniales">Patrimoniales</option>
+      <option value="SOAT">SOAT</option>
+    </select>
+    <input id="poliza-aseguradora" placeholder="Aseguradora" />
+    <input id="poliza-plan" placeholder="Plan" />
+    <select id="poliza-modalidad">
+      <option value="">Modalidad…</option>
+      <option value="Individual">Individual</option>
+      <option value="Colectiva">Colectiva</option>
+    </select>
+    <input id="poliza-sucursal" placeholder="Sucursal" />
+    <input id="poliza-municipio-expedicion" placeholder="Municipio expedición" />
+    <input id="poliza-vigencia-inicial" type="date" placeholder="Vigencia inicial" />
+    <input id="poliza-fecha-inicio" type="date" placeholder="Fecha inicio" />
+    <input id="poliza-fecha-vencimiento" type="date" placeholder="Fecha vencimiento" />
+    <input id="poliza-prima" type="number" step="0.01" min="0" placeholder="Prima" />
+    <select id="poliza-estado">
+      <option value="vigente">Vigente</option>
+      <option value="sin_renovar">Sin renovar</option>
+      <option value="cancelada">Cancelada</option>
+      <option value="renovada">Renovada</option>
+    </select>
+    <div class="actions span-4">
+      <button type="submit">Guardar póliza</button>
+      <button type="button" onclick="deletePolizaSelected()" class="danger">Eliminar seleccionada</button>
+      <span class="mini" id="poliza-form-status"></span>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Número</th>
+          <th>Ramo</th>
+          <th>Aseguradora</th>
+          <th>Cliente</th>
+          <th>Vigencia</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="polizas-table">
+        <tr><td colspan="8" class="mini">Cargando pólizas...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-head">
+    <div>
+      <h2>Siniestros — Monitor SLA</h2>
+      <div class="hint">Umbral siniestro: alerta 15 min / escalar 30 min sin atender (sla_config, PLAN_ARQUITECTURA_MSDS.md). Referencia: fecha_notif_asesor o fecha_ocurrencia. Solo abiertos (avisado/definido) cuentan SLA.</div>
+    </div>
+    <div class="actions">
+      <button onclick="loadSiniestros()">Refrescar</button>
+      <button onclick="resetSiniestroForm()">Nuevo siniestro</button>
+    </div>
+  </div>
+
+  <form class="cliente-form" onsubmit="saveSiniestro(event)">
+    <input type="hidden" id="siniestro-id" />
+    <input id="siniestro-poliza-id" placeholder="ID póliza" required />
+    <input id="siniestro-num-aseguradora" placeholder="Nº siniestro aseguradora" />
+    <input id="siniestro-asegurado" class="span-2" placeholder="Asegurado afectado" />
+    <input id="siniestro-fecha-ocurrencia" type="date" placeholder="Fecha ocurrencia" />
+    <input id="siniestro-fecha-notif-asesor" type="datetime-local" placeholder="Notif. asesor" />
+    <input id="siniestro-fecha-notif-aseguradora" type="datetime-local" placeholder="Notif. aseguradora" />
+    <select id="siniestro-estado">
+      <option value="avisado">Avisado</option>
+      <option value="definido">Definido</option>
+      <option value="cerrado">Cerrado</option>
+    </select>
+    <input id="siniestro-valor-indemnizado" type="number" step="0.01" min="0" placeholder="Valor indemnizado" />
+    <textarea id="siniestro-descripcion" placeholder="Descripción"></textarea>
+    <div class="actions span-4">
+      <button type="submit">Guardar siniestro</button>
+      <button type="button" onclick="deleteSiniestroSelected()" class="danger">Eliminar seleccionado</button>
+      <span class="mini" id="siniestro-form-status"></span>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Póliza</th>
+          <th>Asegurado</th>
+          <th>Estado</th>
+          <th>SLA</th>
+          <th>Transcurrido</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="siniestros-table">
+        <tr><td colspan="7" class="mini">Cargando siniestros...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="panel">
+    <button class="close" onclick="closeOverlay()">Cerrar</button>
+    <div id="overlayContent"></div>
+  </div>
+</div>
+
+<script>
+const MODELS = ['Fable', 'Sonnet', 'Opus', 'Manual'];
+// msds-roadmap.md usa estados en texto plano (sin emoji): Completado,
+// Bloqueante, Bloqueante humano, Bloqueado, Planeado, Futuro, En curso.
+const ESTADOS = ['Planeado', 'En curso', 'Bloqueante', 'Bloqueante humano', 'Bloqueado', 'Completado', 'Futuro'];
+
+function classify(estado) {
+  const lower = (estado || '').toLowerCase();
+  if (lower.includes('completado')) return 'done';
+  if (lower.includes('bloqueante') || lower.includes('bloqueado')) return 'blocked';
+  if (lower.includes('curso') || lower.includes('progreso')) return 'doing';
+  return 'todo';
+}
+
+function depBadgeHtml(depId, tickets) {
+  const dep = tickets.find((t) => t.id === depId);
+  const ok = dep ? classify(dep.estado) === 'done' : false;
+  return `<span class="${ok ? 'dep-ok' : 'dep-bad'}">${depId} ${ok ? '✅' : '❌'}</span>`;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function ejecutorBadgeHtml(ejecutor) {
+  const e = (ejecutor || '').trim();
+  const lower = e.toLowerCase();
+  const cls = lower.startsWith('codex') ? 'ejecutor-codex' : lower.startsWith('cc') ? 'ejecutor-cc' : 'ejecutor-manual';
+  const label = lower.startsWith('codex') ? '🤖 Codex ejecuta' : lower.startsWith('cc') ? '🧭 CC ejecuta' : `👤 ${escapeHtml(e) || 'Manual'}`;
+  return `<span class="ejecutor-badge ${cls}">${label}</span>`;
+}
+
+function prioridadBadgeHtml(prioridad) {
+  const p = (prioridad || '').trim();
+  if (!p) return '';
+  const lower = p.toLowerCase();
+  const cls = lower.startsWith('cr') ? 'prio-critica' : lower.startsWith('alta') ? 'prio-alta' : 'prio-media';
+  const label = lower.startsWith('cr') ? '🔴 Crítica' : lower.startsWith('alta') ? '🟡 Alta' : '🟢 Media';
+  return `<span class="prio-badge ${cls}">${label}</span>`;
+}
+
+function cardHtml(t, tickets) {
+  const depsHtml = t.dependencias.length
+    ? t.dependencias.map((d) => depBadgeHtml(d, tickets)).join(' ')
+    : '<span class="dep-ok">sin dependencias</span>';
+  const modelSel = MODELS.map((m) => `<option value="${m}" ${m.toLowerCase() === (t.modelo || '').toLowerCase() ? 'selected' : ''}>${m}</option>`).join('');
+  const estadoOptions = ESTADOS.includes(t.estado) ? ESTADOS : [...ESTADOS, t.estado].filter(Boolean);
+  const estadoSel = estadoOptions.map((e) => `<option value="${e}" ${e === t.estado ? 'selected' : ''}>${e}</option>`).join('');
+  const descTrunc = (t.descripcion || '').length > 260 ? t.descripcion.slice(0, 260) + '…' : (t.descripcion || '');
+  const checklistHtml = (t.checklist && t.checklist.length)
+    ? `<div class="desc">Checklist: ${t.checklist.filter(c => c.done).length}/${t.checklist.length}</div>`
+    : '';
+  return `
+    <div class="card" data-id="${t.id}">
+      <div class="hito">${escapeHtml(t.hito || '')}</div>
+      <div class="id">${t.id}</div>
+      <div class="title">${escapeHtml(t.titulo)}</div>
+      ${ejecutorBadgeHtml(t.ejecutor)} ${prioridadBadgeHtml(t.prioridad)}
+      <div class="desc">${escapeHtml(descTrunc)}</div>
+      ${checklistHtml}
+      <div class="deps">Dependencias: ${depsHtml}</div>
+      <div class="row">
+        <select id="estado-${t.id}" onchange="changeStatus('${t.id}')">${estadoSel}</select>
+      </div>
+      <div class="row">
+        <select id="model-${t.id}">${modelSel}</select>
+      </div>
+      <div class="links">
+        <button onclick="viewCommand('${t.id}')">Ver comando</button>
+        <button onclick="viewLogs('${t.id}')">Logs</button>
+        <button onclick="viewComments('${t.id}')">Comentarios</button>
+      </div>
+    </div>`;
+}
+
+let ticketsCache = [];
+let clientesCache = [];
+let actividadesCache = [];
+let polizasCache = [];
+let siniestrosCache = [];
+
+async function refresh() {
+  const res = await fetch('/api/tickets');
+  const tickets = await res.json();
+  ticketsCache = tickets;
+  const cols = { todo: [], doing: [], blocked: [], done: [] };
+  for (const t of tickets) cols[classify(t.estado)].push(t);
+  for (const [status, list] of Object.entries(cols)) {
+    const el = document.querySelector(`.col[data-status="${status}"] .cards`);
+    el.innerHTML = list.map((t) => cardHtml(t, tickets)).join('') || '<div style="color:var(--muted);font-size:12px;">(vacío)</div>';
+  }
+  await loadClientes();
+  await loadActividades();
+  await loadPolizas();
+  await loadSiniestros();
+}
+
+async function changeStatus(ticketId) {
+  const estado = document.getElementById(`estado-${ticketId}`).value;
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado }),
+  });
+  const data = await res.json();
+  if (data.error) alert(data.error);
+  refresh();
+}
+
+function openOverlay(html) {
+  document.getElementById('overlayContent').innerHTML = html;
+  document.getElementById('overlay').style.display = 'flex';
+}
+function closeOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+async function viewCommand(ticketId) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/command`, { method: 'POST' });
+  const data = await res.json();
+  const cmd = data.command || data.error || '(sin comando)';
+  openOverlay(`
+    <h3>${ticketId} — comando sugerido</h3>
+    <p style="font-size:12px;color:var(--muted);">Este comando NO se ejecuta automáticamente. Copialo y corrélo manualmente en tu terminal.</p>
+    <textarea id="cmdText" rows="4" readonly>${escapeHtml(cmd)}</textarea>
+    <button onclick="copyCommand()">Copiar</button>
+  `);
+}
+
+function copyCommand() {
+  const ta = document.getElementById('cmdText');
+  ta.select();
+  document.execCommand('copy');
+}
+
+async function viewLogs(ticketId) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/logs`);
+  const data = await res.json();
+  const text = data.text || '(sin logs)';
+  openOverlay(`<h3>${ticketId} — logs</h3><pre>${escapeHtml(text)}</pre>`);
+}
+
+async function viewComments(ticketId) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/comments`);
+  const comments = await res.json();
+  const html = comments.map((c) => `<div class="comment"><div class="meta">${c.timestamp}</div>${escapeHtml(c.text)}</div>`).join('') || '<div style="color:var(--muted);font-size:12px;">(sin comentarios)</div>';
+  openOverlay(`
+    <h3>${ticketId} — comentarios</h3>
+    <div>${html}</div>
+    <input id="commentInput" type="text" placeholder="Agregar comentario... (Enter para enviar)" onkeydown="if(event.key==='Enter') addComment('${ticketId}')" />
+  `);
+}
+
+async function addComment(ticketId) {
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  viewComments(ticketId);
+}
+
+function normalizeClientePayload() {
+  return {
+    tipo: document.getElementById('cliente-tipo').value,
+    tipo_doc: document.getElementById('cliente-tipo-doc').value,
+    identificacion: document.getElementById('cliente-identificacion').value.trim() || null,
+    nombre: document.getElementById('cliente-nombre').value.trim(),
+    primer_apellido: document.getElementById('cliente-primer-apellido').value.trim() || null,
+    segundo_apellido: document.getElementById('cliente-segundo-apellido').value.trim() || null,
+    correo: document.getElementById('cliente-correo').value.trim() || null,
+    telefono: document.getElementById('cliente-telefono').value.trim() || null,
+    celular: document.getElementById('cliente-celular').value.trim() || null,
+    municipio: document.getElementById('cliente-municipio').value.trim() || null,
+    direccion: document.getElementById('cliente-direccion').value.trim() || null,
+    profesion: document.getElementById('cliente-profesion').value.trim() || null,
+    ocupacion: document.getElementById('cliente-ocupacion').value.trim() || null,
+    estrato: document.getElementById('cliente-estrato').value ? Number(document.getElementById('cliente-estrato').value) : null,
+    observaciones: document.getElementById('cliente-observaciones').value.trim() || null,
+  };
+}
+
+function renderClientesTable(rows) {
+  const tbody = document.getElementById('clientes-table');
+  clientesCache = rows || [];
+  if (!clientesCache.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="mini">Sin clientes cargados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = clientesCache.map((c) => `
+    <tr>
+      <td>${escapeHtml(String(c.id ?? ''))}</td>
+      <td><strong>${escapeHtml(c.nombre || '')}</strong><div class="mini">${escapeHtml([c.tipo, c.tipo_doc].filter(Boolean).join(' · '))}</div></td>
+      <td>${escapeHtml(c.identificacion || '—')}</td>
+      <td>${escapeHtml(c.correo || c.telefono || c.celular || '—')}</td>
+      <td>${escapeHtml(c.municipio || '—')}</td>
+      <td>${escapeHtml(c.creado_en ? new Date(c.creado_en).toLocaleDateString() : '—')}</td>
+      <td>
+        <div class="actions">
+          <button type="button" onclick='editCliente(${JSON.stringify(c).replace(/'/g, "&apos;")})'>Editar</button>
+          <button type="button" class="danger" onclick="deleteClienteById(${JSON.stringify(c.id)})">Borrar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function clienteLabel(id) {
+  const c = clientesCache.find((item) => String(item.id) === String(id));
+  return c ? `${c.nombre || 'Cliente'}${c.identificacion ? ` · ${c.identificacion}` : ''}` : `Cliente #${id || '—'}`;
+}
+
+async function loadClientes() {
+  const status = document.getElementById('cliente-form-status');
+  status.textContent = 'Cargando...';
+  try {
+    const res = await fetch('/api/clientes');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudieron cargar clientes');
+    renderClientesTable(data);
+    status.textContent = `${data.length} clientes`;
+  } catch (err) {
+    status.textContent = String(err.message || err);
+    document.getElementById('clientes-table').innerHTML = `<tr><td colspan="7" class="mini danger">${escapeHtml(String(err.message || err))}</td></tr>`;
+  }
+}
+
+function resetClienteForm() {
+  ['cliente-id','cliente-identificacion','cliente-nombre','cliente-primer-apellido','cliente-segundo-apellido','cliente-correo','cliente-telefono','cliente-celular','cliente-municipio','cliente-direccion','cliente-profesion','cliente-ocupacion','cliente-estrato','cliente-observaciones'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('cliente-tipo').value = 'natural';
+  document.getElementById('cliente-tipo-doc').value = 'CC';
+  document.getElementById('cliente-form-status').textContent = 'Nuevo cliente';
+}
+
+function editCliente(cliente) {
+  document.getElementById('cliente-id').value = cliente.id ?? '';
+  document.getElementById('cliente-tipo').value = cliente.tipo || 'natural';
+  document.getElementById('cliente-tipo-doc').value = cliente.tipo_doc || 'CC';
+  document.getElementById('cliente-identificacion').value = cliente.identificacion || '';
+  document.getElementById('cliente-nombre').value = cliente.nombre || '';
+  document.getElementById('cliente-primer-apellido').value = cliente.primer_apellido || '';
+  document.getElementById('cliente-segundo-apellido').value = cliente.segundo_apellido || '';
+  document.getElementById('cliente-correo').value = cliente.correo || '';
+  document.getElementById('cliente-telefono').value = cliente.telefono || '';
+  document.getElementById('cliente-celular').value = cliente.celular || '';
+  document.getElementById('cliente-municipio').value = cliente.municipio || '';
+  document.getElementById('cliente-direccion').value = cliente.direccion || '';
+  document.getElementById('cliente-profesion').value = cliente.profesion || '';
+  document.getElementById('cliente-ocupacion').value = cliente.ocupacion || '';
+  document.getElementById('cliente-estrato').value = cliente.estrato ?? '';
+  document.getElementById('cliente-observaciones').value = cliente.observaciones || '';
+  document.getElementById('cliente-form-status').textContent = `Editando cliente ${cliente.id}`;
+}
+
+async function saveCliente(event) {
+  event.preventDefault();
+  const status = document.getElementById('cliente-form-status');
+  const id = document.getElementById('cliente-id').value.trim();
+  const payload = normalizeClientePayload();
+  if (!payload.nombre) {
+    status.textContent = 'El nombre es obligatorio';
+    return;
+  }
+  try {
+    const res = await fetch(id ? `/api/clientes/${encodeURIComponent(id)}` : '/api/clientes', {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo guardar el cliente');
+    status.textContent = id ? 'Cliente actualizado' : 'Cliente creado';
+    resetClienteForm();
+    await loadClientes();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+async function deleteClienteById(id) {
+  if (!id) return;
+  if (!confirm(`¿Borrar cliente ${id}?`)) return;
+  const status = document.getElementById('cliente-form-status');
+  try {
+    const res = await fetch(`/api/clientes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo borrar');
+    status.textContent = 'Cliente borrado';
+    await loadClientes();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+function deleteClienteSelected() {
+  const id = document.getElementById('cliente-id').value.trim();
+  if (!id) {
+    document.getElementById('cliente-form-status').textContent = 'Selecciona un cliente para borrarlo';
+    return;
+  }
+  deleteClienteById(id);
+}
+
+function normalizeActividadPayload() {
+  return {
+    cliente_id: document.getElementById('actividad-cliente').value || null,
+    asesor_id: document.getElementById('actividad-asesor-id').value.trim() || null,
+    poliza_id: document.getElementById('actividad-poliza-id').value.trim() ? Number(document.getElementById('actividad-poliza-id').value.trim()) : null,
+    siniestro_id: document.getElementById('actividad-siniestro-id').value.trim() ? Number(document.getElementById('actividad-siniestro-id').value.trim()) : null,
+    pendiente_id: document.getElementById('actividad-pendiente-id').value.trim() ? Number(document.getElementById('actividad-pendiente-id').value.trim()) : null,
+    clase: document.getElementById('actividad-clase').value.trim() || null,
+    descripcion: document.getElementById('actividad-descripcion').value.trim() || null,
+    estado: document.getElementById('actividad-estado').value,
+    fecha_inicio: document.getElementById('actividad-fecha-inicio').value || null,
+    fecha_fin: document.getElementById('actividad-fecha-fin').value || null,
+  };
+}
+
+function renderActividadesTimeline(rows) {
+  const list = document.getElementById('actividades-timeline');
+  const empty = document.getElementById('timeline-empty');
+  actividadesCache = rows || [];
+  if (!actividadesCache.length) {
+    list.innerHTML = '';
+    empty.textContent = 'Sin actividades cargadas';
+    return;
+  }
+  empty.textContent = `${actividadesCache.length} actividades`;
+  list.innerHTML = actividadesCache.map((a) => `
+    <article class="timeline-item">
+      <div class="timeline-top">
+        <span>#${escapeHtml(String(a.id ?? ''))}</span>
+        <span>${escapeHtml(a.creado_en ? new Date(a.creado_en).toLocaleString() : '—')}</span>
+      </div>
+      <div class="timeline-title">${escapeHtml(a.clase || 'Actividad')}</div>
+      <div class="timeline-desc">${escapeHtml(a.descripcion || 'Sin descripción')}</div>
+      <div class="mini">${escapeHtml(clienteLabel(a.cliente_id))}</div>
+      <div class="mini">Estado: ${escapeHtml(a.estado || 'abierta')} · Inicio: ${escapeHtml(a.fecha_inicio || '—')} · Fin: ${escapeHtml(a.fecha_fin || '—')}</div>
+      <div class="actions" style="margin-top:8px">
+        <button type="button" onclick='editActividad(${JSON.stringify(a).replace(/'/g, "&apos;")})'>Editar</button>
+        <button type="button" class="danger" onclick="deleteActividadById(${JSON.stringify(a.id)})">Borrar</button>
+      </div>
+    </article>
+  `).join('');
+}
+
+async function loadActividades() {
+  const status = document.getElementById('actividad-form-status');
+  status.textContent = 'Cargando...';
+  try {
+    const res = await fetch('/api/actividades');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudieron cargar actividades');
+    renderActividadesTimeline(data);
+    status.textContent = `${data.length} actividades`;
+  } catch (err) {
+    status.textContent = String(err.message || err);
+    document.getElementById('actividades-timeline').innerHTML = '';
+    document.getElementById('timeline-empty').textContent = String(err.message || err);
+  }
+}
+
+function resetActividadForm() {
+  ['actividad-id','actividad-asesor-id','actividad-poliza-id','actividad-siniestro-id','actividad-pendiente-id','actividad-clase','actividad-descripcion','actividad-fecha-inicio','actividad-fecha-fin'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('actividad-cliente').value = '';
+  document.getElementById('actividad-estado').value = 'abierta';
+  document.getElementById('actividad-form-status').textContent = 'Nueva actividad';
+}
+
+function editActividad(actividad) {
+  document.getElementById('actividad-id').value = actividad.id ?? '';
+  document.getElementById('actividad-cliente').value = actividad.cliente_id ?? '';
+  document.getElementById('actividad-asesor-id').value = actividad.asesor_id ?? '';
+  document.getElementById('actividad-poliza-id').value = actividad.poliza_id ?? '';
+  document.getElementById('actividad-siniestro-id').value = actividad.siniestro_id ?? '';
+  document.getElementById('actividad-pendiente-id').value = actividad.pendiente_id ?? '';
+  document.getElementById('actividad-clase').value = actividad.clase || '';
+  document.getElementById('actividad-descripcion').value = actividad.descripcion || '';
+  document.getElementById('actividad-estado').value = actividad.estado || 'abierta';
+  document.getElementById('actividad-fecha-inicio').value = activityDateOnly(actividad.fecha_inicio);
+  document.getElementById('actividad-fecha-fin').value = activityDateOnly(actividad.fecha_fin);
+  document.getElementById('actividad-form-status').textContent = `Editando actividad ${actividad.id}`;
+}
+
+function activityDateOnly(value) {
+  if (!value) return '';
+  return String(value).slice(0, 10);
+}
+
+async function saveActividad(event) {
+  event.preventDefault();
+  const status = document.getElementById('actividad-form-status');
+  const id = document.getElementById('actividad-id').value.trim();
+  const payload = normalizeActividadPayload();
+  if (!payload.cliente_id) {
+    status.textContent = 'Selecciona un cliente';
+    return;
+  }
+  try {
+    const res = await fetch(id ? `/api/actividades/${encodeURIComponent(id)}` : '/api/actividades', {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo guardar la actividad');
+    status.textContent = id ? 'Actividad actualizada' : 'Actividad creada';
+    resetActividadForm();
+    await loadActividades();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+async function deleteActividadById(id) {
+  if (!id) return;
+  if (!confirm(`¿Borrar actividad ${id}?`)) return;
+  const status = document.getElementById('actividad-form-status');
+  try {
+    const res = await fetch(`/api/actividades/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo borrar');
+    status.textContent = 'Actividad borrada';
+    await loadActividades();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+function deleteActividadSelected() {
+  const id = document.getElementById('actividad-id').value.trim();
+  if (!id) {
+    document.getElementById('actividad-form-status').textContent = 'Selecciona una actividad para borrarla';
+    return;
+  }
+  deleteActividadById(id);
+}
+
+function normalizePolizaPayload() {
+  return {
+    cliente_id: document.getElementById('poliza-cliente-id').value.trim() ? Number(document.getElementById('poliza-cliente-id').value.trim()) : null,
+    pagador_id: document.getElementById('poliza-pagador-id').value.trim() ? Number(document.getElementById('poliza-pagador-id').value.trim()) : null,
+    vehiculo_id: document.getElementById('poliza-vehiculo-id').value.trim() ? Number(document.getElementById('poliza-vehiculo-id').value.trim()) : null,
+    numero: document.getElementById('poliza-numero').value.trim() || null,
+    ramo: document.getElementById('poliza-ramo').value,
+    aseguradora: document.getElementById('poliza-aseguradora').value.trim() || null,
+    plan: document.getElementById('poliza-plan').value.trim() || null,
+    modalidad: document.getElementById('poliza-modalidad').value || null,
+    sucursal: document.getElementById('poliza-sucursal').value.trim() || null,
+    municipio_expedicion: document.getElementById('poliza-municipio-expedicion').value.trim() || null,
+    vigencia_inicial: document.getElementById('poliza-vigencia-inicial').value || null,
+    fecha_inicio: document.getElementById('poliza-fecha-inicio').value || null,
+    fecha_vencimiento: document.getElementById('poliza-fecha-vencimiento').value || null,
+    prima: document.getElementById('poliza-prima').value ? Number(document.getElementById('poliza-prima').value) : null,
+    estado: document.getElementById('poliza-estado').value,
+  };
+}
+
+function renderPolizasTable(rows) {
+  const tbody = document.getElementById('polizas-table');
+  polizasCache = rows || [];
+  if (!polizasCache.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="mini">Sin pólizas cargadas</td></tr>';
+    return;
+  }
+  tbody.innerHTML = polizasCache.map((p) => `
+    <tr>
+      <td>${escapeHtml(String(p.id ?? ''))}</td>
+      <td>${escapeHtml(p.numero || '—')}</td>
+      <td>${escapeHtml(p.ramo || '—')}</td>
+      <td>${escapeHtml(p.aseguradora || '—')}</td>
+      <td>${escapeHtml(String(p.cliente_id ?? '—'))}</td>
+      <td>${escapeHtml(p.fecha_inicio || '—')} → ${escapeHtml(p.fecha_vencimiento || '—')}</td>
+      <td>${escapeHtml(p.estado || '—')}</td>
+      <td>
+        <div class="actions">
+          <button type="button" onclick='editPoliza(${JSON.stringify(p).replace(/'/g, "&apos;")})'>Editar</button>
+          <button type="button" class="danger" onclick="deletePolizaById(${JSON.stringify(p.id)})">Borrar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadPolizas() {
+  const status = document.getElementById('poliza-form-status');
+  status.textContent = 'Cargando...';
+  try {
+    const res = await fetch('/api/polizas');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudieron cargar pólizas');
+    renderPolizasTable(data);
+    status.textContent = `${data.length} pólizas`;
+  } catch (err) {
+    status.textContent = String(err.message || err);
+    document.getElementById('polizas-table').innerHTML = `<tr><td colspan="8" class="mini danger">${escapeHtml(String(err.message || err))}</td></tr>`;
+  }
+}
+
+function resetPolizaForm() {
+  ['poliza-id','poliza-cliente-id','poliza-pagador-id','poliza-vehiculo-id','poliza-numero','poliza-ramo','poliza-aseguradora','poliza-plan','poliza-modalidad','poliza-sucursal','poliza-municipio-expedicion','poliza-vigencia-inicial','poliza-fecha-inicio','poliza-fecha-vencimiento','poliza-prima'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('poliza-estado').value = 'vigente';
+  document.getElementById('poliza-form-status').textContent = 'Nueva póliza';
+}
+
+function editPoliza(poliza) {
+  document.getElementById('poliza-id').value = poliza.id ?? '';
+  document.getElementById('poliza-cliente-id').value = poliza.cliente_id ?? '';
+  document.getElementById('poliza-pagador-id').value = poliza.pagador_id ?? '';
+  document.getElementById('poliza-vehiculo-id').value = poliza.vehiculo_id ?? '';
+  document.getElementById('poliza-numero').value = poliza.numero || '';
+  document.getElementById('poliza-ramo').value = poliza.ramo || '';
+  document.getElementById('poliza-aseguradora').value = poliza.aseguradora || '';
+  document.getElementById('poliza-plan').value = poliza.plan || '';
+  document.getElementById('poliza-modalidad').value = poliza.modalidad || '';
+  document.getElementById('poliza-sucursal').value = poliza.sucursal || '';
+  document.getElementById('poliza-municipio-expedicion').value = poliza.municipio_expedicion || '';
+  document.getElementById('poliza-vigencia-inicial').value = poliza.vigencia_inicial || '';
+  document.getElementById('poliza-fecha-inicio').value = poliza.fecha_inicio || '';
+  document.getElementById('poliza-fecha-vencimiento').value = poliza.fecha_vencimiento || '';
+  document.getElementById('poliza-prima').value = poliza.prima ?? '';
+  document.getElementById('poliza-estado').value = poliza.estado || 'vigente';
+  document.getElementById('poliza-form-status').textContent = `Editando póliza ${poliza.id}`;
+}
+
+async function savePoliza(event) {
+  event.preventDefault();
+  const status = document.getElementById('poliza-form-status');
+  const id = document.getElementById('poliza-id').value.trim();
+  const payload = normalizePolizaPayload();
+  if (!payload.ramo) {
+    status.textContent = 'El ramo es obligatorio';
+    return;
+  }
+  try {
+    const res = await fetch(id ? `/api/polizas/${encodeURIComponent(id)}` : '/api/polizas', {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo guardar la póliza');
+    status.textContent = id ? 'Póliza actualizada' : 'Póliza creada';
+    resetPolizaForm();
+    await loadPolizas();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+async function deletePolizaById(id) {
+  if (!id) return;
+  if (!confirm(`¿Borrar póliza ${id}?`)) return;
+  const status = document.getElementById('poliza-form-status');
+  try {
+    const res = await fetch(`/api/polizas/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo borrar');
+    status.textContent = 'Póliza borrada';
+    await loadPolizas();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+function deletePolizaSelected() {
+  const id = document.getElementById('poliza-id').value.trim();
+  if (!id) {
+    document.getElementById('poliza-form-status').textContent = 'Selecciona una póliza para borrarla';
+    return;
+  }
+  deletePolizaById(id);
+}
+
+const SLA_LABELS = { ok: 'OK', alerta: 'Alerta', escalado: 'Escalado', cerrado: 'Cerrado', sin_datos: 'Sin datos' };
+
+function toDatetimeLocalValue(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function normalizeSiniestroPayload() {
+  return {
+    poliza_id: document.getElementById('siniestro-poliza-id').value.trim() ? Number(document.getElementById('siniestro-poliza-id').value.trim()) : null,
+    num_aseguradora: document.getElementById('siniestro-num-aseguradora').value.trim() || null,
+    asegurado: document.getElementById('siniestro-asegurado').value.trim() || null,
+    fecha_ocurrencia: document.getElementById('siniestro-fecha-ocurrencia').value || null,
+    fecha_notif_asesor: document.getElementById('siniestro-fecha-notif-asesor').value ? new Date(document.getElementById('siniestro-fecha-notif-asesor').value).toISOString() : null,
+    fecha_notif_aseguradora: document.getElementById('siniestro-fecha-notif-aseguradora').value ? new Date(document.getElementById('siniestro-fecha-notif-aseguradora').value).toISOString() : null,
+    descripcion: document.getElementById('siniestro-descripcion').value.trim() || null,
+    estado: document.getElementById('siniestro-estado').value,
+    valor_indemnizado: document.getElementById('siniestro-valor-indemnizado').value ? Number(document.getElementById('siniestro-valor-indemnizado').value) : 0,
+  };
+}
+
+function renderSiniestrosTable(rows) {
+  const tbody = document.getElementById('siniestros-table');
+  siniestrosCache = rows || [];
+  if (!siniestrosCache.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="mini">Sin siniestros cargados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = siniestrosCache.map((s) => `
+    <tr>
+      <td>${escapeHtml(String(s.id ?? ''))}</td>
+      <td>${escapeHtml(String(s.poliza_id ?? '—'))}</td>
+      <td>${escapeHtml(s.asegurado || '—')}</td>
+      <td>${escapeHtml(s.estado || '—')}</td>
+      <td><span class="sla-badge sla-${s.sla}">${escapeHtml(SLA_LABELS[s.sla] || s.sla)}</span></td>
+      <td>${s.minutos_transcurridos != null ? escapeHtml(String(s.minutos_transcurridos)) + ' min' : '—'}</td>
+      <td>
+        <div class="actions">
+          <button type="button" onclick='editSiniestro(${JSON.stringify(s).replace(/'/g, "&apos;")})'>Editar</button>
+          <button type="button" class="danger" onclick="deleteSiniestroById(${JSON.stringify(s.id)})">Borrar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadSiniestros() {
+  const status = document.getElementById('siniestro-form-status');
+  status.textContent = 'Cargando...';
+  try {
+    const res = await fetch('/api/siniestros');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudieron cargar siniestros');
+    renderSiniestrosTable(data);
+    const escalados = data.filter((s) => s.sla === 'escalado').length;
+    const alertas = data.filter((s) => s.sla === 'alerta').length;
+    status.textContent = `${data.length} siniestros — ${escalados} escalados, ${alertas} en alerta`;
+  } catch (err) {
+    status.textContent = String(err.message || err);
+    document.getElementById('siniestros-table').innerHTML = `<tr><td colspan="7" class="mini danger">${escapeHtml(String(err.message || err))}</td></tr>`;
+  }
+}
+
+function resetSiniestroForm() {
+  ['siniestro-id','siniestro-poliza-id','siniestro-num-aseguradora','siniestro-asegurado','siniestro-fecha-ocurrencia','siniestro-fecha-notif-asesor','siniestro-fecha-notif-aseguradora','siniestro-valor-indemnizado','siniestro-descripcion'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('siniestro-estado').value = 'avisado';
+  document.getElementById('siniestro-form-status').textContent = 'Nuevo siniestro';
+}
+
+function editSiniestro(siniestro) {
+  document.getElementById('siniestro-id').value = siniestro.id ?? '';
+  document.getElementById('siniestro-poliza-id').value = siniestro.poliza_id ?? '';
+  document.getElementById('siniestro-num-aseguradora').value = siniestro.num_aseguradora || '';
+  document.getElementById('siniestro-asegurado').value = siniestro.asegurado || '';
+  document.getElementById('siniestro-fecha-ocurrencia').value = siniestro.fecha_ocurrencia || '';
+  document.getElementById('siniestro-fecha-notif-asesor').value = toDatetimeLocalValue(siniestro.fecha_notif_asesor);
+  document.getElementById('siniestro-fecha-notif-aseguradora').value = toDatetimeLocalValue(siniestro.fecha_notif_aseguradora);
+  document.getElementById('siniestro-valor-indemnizado').value = siniestro.valor_indemnizado ?? '';
+  document.getElementById('siniestro-descripcion').value = siniestro.descripcion || '';
+  document.getElementById('siniestro-estado').value = siniestro.estado || 'avisado';
+  document.getElementById('siniestro-form-status').textContent = `Editando siniestro ${siniestro.id}`;
+}
+
+async function saveSiniestro(event) {
+  event.preventDefault();
+  const status = document.getElementById('siniestro-form-status');
+  const id = document.getElementById('siniestro-id').value.trim();
+  const payload = normalizeSiniestroPayload();
+  if (!payload.poliza_id) {
+    status.textContent = 'La póliza es obligatoria';
+    return;
+  }
+  try {
+    const res = await fetch(id ? `/api/siniestros/${encodeURIComponent(id)}` : '/api/siniestros', {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo guardar el siniestro');
+    status.textContent = id ? 'Siniestro actualizado' : 'Siniestro creado';
+    resetSiniestroForm();
+    await loadSiniestros();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+async function deleteSiniestroById(id) {
+  if (!id) return;
+  if (!confirm(`¿Borrar siniestro ${id}?`)) return;
+  const status = document.getElementById('siniestro-form-status');
+  try {
+    const res = await fetch(`/api/siniestros/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'No se pudo borrar');
+    status.textContent = 'Siniestro borrado';
+    await loadSiniestros();
+  } catch (err) {
+    status.textContent = String(err.message || err);
+  }
+}
+
+function deleteSiniestroSelected() {
+  const id = document.getElementById('siniestro-id').value.trim();
+  if (!id) {
+    document.getElementById('siniestro-form-status').textContent = 'Selecciona un siniestro para borrarlo';
+    return;
+  }
+  deleteSiniestroById(id);
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

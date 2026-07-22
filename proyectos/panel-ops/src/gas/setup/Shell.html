@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panel-Ops</title>
+    <style>
+      :root {
+        --bg: #f5efe7;
+        --panel: #fffaf3;
+        --ink: #1f2a37;
+        --muted: #5f6b7a;
+        --accent: #b85c38;
+        --accent-2: #2d6a4f;
+        --line: rgba(31, 42, 55, 0.12);
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: radial-gradient(circle at top left, #fff7ed, transparent 36%),
+                    radial-gradient(circle at top right, #e8f3ee, transparent 28%),
+                    var(--bg);
+        color: var(--ink);
+      }
+      .shell {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 40px 20px 64px;
+      }
+      .card {
+        background: rgba(255, 250, 243, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        padding: 28px;
+        box-shadow: 0 18px 50px rgba(31, 42, 55, 0.08);
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 12px;
+        color: var(--accent-2);
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(32px, 5vw, 52px);
+        line-height: 1;
+      }
+      p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .pill {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px 18px;
+      }
+      .label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .value {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .status {
+        margin-top: 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(45, 106, 79, 0.12);
+        color: var(--accent-2);
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card">
+        <div class="eyebrow">Panel-Ops Web App</div>
+        <h1>Hola, <?= session.fullName ?></h1>
+        <p>Sesión autenticada por Google. El rol se resuelve desde la pestaña <strong>Users</strong> y la API ya puede leer, insertar y actualizar tablas bajo LockService.</p>
+        <div class="grid">
+          <div class="pill"><span class="label">Email</span><span class="value"><?= session.email ?></span></div>
+          <div class="pill"><span class="label">Rol</span><span class="value"><?= session.role ?></span></div>
+          <div class="pill"><span class="label">API</span><span class="value">/doPost router activo</span></div>
+        </div>
+        <div class="status">Acceso concedido</div>
+      </section>
+    </main>
+  </body>
+</html>
