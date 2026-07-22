@@ -1,0 +1,73 @@
+type PublicEnvKey =
+  | 'NEXT_PUBLIC_SUPABASE_URL'
+  | 'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+  | 'NEXT_PUBLIC_META_PIXEL_ID'
+  | 'NEXT_PUBLIC_GA4_ID'
+  | 'NEXT_PUBLIC_CALENDLY_URL'
+  | 'NEXT_PUBLIC_DEFAULT_STATE'
+  | 'NEXT_PUBLIC_SOCIAL_PROOF_MODE'
+  | 'NEXT_PUBLIC_SHARE_ENABLED'
+  | 'NEXT_PUBLIC_WEEKLY_SLOTS'
+  | 'NEXT_PUBLIC_LEADERBOARD'
+  | 'NEXT_PUBLIC_SOUND'
+  | 'NEXT_PUBLIC_BPA_PRICE';
+
+const raw = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_META_PIXEL_ID: process.env.NEXT_PUBLIC_META_PIXEL_ID,
+  NEXT_PUBLIC_GA4_ID: process.env.NEXT_PUBLIC_GA4_ID,
+  NEXT_PUBLIC_CALENDLY_URL: process.env.NEXT_PUBLIC_CALENDLY_URL,
+  NEXT_PUBLIC_DEFAULT_STATE: process.env.NEXT_PUBLIC_DEFAULT_STATE,
+  NEXT_PUBLIC_SOCIAL_PROOF_MODE: process.env.NEXT_PUBLIC_SOCIAL_PROOF_MODE,
+  NEXT_PUBLIC_SHARE_ENABLED: process.env.NEXT_PUBLIC_SHARE_ENABLED,
+  NEXT_PUBLIC_WEEKLY_SLOTS: process.env.NEXT_PUBLIC_WEEKLY_SLOTS,
+  NEXT_PUBLIC_LEADERBOARD: process.env.NEXT_PUBLIC_LEADERBOARD,
+  NEXT_PUBLIC_SOUND: process.env.NEXT_PUBLIC_SOUND,
+  NEXT_PUBLIC_BPA_PRICE: process.env.NEXT_PUBLIC_BPA_PRICE,
+} as const;
+
+const publicDefaults = {
+  NEXT_PUBLIC_SUPABASE_URL: '',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: '',
+  NEXT_PUBLIC_META_PIXEL_ID: '',
+  NEXT_PUBLIC_GA4_ID: '',
+  NEXT_PUBLIC_CALENDLY_URL: '',
+  NEXT_PUBLIC_DEFAULT_STATE: 'CA',
+  NEXT_PUBLIC_SOCIAL_PROOF_MODE: 'simulated',
+  NEXT_PUBLIC_SHARE_ENABLED: 'false',
+  NEXT_PUBLIC_WEEKLY_SLOTS: '3',
+  NEXT_PUBLIC_LEADERBOARD: 'off',
+  NEXT_PUBLIC_SOUND: 'off',
+  NEXT_PUBLIC_BPA_PRICE: '5',
+} as const;
+
+const readPublicEnv = (key: PublicEnvKey) => raw[key] ?? publicDefaults[key];
+
+const parseBoolean = (value: string) => value === 'true';
+
+const parseNumber = (value: string, fallback: number) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+export const env = {
+  NEXT_PUBLIC_SUPABASE_URL: readPublicEnv('NEXT_PUBLIC_SUPABASE_URL'),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: readPublicEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+  NEXT_PUBLIC_META_PIXEL_ID: readPublicEnv('NEXT_PUBLIC_META_PIXEL_ID'),
+  NEXT_PUBLIC_GA4_ID: readPublicEnv('NEXT_PUBLIC_GA4_ID'),
+  NEXT_PUBLIC_CALENDLY_URL: readPublicEnv('NEXT_PUBLIC_CALENDLY_URL'),
+  NEXT_PUBLIC_DEFAULT_STATE: readPublicEnv('NEXT_PUBLIC_DEFAULT_STATE'),
+  NEXT_PUBLIC_SOCIAL_PROOF_MODE: readPublicEnv('NEXT_PUBLIC_SOCIAL_PROOF_MODE'),
+  NEXT_PUBLIC_SHARE_ENABLED: parseBoolean(readPublicEnv('NEXT_PUBLIC_SHARE_ENABLED')),
+  NEXT_PUBLIC_WEEKLY_SLOTS: parseNumber(readPublicEnv('NEXT_PUBLIC_WEEKLY_SLOTS'), 3),
+  NEXT_PUBLIC_LEADERBOARD: readPublicEnv('NEXT_PUBLIC_LEADERBOARD'),
+  NEXT_PUBLIC_SOUND: readPublicEnv('NEXT_PUBLIC_SOUND'),
+  NEXT_PUBLIC_BPA_PRICE: parseNumber(readPublicEnv('NEXT_PUBLIC_BPA_PRICE'), 5),
+} as const;
+
+export type EnvKey = PublicEnvKey;
+
+export function isConfigured(key: EnvKey): boolean {
+  return raw[key] !== undefined && raw[key] !== '';
+}

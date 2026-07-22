@@ -1,0 +1,9 @@
+[
+  { "id": 1, "title": "Mapa mental del dinero", "description": "Ves lo que ya haces y por qué.", "duration": "4 min", "unlocked": true },
+  { "id": 2, "title": "Fugas invisibles", "description": "Detecta dónde se va el flujo.", "duration": "6 min", "unlocked": false },
+  { "id": 3, "title": "Sistema de control", "description": "Hábitos y números que sí se sostienen.", "duration": "7 min", "unlocked": false },
+  { "id": 4, "title": "Protección de base", "description": "Orden antes de crecer.", "duration": "5 min", "unlocked": false },
+  { "id": 5, "title": "Decisiones con intención", "description": "Qué hacer cuando entra dinero.", "duration": "8 min", "unlocked": false },
+  { "id": 6, "title": "Disciplina visible", "description": "Pequeños movimientos, gran tracción.", "duration": "6 min", "unlocked": false },
+  { "id": 7, "title": "Puerta al siguiente nivel", "description": "El cierre del funnel y el siguiente paso.", "duration": "4 min", "unlocked": false }
+]

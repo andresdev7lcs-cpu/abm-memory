@@ -10,10 +10,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary: 'bg-brand-green text-white hover:opacity-90 active:scale-95',
-  secondary: 'bg-brand-blue text-white hover:opacity-90 active:scale-95',
-  gold: 'bg-brand-gold text-brand-blue font-bold hover:opacity-90 active:scale-95',
-  outline: 'border-2 border-brand-green text-brand-green hover:bg-brand-green hover:text-white active:scale-95',
+  primary: 'bg-[var(--grad-levelup)] text-[var(--color-navy)] hover:brightness-105 active:scale-95',
+  secondary: 'bg-[var(--grad-royal)] text-white hover:brightness-105 active:scale-95',
+  gold: 'bg-[var(--color-gold)] text-[var(--color-navy)] font-bold hover:brightness-105 active:scale-95',
+  outline: 'border-2 border-[var(--color-fire)] text-[var(--color-fire)] hover:bg-[var(--color-fire)] hover:text-white active:scale-95',
 };
 
 const sizeClasses = {

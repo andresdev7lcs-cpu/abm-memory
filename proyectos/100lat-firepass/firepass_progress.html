@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIRE PASS™ Progress Dashboard</title>
+  <style>
+    :root{
+      --bg:#08111f;
+      --panel:#0f1b2f;
+      --panel-2:#13233d;
+      --text:#eaf1ff;
+      --muted:#8ea2c6;
+      --line:#243757;
+      --pending:#6d7587;
+      --progress:#4ea1ff;
+      --done:#37c77a;
+      --blocked:#ff5a67;
+      --accent:#ffcc66;
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(78,161,255,.22), transparent 26%),
+        radial-gradient(circle at top right, rgba(55,199,122,.16), transparent 28%),
+        linear-gradient(180deg, #050b14 0%, #0a1323 42%, #09111d 100%);
+      min-height:100vh;
+    }
+    .wrap{max-width:1280px;margin:0 auto;padding:18px 14px 36px}
+    .hero{
+      background:linear-gradient(135deg, rgba(15,27,47,.96), rgba(19,35,61,.92));
+      border:1px solid rgba(142,162,198,.18);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;inset:auto -10% -60% auto;
+      width:280px;height:280px;border-radius:50%;
+      background:radial-gradient(circle, rgba(78,161,255,.16), transparent 70%);
+      pointer-events:none;
+    }
+    .title-row{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+    h1{margin:0;font-size:clamp(26px,4vw,42px);line-height:1.05}
+    .sub{margin:8px 0 0;color:var(--muted);max-width:920px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .chip,.meta,.button{
+      border:1px solid rgba(142,162,198,.18);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:12px;
+    }
+    .chip strong,.meta strong{color:#fff}
+    .progress-shell{margin-top:16px;display:grid;gap:10px}
+    .bar{
+      height:14px;border-radius:999px;background:rgba(255,255,255,.07);
+      overflow:hidden;border:1px solid rgba(255,255,255,.06)
+    }
+    .bar > div{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--progress),#8ec5ff)}
+    .bar.green > div{background:linear-gradient(90deg,var(--done),#8df0b9)}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .stat{
+      background:rgba(255,255,255,.035);border:1px solid rgba(142,162,198,.14);
+      border-radius:16px;padding:12px
+    }
+    .stat .k{font-size:12px;color:var(--muted)}
+    .stat .v{font-size:24px;font-weight:700;margin-top:4px}
+    .toolbar{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      margin:16px 0
+    }
+    .filters{display:flex;gap:8px;flex-wrap:wrap}
+    button.button{
+      cursor:pointer;transition:.15s transform,.15s background,.15s border-color;
+      min-height:40px
+    }
+    button.button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.22)}
+    button.button.active{background:rgba(78,161,255,.16);border-color:rgba(78,161,255,.45)}
+    .grid{display:grid;gap:14px}
+    .section{
+      background:rgba(10,18,31,.72);
+      border:1px solid rgba(142,162,198,.14);
+      border-radius:22px;
+      padding:16px;
+      box-shadow:var(--shadow);
+    }
+    .section-head{display:flex;justify-content:space-between;gap:10px;align-items:end;flex-wrap:wrap}
+    .section h2{margin:0;font-size:18px}
+    .section .small{color:var(--muted);font-size:12px}
+    .phase-progress{margin-top:12px}
+    .phase-progress .label{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-bottom:6px}
+    .tasks{margin-top:12px;display:grid;gap:10px}
+    .task{
+      display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;
+      padding:14px;border-radius:16px;background:rgba(255,255,255,.03);
+      border:1px solid rgba(142,162,198,.12)
+    }
+    .task.pending{border-left:4px solid var(--pending)}
+    .task.progress{border-left:4px solid var(--progress)}
+    .task.done{border-left:4px solid var(--done)}
+    .task.blocked{border-left:4px solid var(--blocked)}
+    .task input{width:22px;height:22px;margin-top:2px;accent-color:var(--done);cursor:pointer}
+    .task h3{margin:0;font-size:15px}
+    .task p{margin:4px 0 0;color:var(--muted)}
+    .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .tag{
+      font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.05);
+      color:#d6e3ff;border:1px solid rgba(255,255,255,.07)
+    }
+    .owner.codex{background:rgba(78,161,255,.14)}
+    .owner.claude{background:rgba(255,204,102,.14)}
+    .owner.ap{background:rgba(55,199,122,.14)}
+    .status{font-size:12px;font-weight:700}
+    .status.pending{color:var(--pending)}
+    .status.progress{color:var(--progress)}
+    .status.done{color:var(--done)}
+    .status.blocked{color:var(--blocked)}
+    .next-list{display:grid;gap:10px;margin-top:12px}
+    .next-item{
+      display:flex;justify-content:space-between;gap:12px;align-items:center;
+      padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)
+    }
+    .next-item strong{display:block}
+    .next-item span{color:var(--muted);font-size:12px}
+    .footer-note{margin-top:14px;color:var(--muted);font-size:12px}
+    @media (max-width: 760px){
+      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .task{grid-template-columns:auto 1fr}
+      .task .status-col{grid-column:2}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="title-row">
+        <div>
+          <h1>FIRE PASS™ Progress Dashboard</h1>
+          <p class="sub">Standalone tracker for <code>07_MASTER_CHECKLIST_CODEX.md</code>. Current snapshot is aligned to the implemented FIRE PASS™ Fase 1 + 1b in <code>proyectos/100lat-firepass</code>.</p>
+          <div class="chips" id="filters">
+            <button class="button active" data-filter="all">All</button>
+            <button class="button" data-filter="Codex">Codex</button>
+            <button class="button" data-filter="Claude Code">Claude Code</button>
+            <button class="button" data-filter="AP">AP</button>
+            <button class="button" id="exportBtn">Export markdown</button>
+          </div>
+        </div>
+        <div class="meta"><strong id="lastUpdated">Last updated:</strong> <span id="lastUpdatedValue">—</span></div>
+      </div>
+
+      <div class="progress-shell">
+        <div>
+          <div class="label" style="display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px"><span>Overall progress</span><span id="overallText">0/0</span></div>
+          <div class="bar green"><div id="overallBar" style="width:0%"></div></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">Pending</div><div class="v" id="pendingCount">0</div></div>
+          <div class="stat"><div class="k">In progress</div><div class="v" id="inProgressCount">0</div></div>
+          <div class="stat"><div class="k">Done</div><div class="v" id="doneCount">0</div></div>
+          <div class="stat"><div class="k">Blocked</div><div class="v" id="blockedCount">0</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <div class="section-head">
+          <h2>What's next</h2>
+          <div class="small">Next 3 pending tasks across all phases</div>
+        </div>
+        <div class="next-list" id="nextList"></div>
+      </div>
+    </section>
+
+    <div class="grid" id="phases"></div>
+    <div class="footer-note">Color key: gray pending, blue in progress, green done, red blocked. Status is stored in localStorage so it survives refresh in this browser.</div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'firepass_progress_v1';
+    const tasks = [
+      { id:'F0.1', phase:0, phaseName:'Phase 0: Foundations', title:'Variables de entorno', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F0.2', phase:0, phaseName:'Phase 0: Foundations', title:'Design tokens', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F0.3', phase:0, phaseName:'Phase 0: Foundations', title:'Contenido centralizado', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F0.4', phase:0, phaseName:'Phase 0: Foundations', title:'Wrapper de tracking', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F0.5', phase:0, phaseName:'Phase 0: Foundations', title:'Cliente Supabase server/client + migración SQL', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F1.1', phase:1, phaseName:'Phase 1: Design system + base components', title:'Button', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F1.2', phase:1, phaseName:'Phase 1: Design system + base components', title:'Input', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F1.3', phase:1, phaseName:'Phase 1: Design system + base components', title:'AnswerCard', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F1.4', phase:1, phaseName:'Phase 1: Design system + base components', title:'Timer', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F1.5', phase:1, phaseName:'Phase 1: Design system + base components', title:'LifelineButton', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F1.6', phase:1, phaseName:'Phase 1: Design system + base components', title:'Badge', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F1.7', phase:1, phaseName:'Phase 1: Design system + base components', title:'CountdownBanner', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F1.8', phase:1, phaseName:'Phase 1: Design system + base components', title:'SocialProofPill', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F1.9', phase:1, phaseName:'Phase 1: Design system + base components', title:'CharacterSlot', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F2.1', phase:2, phaseName:'Phase 2: TOF', title:'Screen 1 Home', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F2.2', phase:2, phaseName:'Phase 2: TOF', title:'Screen 2 Instructions', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F2.3', phase:2, phaseName:'Phase 2: TOF', title:'Pool de preguntas', owner:'Claude Code', blocking:'yes', status:'done' },
+      { id:'F2.4', phase:2, phaseName:'Phase 2: TOF', title:'Motor de juego', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F2.5', phase:2, phaseName:'Phase 2: TOF', title:'Resultados WIN/LOSS', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F2.6', phase:2, phaseName:'Phase 2: TOF', title:'Guide unlock', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F2.7', phase:2, phaseName:'Phase 2: TOF', title:'Share P1', owner:'AP', blocking:'no', status:'pending' },
+      { id:'F2.8', phase:2, phaseName:'Phase 2: TOF', title:'Imágenes OG (3 rutas)', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F3.1', phase:3, phaseName:'Phase 3: Guide', title:'Guardia + layout', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F3.2', phase:3, phaseName:'Phase 3: Guide', title:'Player de cards', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F3.3', phase:3, phaseName:'Phase 3: Guide', title:'Tipos de card', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F3.4', phase:3, phaseName:'Phase 3: Guide', title:'Contenido cap 1–7', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F3.5', phase:3, phaseName:'Phase 3: Guide', title:'Progreso + badges + índice Zeigarnik', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F3.6', phase:3, phaseName:'Phase 3: Guide', title:'Calculadoras', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F3.7', phase:3, phaseName:'Phase 3: Guide', title:'Cap 7 → CTA BPA', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F4.1', phase:4, phaseName:'Phase 4: BPA flow', title:'Landing $5 + checkout mock', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F4.2', phase:4, phaseName:'Phase 4: BPA flow', title:'Supabase Auth', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F4.3', phase:4, phaseName:'Phase 4: BPA flow', title:'Onboarding 5 pasos', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F4.4', phase:4, phaseName:'Phase 4: BPA flow', title:'Ciudad SVG por capas', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F4.5', phase:4, phaseName:'Phase 4: BPA flow', title:'Misiones niveles 1–5', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F4.6', phase:4, phaseName:'Phase 4: BPA flow', title:'Retos diarios + racha', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F4.7', phase:4, phaseName:'Phase 4: BPA flow', title:'Nivel 5 → secuencia invitación', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F4.8', phase:4, phaseName:'Phase 4: BPA flow', title:'Niveles 6–10', owner:'Codex', blocking:'no', status:'pending' },
+      { id:'F4.9', phase:4, phaseName:'Phase 4: BPA flow', title:'Feedback 1/30', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F5.1', phase:5, phaseName:'Phase 5: BOF landing', title:'Landing completa', owner:'Codex', blocking:'yes', status:'done' },
+      { id:'F5.2', phase:5, phaseName:'Phase 5: BOF landing', title:'Cadena Calendly→WhatsApp→form', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F5.3', phase:5, phaseName:'Phase 5: BOF landing', title:'/api/webhooks/calendly', owner:'Claude Code', blocking:'yes', status:'pending' },
+      { id:'F6.1', phase:6, phaseName:'Phase 6: QA gate', title:'Compliance grep CI', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F6.2', phase:6, phaseName:'Phase 6: QA gate', title:'Auditoría de eventos', owner:'Codex', blocking:'yes', status:'pending' },
+      { id:'F6.3', phase:6, phaseName:'Phase 6: QA gate', title:'Mobile QA 390×844', owner:'AP', blocking:'yes', status:'pending' },
+      { id:'F6.4', phase:6, phaseName:'Phase 6: QA gate', title:'Lighthouse mobile', owner:'AP', blocking:'yes', status:'pending' },
+      { id:'F6.5', phase:6, phaseName:'Phase 6: QA gate', title:'Flujo E2E manual', owner:'AP', blocking:'yes', status:'pending' },
+    ];
+
+    const state = loadState();
+    const phaseOrder = [0,1,2,3,4,5,6];
+    let activeFilter = 'all';
+
+    function loadState(){
+      try{
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      }catch{
+        return {};
+      }
+    }
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY + '_updated', new Date().toISOString());
+    }
+
+    function getStatus(id){
+      return state[id] || 'pending';
+    }
+
+    function setStatus(id, status){
+      state[id] = status;
+      saveState();
+      render();
+    }
+
+    function cycleStatus(current){
+      if(current === 'pending') return 'done';
+      if(current === 'done') return 'pending';
+      return 'done';
+    }
+
+    function statusLabel(status){
+      if(status === 'done') return '✅ Done';
+      if(status === 'progress') return '[→] In Progress';
+      if(status === 'blocked') return 'Blocked';
+      return '[ ] Pending';
+    }
+
+    function ownerClass(owner){
+      return owner === 'Codex' ? 'codex' : owner === 'Claude Code' ? 'claude' : 'ap';
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    }
+
+    function groupByPhase(items){
+      return phaseOrder.map(phase => items.filter(t => t.phase === phase));
+    }
+
+    function matchesFilter(task){
+      return activeFilter === 'all' || task.owner === activeFilter;
+    }
+
+    function render(){
+      const all = tasks;
+      const done = all.filter(t => getStatus(t.id) === 'done').length;
+      const progress = all.filter(t => getStatus(t.id) === 'progress').length;
+      const blocked = all.filter(t => getStatus(t.id) === 'blocked').length;
+      const pending = all.length - done - progress - blocked;
+      const pct = all.length ? Math.round((done / all.length) * 100) : 0;
+      document.getElementById('overallBar').style.width = pct + '%';
+      document.getElementById('overallText').textContent = `${done}/${all.length} complete`;
+      document.getElementById('pendingCount').textContent = pending;
+      document.getElementById('inProgressCount').textContent = progress;
+      document.getElementById('doneCount').textContent = done;
+      document.getElementById('blockedCount').textContent = blocked;
+      document.getElementById('lastUpdatedValue').textContent = new Intl.DateTimeFormat([], { dateStyle:'medium', timeStyle:'short' }).format(new Date(localStorage.getItem(STORAGE_KEY + '_updated') || Date.now()));
+
+      renderNext();
+      renderPhases();
+      updateFilterButtons();
+    }
+
+    function renderNext(){
+      const list = document.getElementById('nextList');
+      const next = tasks.filter(t => getStatus(t.id) === 'pending').slice(0,3);
+      list.innerHTML = next.length ? next.map(task => `
+        <div class="next-item">
+          <div><strong>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</strong><span>${escapeHtml(task.phaseName)} · Owner: ${escapeHtml(task.owner)}</span></div>
+          <span>${task.blocking === 'yes' ? 'Blocking' : 'Non-blocking'}</span>
+        </div>`).join('') : '<div class="next-item"><div><strong>All tasks done</strong><span>No pending items remain.</span></div></div>';
+    }
+
+    function renderPhases(){
+      const host = document.getElementById('phases');
+      const grouped = groupByPhase(tasks);
+      host.innerHTML = grouped.map((phaseTasks, idx) => {
+        const done = phaseTasks.filter(t => getStatus(t.id) === 'done').length;
+        const total = phaseTasks.length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const visibleTasks = phaseTasks.filter(matchesFilter);
+        return `
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <h2>${escapeHtml(phaseTasks[0]?.phaseName || `Phase ${idx}`)}</h2>
+                <div class="small">${done}/${total} complete · ${visibleTasks.length} shown with current filter</div>
+              </div>
+              <div class="small">${pct}% complete</div>
+            </div>
+            <div class="phase-progress">
+              <div class="label"><span>Phase progress</span><span>${done}/${total}</span></div>
+              <div class="bar ${pct === 100 ? 'green' : ''}"><div style="width:${pct}%"></div></div>
+            </div>
+            <div class="tasks">
+              ${visibleTasks.map(task => renderTask(task)).join('')}
+            </div>
+          </section>`;
+      }).join('');
+
+      host.querySelectorAll('[data-task-id]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if(e.target.tagName === 'INPUT') return;
+          const id = el.getAttribute('data-task-id');
+          const current = getStatus(id);
+          setStatus(id, cycleStatus(current));
+        });
+      });
+      host.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const id = e.target.getAttribute('data-id');
+          setStatus(id, e.target.checked ? 'done' : 'pending');
+        });
+      });
+    }
+
+    function renderTask(task){
+      const status = getStatus(task.id);
+      return `
+        <div class="task ${status === 'done' ? 'done' : status === 'progress' ? 'progress' : status === 'blocked' ? 'blocked' : 'pending'}" data-task-id="${escapeHtml(task.id)}">
+          <input type="checkbox" data-id="${escapeHtml(task.id)}" ${status === 'done' ? 'checked' : ''} aria-label="${escapeHtml(task.id)} ${escapeHtml(task.title)}">
+          <div>
+            <h3>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</h3>
+            <p>${escapeHtml(task.phaseName)}</p>
+            <div class="tags">
+              <span class="tag owner ${ownerClass(task.owner)}">${escapeHtml(task.owner)}</span>
+              <span class="tag">Blocking: ${task.blocking}</span>
+              <span class="tag status ${status === 'done' ? 'done' : status === 'progress' ? 'progress' : status === 'blocked' ? 'blocked' : 'pending'}">${statusLabel(status)}</span>
+            </div>
+          </div>
+          <div class="status-col">
+            <span class="status ${status === 'done' ? 'done' : status === 'progress' ? 'progress' : status === 'blocked' ? 'blocked' : 'pending'}">${status.toUpperCase()}</span>
+          </div>
+        </div>`;
+    }
+
+    function updateFilterButtons(){
+      document.querySelectorAll('#filters .button[data-filter]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === activeFilter);
+      });
+    }
+
+    function exportMarkdown(){
+      const phases = phaseOrder.map(phase => tasks.filter(t => t.phase === phase));
+      let md = '# FIRE PASS™ Progress Dashboard\n\n';
+      phases.forEach(phaseTasks => {
+        const name = phaseTasks[0]?.phaseName || 'Phase';
+        md += `## ${name}\n\n`;
+        phaseTasks.forEach(task => {
+          const st = getStatus(task.id);
+          const box = st === 'done' ? 'x' : ' ';
+          md += `- [${box}] ${task.id} ${task.title} | Owner: ${task.owner} | Blocking: ${task.blocking}\n`;
+        });
+        md += '\n';
+      });
+      md += '## Legend\n\n- [ ] Pending\n- [x] Done\n\n';
+      navigator.clipboard.writeText(md).then(() => {
+        alert('Markdown copied to clipboard.');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = md; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+        alert('Markdown copied to clipboard.');
+      });
+    }
+
+    document.getElementById('filters').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-filter]');
+      if(!btn) return;
+      activeFilter = btn.dataset.filter;
+      render();
+    });
+    document.getElementById('exportBtn').addEventListener('click', exportMarkdown);
+
+    render();
+  </script>
+</body>
+</html>

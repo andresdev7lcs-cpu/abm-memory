@@ -1,82 +1,108 @@
 'use client';
 
 import { create } from 'zustand';
-import { Avatar, Segment, getSegment } from '@/types';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
-interface GameStore {
-  // Game state
-  avatar: Avatar | null;
-  currentQuestion: number;
-  answers: (number | null)[];
-  correctness: (boolean | null)[];
-  score: number;
-  isGameOver: boolean;
+export type Segment = 'Conservative' | 'Moderate' | 'Aggressive' | null;
 
-  // Lead data
-  userName: string;
+export interface GameStore {
   email: string;
-  phone: string;
-  leadSubmitted: boolean;
-
-  // Computed
-  segment: Segment | null;
-
-  // Actions
-  setAvatar: (avatar: Avatar) => void;
-  submitAnswer: (questionIndex: number, answerIndex: number, isCorrect: boolean) => void;
-  nextQuestion: () => void;
-  finishGame: (finalScore: number) => void;
-  setLeadData: (name: string, email: string, phone: string) => void;
-  setLeadSubmitted: () => void;
+  name: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  currentScreen: number;
+  score: number;
+  answers: { questionId: string; selected: string }[];
+  segment: Segment;
+  guideUnlockedAt: string | null;
+  currentChapter: number | null;
+  bpaCity?: string;
+  bpaDailyCheckIns: boolean;
+  setEmail: (email: string) => void;
+  setName: (name: string) => void;
+  setUTMs: (utms: { source?: string; medium?: string; campaign?: string; content?: string }) => void;
+  setScore: (score: number) => void;
+  addAnswer: (questionId: string, selected: string) => void;
+  calculateSegment: (score: number) => Segment;
+  unlockGuide: () => void;
+  setCurrentScreen: (screen: number) => void;
+  setCurrentChapter: (chapter: number | null) => void;
+  setBPACity: (city: string) => void;
+  setBPACheckIns: (enabled: boolean) => void;
+  getSessionData: () => Record<string, unknown>;
   resetGame: () => void;
 }
 
 const initialState = {
-  avatar: null,
-  currentQuestion: 0,
-  answers: Array(10).fill(null),
-  correctness: Array(10).fill(null),
-  score: 0,
-  isGameOver: false,
-  userName: '',
   email: '',
-  phone: '',
-  leadSubmitted: false,
+  name: '',
+  utmSource: undefined,
+  utmMedium: undefined,
+  utmCampaign: undefined,
+  utmContent: undefined,
+  currentScreen: 1,
+  score: 0,
+  answers: [],
   segment: null,
+  guideUnlockedAt: null,
+  currentChapter: null,
+  bpaCity: undefined,
+  bpaDailyCheckIns: true,
 };
 
-export const useGameStore = create<GameStore>((set, get) => ({
-  ...initialState,
-
-  setAvatar: (avatar) => set({ avatar }),
-
-  submitAnswer: (questionIndex, answerIndex, isCorrect) => {
-    const answers = [...get().answers];
-    const correctness = [...get().correctness];
-    answers[questionIndex] = answerIndex;
-    correctness[questionIndex] = isCorrect;
-    set({
-      answers,
-      correctness,
-      score: isCorrect ? get().score + 1 : get().score,
-    });
-  },
-
-  nextQuestion: () => {
-    set((state) => ({ currentQuestion: state.currentQuestion + 1 }));
-  },
-
-  finishGame: (finalScore) => {
-    set({
-      isGameOver: true,
-      score: finalScore,
-      segment: getSegment(finalScore),
-    });
-  },
-
-  setLeadData: (userName, email, phone) => set({ userName, email, phone }),
-
-  setLeadSubmitted: () => set({ leadSubmitted: true }),
-
-  resetGame: () => set(initialState),
-}));
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
+      setEmail: (email) => set({ email }),
+      setName: (name) => set({ name }),
+      setUTMs: (utms) =>
+        set((state) => ({
+          utmSource: state.utmSource ?? utms.source,
+          utmMedium: state.utmMedium ?? utms.medium,
+          utmCampaign: state.utmCampaign ?? utms.campaign,
+          utmContent: state.utmContent ?? utms.content,
+        })),
+      setScore: (score) => set({ score, segment: get().calculateSegment(score) }),
+      addAnswer: (questionId, selected) =>
+        set((state) => ({ answers: [...state.answers, { questionId, selected }], score: state.score + 1, segment: get().calculateSegment(state.score + 1) })),
+      calculateSegment: (score) => {
+        if (score <= 2) return 'Conservative';
+        if (score <= 5) return 'Moderate';
+        return 'Aggressive';
+      },
+      unlockGuide: () => set({ guideUnlockedAt: new Date().toISOString() }),
+      setCurrentScreen: (currentScreen) => set({ currentScreen }),
+      setCurrentChapter: (currentChapter) => set({ currentChapter }),
+      setBPACity: (bpaCity) => set({ bpaCity }),
+      setBPACheckIns: (bpaDailyCheckIns) => set({ bpaDailyCheckIns }),
+      getSessionData: () => {
+        const state = get();
+        return {
+          email: state.email,
+          name: state.name,
+          utms: {
+            source: state.utmSource,
+            medium: state.utmMedium,
+            campaign: state.utmCampaign,
+            content: state.utmContent,
+          },
+          score: state.score,
+          answers: state.answers,
+          segment: state.segment,
+          guideUnlockedAt: state.guideUnlockedAt,
+          currentChapter: state.currentChapter,
+          bpaCity: state.bpaCity,
+          bpaDailyCheckIns: state.bpaDailyCheckIns,
+        };
+      },
+      resetGame: () => set(initialState),
+    }),
+    {
+      name: 'firepass-game-store',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);

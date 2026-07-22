@@ -1,97 +1,83 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Charlie from '@/components/avatars/Charlie';
+import ClientOnly from '@/components/guards/ClientOnly';
 import { useGameStore } from '@/store/gameStore';
+import { readUtmParams } from '@/lib/utils';
 
-export default function HomePage() {
+function HomeContent() {
   const router = useRouter();
-  const { resetGame } = useGameStore();
-  const [mounted, setMounted] = useState(false);
+  const params = useSearchParams();
+  const { email, name, setEmail, setName, setUTMs } = useGameStore();
 
   useEffect(() => {
-    setMounted(true);
-    resetGame();
-  }, [resetGame]);
+    const utms = readUtmParams(new URLSearchParams(params.toString()));
+    if (utms.source || utms.medium || utms.campaign || utms.content) setUTMs(utms);
+  }, [params, setUTMs]);
 
-  const handleStart = () => {
-    router.push('/select');
-  };
-
-  if (!mounted) return null;
+  const canContinue = Boolean(email.trim() && name.trim());
 
   return (
-    <main className="stage-bg min-h-dvh flex flex-col items-center justify-center px-6 py-10 screen-enter">
+    <main className="min-h-dvh stage-bg px-5 py-8 text-white">
+      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-xl flex-col justify-center gap-6">
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+          <Charlie />
+          <p className="mt-4 text-xs font-bold tracking-[0.3em] text-[#ffd166] uppercase">FIRE PASS™</p>
+          <h1 className="fire-h1 mt-3 text-3xl font-black leading-tight">Descubre tu potencial financiero</h1>
+          <p className="fire-body mt-2 text-sm text-white/75">Un quiz rápido para abrir el siguiente paso del funnel.</p>
+        </motion.div>
 
-      {/* Hero content */}
-      <div className="flex flex-col items-center text-center max-w-md">
-
-        {/* Presenter image */}
-        <motion.img
-          src="/images/presenter.png"
-          alt="Presentador"
-          initial={{ scale: 0, rotate: -20, opacity: 0 }}
-          animate={{ scale: 1, rotate: 0, opacity: 1 }}
-          transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
-          className="object-contain mb-6 animate-float"
-          style={{ width: 120, height: 120 }}
-        />
-
-        {/* Logo badge */}
-        <motion.span
-          initial={{ opacity: 0, y: -10 }}
+        <motion.form
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-xs font-bold text-brand-gold tracking-widest uppercase mb-4"
+          className="fire-card p-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!canContinue) return;
+            router.push('/game/screen2');
+          }}
         >
-          FIRE PASS™
-        </motion.span>
-
-        {/* Main headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="text-3xl font-extrabold text-white leading-tight mb-3"
-        >
-          100 Latinos en USA dijeron…
-        </motion.h1>
-
-        {/* Subheadline */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-lg font-semibold text-white/80 mb-8"
-        >
-          ¿Estás dentro del promedio… o dentro del 1%?
-        </motion.p>
-
-        {/* CTA Button */}
-        <motion.button
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleStart}
-          className="btn-glow-green w-full rounded-2xl py-4 font-extrabold text-white text-lg mb-6"
-        >
-          ¡JUGAR AHORA! →
-        </motion.button>
-
-        {/* Bottom copy */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-white/40 text-xs leading-relaxed"
-        >
-          10 preguntas · 30 segundos c/u · Descubre qué tan preparado estás para tu futuro financiero
-        </motion.p>
+          <div className="space-y-4">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-white/60">Nombre</span>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-[#09111d] px-4 py-3 outline-none fire-body"
+                placeholder="Tu nombre"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-white/60">Email</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-[#09111d] px-4 py-3 outline-none fire-body"
+                placeholder="correo@ejemplo.com"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={!canContinue}
+              className="btn-glow-green w-full rounded-2xl px-4 py-3 font-extrabold text-[#08111d] disabled:opacity-40"
+            >
+              Empezar Quiz
+            </button>
+          </div>
+        </motion.form>
       </div>
-
     </main>
+  );
+}
+
+export default function Page() {
+  return (
+    <ClientOnly>
+      <HomeContent />
+    </ClientOnly>
   );
 }

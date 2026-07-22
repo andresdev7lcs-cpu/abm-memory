@@ -1,0 +1,12 @@
+[
+  { "level": 1, "title": "Setup diario", "description": "Activa tu ritmo.", "reward": "$5 plan", "locked": false },
+  { "level": 2, "title": "Hábito base", "description": "Una acción simple por día.", "reward": "Check-in", "locked": false },
+  { "level": 3, "title": "Constancia", "description": "Sostén el impulso.", "reward": "Badge", "locked": false },
+  { "level": 4, "title": "Energía", "description": "Menos fricción, más avance.", "reward": "Streak", "locked": false },
+  { "level": 5, "title": "Ritmo", "description": "Ya te mueves solo.", "reward": "Unlock", "locked": false },
+  { "level": 6, "title": "Control", "description": "Ves patrones con claridad.", "reward": "Insight", "locked": false },
+  { "level": 7, "title": "Refuerzo", "description": "La rutina se vuelve natural.", "reward": "Momentum", "locked": false },
+  { "level": 8, "title": "Expansión", "description": "Sube la exigencia.", "reward": "Flow", "locked": false },
+  { "level": 9, "title": "Dominio", "description": "Casi automático.", "reward": "Advance", "locked": false },
+  { "level": 10, "title": "BPA complete", "description": "Se abre el siguiente tramo.", "reward": "Invite", "locked": false }
+]
