@@ -31,7 +31,7 @@ function customersCreate(payload) {
   record.deleted_at = '';
 
   var duplicates = findDuplicateCustomers_(record.id_type, record.id_number, null);
-  var inserted = db.insert(CUSTOMERS_TABLE, record, { actor: session.email, note: 'customers.create' });
+  var inserted = db.insert(CUSTOMERS_TABLE, record, { actor: session.email, note: 'customers.create', pk_value: record.customer_id });
 
   return { ok: true, row: inserted, duplicateWarning: duplicates.length > 0, duplicates: duplicates };
 }
@@ -67,7 +67,7 @@ function customersUpdate(customerId, patch) {
 
   var updated = db.update(CUSTOMERS_TABLE, function (row) {
     return row.customer_id === customerId;
-  }, safePatch, { actor: session.email, note: 'customers.update' });
+  }, safePatch, { actor: session.email, note: 'customers.update', pk_value: customerId });
 
   return { ok: true, row: updated, duplicateWarning: duplicates.length > 0, duplicates: duplicates };
 }
@@ -132,7 +132,7 @@ function customersDeactivate(customerId, reason) {
   var note = 'customers.deactivate' + (reason ? ' - ' + reason : '');
   var updated = db.update(CUSTOMERS_TABLE, function (row) {
     return row.customer_id === customerId;
-  }, { deleted_at: now, updated_at: now }, { actor: session.email, note: note });
+  }, { deleted_at: now, updated_at: now }, { actor: session.email, note: note, pk_value: customerId });
 
   return { ok: true, row: updated };
 }

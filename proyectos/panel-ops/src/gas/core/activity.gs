@@ -38,9 +38,8 @@ function extractTicketId_(tableName, after, before, patch) {
 
 function buildActivityMessage_(type, tableName, after, before, patch, meta) {
   var parts = [type + ' ' + tableName];
-  var pk = getPrimaryKeyField_(tableName);
-  if (after && after[pk] && pk !== 'activity_id') {
-    parts.push(after[pk]);
+  if (meta && meta.pk_value) {
+    parts.push(meta.pk_value);
   } else if (after && after.ticket_id) {
     parts.push(after.ticket_id);
   }
@@ -48,9 +47,4 @@ function buildActivityMessage_(type, tableName, after, before, patch, meta) {
     parts.push(meta.note);
   }
   return parts.join(' - ');
-}
-
-function getPrimaryKeyField_(tableName) {
-  var table = getTableSpec_(tableName);
-  return table.headers[0];
 }
