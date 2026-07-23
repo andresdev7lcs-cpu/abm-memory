@@ -780,3 +780,27 @@ Entry format (one JSON object per fenced block, in order):
   "logFile": null
 }
 ```
+
+```json
+{
+  "timestamp": "2026-07-22T22:00:00.000Z",
+  "ticket": "APP-001",
+  "event": "note",
+  "runner": "claude",
+  "model": "claude-haiku-4-5",
+  "message": "Live tier diagnostics: testCreateValidInsertsAndLogsActivity_ failed (7/8 tests passed, activity row count = 0 when expected ≥1). Root cause identified in src/gas/core/activity.gs buildActivityMessage_(): message builder only included ticket_id, not the primary key of the current table. For Customers table, this meant customer_id never appeared in Activity message, causing test's search filter (indexOf(customer_id)) to fail. FIX APPLIED: buildActivityMessage_() now includes the primary key of the current table (customer_id, ticket_id, etc.) in the activity message, placed immediately after the table name. Added getPrimaryKeyField_() helper to extract the PK field from table schema. This unblocks the test's ability to find activity rows by the row's primary key. Commit: 23f2651. Next step for human: (1) clasp push to real Apps Script project (script id 1PDRCGnpgGj6ZE9cM6L6hMN65fwuEyFs9rn_eqzZ4tIp_0wYot3KH5chR) to deploy the fixed activity.gs; (2) run runAppOneTests() from the Apps Script editor again; (3) paste the new PASS/FAIL output into comments/APP-001.jsonl. Expected outcome: 'FAIL - testCreateValidInsertsAndLogsActivity_ :: customer_id=CUS-XXXX activityRows=1' should now show activityRows=1 instead of 0.",
+  "logFile": null
+}
+```
+
+```json
+{
+  "timestamp": "2026-07-22T22:10:00.000Z",
+  "ticket": "APP-001",
+  "event": "note",
+  "runner": "claude",
+  "model": "claude-haiku-4-5",
+  "message": "Second test run still failed: testCreateValidInsertsAndLogsActivity_ :: customer_id=CUS-0005 activityRows=0. Same symptom, fix not working. Possible causes: (1) clasp push did not execute (activity.gs fix never reached live Apps Script editor) — need confirmation that push succeeded and activity.gs with getPrimaryKeyField_() is now in the real script project; (2) getPrimaryKeyField_() or getTableSpec_() call throws exception during activityLog_(), causing silent failure and no Activity row written at all — need to check live Activity sheet manually to see if ANY rows exist for this customer; (3) Activity table itself missing or unreadable by test. BLOCKER FOR DIAGNOSIS: Please confirm: (a) Did 'clasp push' output show success (files pushed, no errors)? (b) Can you manually inspect the live Activity sheet (spreadsheet 1HAspJ_aFGA2B2qN0FFdkkhFGdurdyXEnDjwrwByL6qM) and paste a few rows to see what messages were actually written? Include the column headers (activity_id, ticket_id, at, actor, type, from_state, to_state, message, meta_json) so we can verify the message format.",
+  "logFile": null
+}
+```
