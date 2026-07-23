@@ -804,3 +804,15 @@ Entry format (one JSON object per fenced block, in order):
   "logFile": null
 }
 ```
+
+```json
+{
+  "timestamp": "2026-07-22T22:20:00.000Z",
+  "ticket": "APP-001",
+  "event": "note",
+  "runner": "claude",
+  "model": "claude-haiku-4-5",
+  "message": "Root cause analysis: Previous fix (getPrimaryKeyField_) attempted to call getTableSpec_() from activity.gs, but this creates a cross-file scope issue in Apps Script — functions are concatenated but execution order is undefined, and getTableSpec_ may not be available when activity.gs runs. NEW APPROACH: Pass pk_value explicitly from caller via meta object. Updated activity.gs buildActivityMessage_() to use meta.pk_value if provided (no getTableSpec_ call). Updated customers.gs all 3 db operations (insert, update, deactivate) to pass pk_value: customer_id in meta. This avoids cross-file dependencies. Commit: ed91ddd. Next step: clasp push (activity.gs + customers.gs) to script project (1PDRCGnpgGj6ZE9cM6L6hMN65fwuEyFs9rn_eqzZ4tIp_0wYot3KH5chR) and re-run runAppOneTests().",
+  "logFile": null
+}
+```
