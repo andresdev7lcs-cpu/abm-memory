@@ -57,44 +57,50 @@
 
 ### T-A4: Team /start Activation
 - **ID:** T-A4
-- **Descripción:** Cada asesor envía /start a su bot (genera chat_id). BLOQUEANTE: solo Fabio confirmado (chat_id 8695082898); 10 de 11 asesores + Jorge sin chat_id en Supabase. Recolectar con @userinfobot → UPDATE asesores.chat_id.
+- **Descripción:** Cada asesor envía /start a su bot (genera chat_id). BLOQUEANTE CRÍTICA: solo Fabio confirmado (chat_id 8695082898); 10 de 11 asesores + Jorge sin chat_id. Método: Cada worker envía /start a su bot en Telegram → chat_id aparece en webhook W00 → UPDATE asesores.chat_id via Supabase. O batch manual: curl getUpdates por bot, extraer chat_id, hacer UPDATE SQL.
 - **Dependencias:** T-A3
 - **Estado:** Bloqueante humano
 - **Modelo recomendado:** Manual
-- **Ejecutor:** Manual (AP)
+- **Ejecutor:** Manual (AP + asesores)
 - **Prioridad:** Crítica
 - **Checklist:**
   - [x] Fabio → @MSDS_Gerencia_N_bot /start (chat_id 8695082898 confirmado)
   - [ ] Santiago → @MSDS_Gerencia_B_bot /start
   - [ ] Gabriel → @MSDS_Autos_N_bot /start
-  - [ ] Valentina, Geraldin, Natalia, Aida, Leonela, Oscar, Yamaira (7 pendientes)
+  - [ ] Valentina → @MSDS_Autos_R_bot /start
+  - [ ] Geraldin → @MSDS_Cartera_bot /start
+  - [ ] Natalia → @MSDS_Caja_bot /start
+  - [ ] Aida → @MSDS_Generales_bot /start
+  - [ ] Leonela → @MSDS_Cumplimiento_bot /start
+  - [ ] Oscar → @MSDS_Siniestros_bot /start
+  - [ ] Yamaira → @MSDS_Comisiones_bot /start
   - [ ] Jorge → @MSDS_Supervisor_bot /start
 
 ### T-A5: Validar P4 Siniestros End-to-End
 - **ID:** T-A5
-- **Descripción:** Crear caso siniestro test → verificar notificación Telegram en 15min → escala en 30min
+- **Descripción:** Crear caso siniestro test → verificar notificación Telegram en 15min → escala en 30min. BLOQUEANTE TEMPORAL: T-A4 (10 asesores sin chat_id, solo AP activo). Parcialmente verificado 2026-07-27: alerta (15min SLA) confirmada end-to-end en ejecución W10#127321 (caso id=3, siniestros area → supervisor alert vía chat 8695082898 ok:true); escalación interrumpida por n8n webhook timeout (22:40 UTC). Infraestructura recuperada 2026-07-14, pending re-test escalación completa con T-A4 resuelto.
 - **Dependencias:** T-A3b, T-A4
 - **Estado:** Bloqueado
 - **Modelo recomendado:** Sonnet
 - **Ejecutor:** Codex
 - **Prioridad:** Crítica
 - **Verificación:**
-  - Caso creado en Supabase
-  - Notificación recibida en chat de Fabio
-  - Escala automática al gerente
+  - Caso creado en Supabase ✅ (id=3, sla_alerta_at/sla_escalar_at set)
+  - Notificación alerta recibida chat 8695082898 ✅ (W10 "Alertar Supervisor" ok)
+  - Escala automática: pendiente (n8n webhook recuperado, ready para re-test)
 
 ### T-A6: Validar P5 Comunicaciones End-to-End
 - **ID:** T-A6
-- **Descripción:** Validar flujo P5 comunicaciones completo entre bots y Supabase. W03 aún rutea a chat test de Andrés, pendiente cambiar a Jorge real una vez T-A4 resuelto.
+- **Descripción:** Validar flujo P5 comunicaciones completo entre bots y Supabase. W03 importado, webhooks activos, pendiente test end-to-end. BLOQUEANTE: Telegram API timeout (network), requiere T-A4 (11 asesores reales con chat_ids en Supabase) para validación completa. Hoy solo AP (8695082898) disponible para pruebas.
 - **Dependencias:** T-A3b, T-A4
 - **Estado:** Bloqueado
 - **Modelo recomendado:** Sonnet
 - **Ejecutor:** Codex
 - **Prioridad:** Crítica
 - **Verificación:**
-  - P5 importado en n8n
-  - Test mensaje end-to-end exitoso
-  - W03 rutea a Jorge, no a Andrés
+  - P5 importado en n8n ✅
+  - Webhooks W03 configurados ✅
+  - Test mensaje end-to-end con Jorge (esperar T-A4)
 
 ### T-A7: Rotar Service_role Key + Mover a Env Vars
 - **ID:** T-A7

@@ -862,6 +862,27 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { command: buildSuggestedCommand(ticket) });
     }
 
+    if (pathname === '/api/casos' && method === 'POST') {
+      try {
+        const body = await readJsonBody(req);
+        const result = await supabaseRequest('casos', { method: 'POST', body });
+        if (result.error) return sendError(res, 400, result.error);
+        return sendJson(res, 201, result.data?.[0] || result.data || { ok: true });
+      } catch (err) {
+        return sendError(res, 500, String((err && err.message) || err));
+      }
+    }
+
+    if (pathname === '/api/casos' && method === 'GET') {
+      try {
+        const result = await supabaseRequest('casos', { query: '?select=*' });
+        if (result.error) return sendError(res, 400, result.error);
+        return sendJson(res, 200, result.data || []);
+      } catch (err) {
+        return sendError(res, 500, String((err && err.message) || err));
+      }
+    }
+
     sendError(res, 404, 'Ruta no encontrada');
   } catch (err) {
     sendError(res, 500, String((err && err.message) || err));
