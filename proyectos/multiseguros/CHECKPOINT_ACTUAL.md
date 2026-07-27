@@ -117,3 +117,37 @@ proyectos/multiseguros/
 - Tareas agrupadas por proyecto — sin mezcla entre clientes
 - Modutriplex e IMASAS cargados en Supabase andybot-memory
 - Pruebas pasadas: estado proyectos, tareas por cliente, historia, skills
+
+---
+
+## SESIÓN 2026-07-27 — RETOMAR + SECURIDAD
+
+### T-A4: Webhook /start Capture
+- ✅ **Creado:** W04_Telegram_Start_ChatId.json
+  - Captura `POST /webhook/msds-start` (Telegram update)
+  - Extrae `chat_id` + `username` 
+  - UPDATE `asesores.telegram_chat_id` donde `telegram_username = @username`
+  - Respuesta: 200 OK si UPDATE exitoso
+- ⏳ **Pendiente:** AP importar en n8n UI + activar webhook
+
+### T-A7: Supabase Key Rotation
+- ✅ **Auditoría completa:** 
+  - Key vieja (`sb_secret_[REVOCADA]`) NO en uso actual
+  - gerencia.html (línea 693): JWT long-term válido (exp: 2097)
+  - Workflows: usan `$env.SUPABASE_SERVICE_ROLE_KEY` (placeholder, no hardcodeado)
+  - Cleanup script creado: `tools/cleanup-supabase-key.mjs`
+- ✅ **Acción COMPLETADA:** No requiere rotación inmediata (key vieja no activa)
+- 📋 **Documentado:** Hito B report lista GO-LIVE estado
+
+### Infraestructura
+- n8n URL actual: `https://no-26feb-n8n.ydlmwq.easypanel.host/` (Easypanel)
+- Supabase: `ejaxtfqwhgppgdglxmkt.supabase.co` — estable
+- 11 bots Telegram verificados activos (getMe 2026-07-27)
+
+### Estado GO-LIVE 2026-07-31
+| Criterio | Estado | Blocker |
+|----------|--------|---------|
+| T-A4 chat_ids | ⏳ Pendiente AP + equipo | 🔴 Crítico |
+| T-A7 key security | ✅ OK (no acción requerida hoy) | — |
+| T-B CRM ops | ✅ 100% operativo | — |
+| T-A5 escalación | ⏳ Re-test pending T-A4 | — |

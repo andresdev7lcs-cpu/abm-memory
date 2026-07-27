@@ -1,0 +1,84 @@
+{
+  "name": "W04 - Telegram /start → Chat ID Capture",
+  "description": "Captura comando /start en Telegram. Extrae chat_id + username. UPDATE asesores.telegram_chat_id en Supabase.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "msds-start",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "n001",
+      "name": "Webhook /start",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "msds-start"
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message || {};\nconst from = msg.from || {};\nconst text = String(msg.text || '').trim();\n\nif (!text.startsWith('/start')) {\n  return [{ json: { ok: false, reason: 'not /start command' } }];\n}\n\nconst chatId = String(msg.chat.id);\nconst username = String(from.username || '');\nconst firstName = String(from.first_name || 'Usuario');\nconst userId = String(from.id || '');\n\nif (!chatId || !username) {\n  return [{ json: { ok: false, reason: 'missing chat_id or username', chat: chatId, user: username } }];\n}\n\nreturn [{ json: {\n  ok: true,\n  chat_id: chatId,\n  username: username.toLowerCase(),\n  first_name: firstName,\n  user_id: userId,\n  timestamp: new Date().toISOString()\n} }];"
+      },
+      "id": "n002",
+      "name": "Extraer /start",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "PATCH",
+        "url": "https://ejaxtfqwhgppgdglxmkt.supabase.co/rest/v1/asesores?telegram_username=eq.@{{ $json.username }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_[REVOCADA]' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "application/json",
+        "body": "={{ JSON.stringify({ telegram_chat_id: $json.chat_id }) }}"
+      },
+      "id": "n003",
+      "name": "UPDATE Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [600, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json || {};\nreturn [{ json: {\n  ok: true,\n  message: 'Chat ID registrado correctamente',\n  chat_id: $('Extraer /start').first().json.chat_id,\n  username: $('Extraer /start').first().json.username,\n  status: res.status || 200\n} }];"
+      },
+      "id": "n004",
+      "name": "Respuesta OK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 0]
+    }
+  ],
+  "connections": {
+    "Webhook /start": {
+      "main": [[{ "node": "Extraer /start", "branch": 0, "output": 0 }]]
+    },
+    "Extraer /start": {
+      "main": [[{ "node": "UPDATE Supabase", "branch": 0, "output": 0 }]]
+    },
+    "UPDATE Supabase": {
+      "main": [[{ "node": "Respuesta OK", "branch": 0, "output": 0 }]]
+    }
+  }
+}
