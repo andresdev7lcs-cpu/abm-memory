@@ -139,10 +139,24 @@ proyectos/multiseguros/
 - ✅ **Acción COMPLETADA:** No requiere rotación inmediata (key vieja no activa)
 - 📋 **Documentado:** Hito B report lista GO-LIVE estado
 
+### P5 Comunicaciones — FIX + OPERATIVO 2026-07-27
+- ✅ **Bug encontrado:** apikey header tenía key vieja (`sb_secret_...`) hardcodeada
+- ✅ **Corregido vía n8n API:**
+  - Header `apikey`: JWT service_role (exp: 2097) ✅
+  - Header `Authorization`: Bearer JWT ✅
+  - Nodo Telegram: credential SCMSDS_bot asignada ✅
+- ✅ **Test completado:**
+  - Webhook POST `/msds-comunicaciones` recibido ✅
+  - INSERT Supabase exitoso (ID 10) ✅
+  - Telegram notificación enviada a Fabio (chat 8695082898) ⏳ (verificar)
+  - Respuesta 200 OK ✅
+- ⏳ **Pendiente:** Verificar notificación llegó a Telegram Fabio
+
 ### Infraestructura
 - n8n URL actual: `https://no-26feb-n8n.ydlmwq.easypanel.host/` (Easypanel)
 - Supabase: `ejaxtfqwhgppgdglxmkt.supabase.co` — estable
 - 11 bots Telegram verificados activos (getMe 2026-07-27)
+- P5 Webhook URL: `https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/msds-comunicaciones`
 
 ### Estado GO-LIVE 2026-07-31
 | Criterio | Estado | Blocker |
@@ -151,3 +165,4 @@ proyectos/multiseguros/
 | T-A7 key security | ✅ OK (no acción requerida hoy) | — |
 | T-B CRM ops | ✅ 100% operativo | — |
 | T-A5 escalación | ⏳ Re-test pending T-A4 | — |
+| **P5 Comunicaciones** | ✅ **OPERATIVO** (key fixed) | — |
