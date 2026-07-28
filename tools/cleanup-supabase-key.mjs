@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Buscar key Supabase vieja en código
- * Key vieja: sb_secret_[REVOCADA] (revocada en Supabase)
+ * Key vieja: revocada en Supabase (2026-07).
+ * Pasa el valor a buscar por env: OLD_KEY=... node cleanup-supabase-key.mjs
  */
 
 import fs from 'fs';
@@ -10,7 +11,11 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const OLD_KEY = 'sb_secret_[REVOCADA]';
+const OLD_KEY = process.env.OLD_KEY;
+if (!OLD_KEY) {
+  console.error('Define OLD_KEY en el entorno. Ej: OLD_KEY=sb_secret_xxx node tools/cleanup-supabase-key.mjs');
+  process.exit(1);
+}
 const SEARCH_DIRS = [
   path.resolve(__dirname, '../proyectos/multiseguros'),
   path.resolve(__dirname, '../herramientas'),

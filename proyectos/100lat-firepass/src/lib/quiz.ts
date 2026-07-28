@@ -47,7 +47,7 @@ function resolveTokens(text: string) {
 }
 
 export function buildQuizSession(seed = 'fire-pass') {
-  const variant = variantOrder[seededNumber(seed) % variantOrder.length];
+  const variant = 'A' as const;
   const byLevel = [1, 2, 3].flatMap((level) =>
     shuffle(
       pool.filter((question) => question.level === level && question.variant === variant),
