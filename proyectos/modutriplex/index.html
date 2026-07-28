@@ -25,10 +25,54 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script>
+    /* ─────────────────────────────────────────────────────────────
+       ANALÍTICA — PARA ACTIVAR: reemplaza los dos valores de abajo
+       por los IDs reales del cliente. Los scripts se cargan solos.
+       GA4_ID      → Google Analytics 4  (formato: G-XXXXXXXXXX)
+       FB_PIXEL_ID → Meta Pixel          (solo números)
+       Mientras tengan el placeholder, no se carga ni se envía nada.
+    ───────────────────────────────────────────────────────────── */
     const GA4_ID = 'G-XXXXXXXXXX';
     const FB_PIXEL_ID = 'XXXXXXXXXXXXXXX';
+
+    const GA4_ON = GA4_ID.indexOf('X') === -1;
+    const PIXEL_ON = FB_PIXEL_ID.indexOf('X') === -1;
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+
+    if (GA4_ON) {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', GA4_ID);
+    }
+
+    if (PIXEL_ON) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+      (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', FB_PIXEL_ID);
+      fbq('track', 'PageView');
+    }
+
+    /* Envía el evento a GA4 y a Meta Pixel a la vez. */
     function track(event, params) {
-      if (typeof gtag !== 'undefined') gtag('event', event, params || {});
+      params = params || {};
+      if (GA4_ON) gtag('event', event, params);
+      if (PIXEL_ON) {
+        var metaEvents = {
+          cotizador_inicio: 'InitiateCheckout',
+          cotizador_completado: 'Lead',
+          whatsapp_click: 'Contact',
+          hero_cta_click: 'ViewContent'
+        };
+        fbq(metaEvents[event] ? 'track' : 'trackCustom', metaEvents[event] || event, params);
+      }
     }
   </script>
   <style>
@@ -1426,7 +1470,12 @@
 ════════════════════════════════════════ -->
 <section class="hero hero-diagonal" id="hero" aria-label="Hero Modutriplex">
   <div class="hero-bg-parallax" aria-hidden="true">
-    <img src="assets/img/invitacion.webp" alt="" loading="eager">
+    <img src="assets/img/invitacion.jpg"
+         srcset="assets/img/invitacion_mobile.jpg 640w, assets/img/invitacion.jpg 1080w"
+         sizes="(max-width: 768px) 100vw, 50vw"
+         width="1080" height="716"
+         alt="Triplo, la mascota de Modutriplex, operando la máquina de corte CNC en el taller"
+         fetchpriority="high" decoding="async" loading="eager">
   </div>
   <div class="hero-overlay" aria-hidden="true"></div>
   <div class="hero-grid" aria-hidden="true"></div>
@@ -1661,7 +1710,7 @@
   </div>
   <div class="video-outer">
     <div class="video-wrapper">
-      <video class="video-vsl" controls playsinline preload="metadata" poster="assets/img/invitacion.webp">
+      <video class="video-vsl" controls playsinline preload="metadata" poster="assets/img/invitacion.jpg">
         <source src="assets/video/vsl.mp4" type="video/mp4">
       </video>
     </div>
@@ -1937,7 +1986,7 @@
     <div id="cotizador-wrapper">
       <div class="cot-wrap">
         <section class="cot-card" style="padding:22px;margin-bottom:16px">
-          <h1 style="margin-bottom:4px">Optimizador de corte Modutriplex</h1>
+          <h2 style="margin-bottom:4px">Optimizador de corte Modutriplex</h2>
           <p style="font-size:14px">Elige tus materiales, cuéntanos qué piezas necesitas y te damos la solución más eficiente. Sin pasos técnicos.</p>
         </section>
 
