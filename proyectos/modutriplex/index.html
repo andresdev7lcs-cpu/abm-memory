@@ -781,7 +781,7 @@
        B4 — COTIZADOR (popup + gate)
     ════════════════════════════════════════ */
     .cot-transition-in { height: 80px; background: linear-gradient(to bottom right, #0d0d14 50%, #ffffff 50%); }
-    #cotizador { background: #ffffff; color: #1a1a1a; padding: 96px 24px 80px; }
+    #cotizador { display: none !important; background: #ffffff; color: #1a1a1a; padding: 96px 24px 80px; }
     .cot-intro { text-align: center; max-width: 720px; margin: 0 auto 56px; }
     .cot-pill {
       display: inline-flex; align-items: center; gap: 8px;
@@ -1439,7 +1439,7 @@
           <div class="st-tag problema" id="st-tag">EL PROBLEMA</div>
           <h2 class="st-headline" id="st-headline">Días perdidos esperando material que no llega</h2>
           <p class="st-subtext" id="st-subtext">Cada hora de espera es dinero que pierdes. Tu cliente no puede esperar.</p>
-          <a href="#" class="st-cta" id="st-cta" onclick="if(typeof openGate!=='undefined')openGate();return false;">Cotizar ahora &rarr;</a>
+          <a href="https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto" target="_blank" rel="noopener noreferrer" class="st-cta" id="st-cta" onclick="if(typeof track!=='undefined')track('cta_whatsapp_click',{location:'storytelling'});">Cotizar ahora &rarr;</a>
         </div>
       </div>
       <div class="st-lista-mobile-wrap">
@@ -1488,7 +1488,7 @@
   <span class="tag-pill"><span class="tag-pill-dot"></span> Cómo funciona</span>
   <h2 class="section-headline">SERVIMOS DANDO SOLUCIONES</h2>
   <div class="como-funciona-cta">
-    <button class="btn-primary" id="btn-como-funciona-cotizar" onclick="track('hero_cta_click',{location:'como_funciona'});if(typeof openGate!=='undefined')openGate();return false;">Cotizar proyecto</button>
+    <a href="https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto" target="_blank" rel="noopener noreferrer" class="btn-primary" id="btn-como-funciona-cotizar" onclick="if(typeof track!=='undefined')track('hero_cta_click',{location:'como_funciona'});">Cotizar proyecto</a>
   </div>
   <div class="video-outer">
     <div class="video-wrapper">
@@ -2023,7 +2023,7 @@
         <li><a href="#cobertura">Materiales</a></li>
         <li><a href="#cobertura">Cobertura</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
-        <li><a href="#" onclick="if(typeof openGate!=='undefined')openGate();return false;">Cotizar ahora</a></li>
+        <li><a href="https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto" target="_blank" rel="noopener noreferrer" onclick="if(typeof track!=='undefined')track('footer_whatsapp_click',{});">Cotizar ahora</a></li>
       </ul>
     </div>
     <div>
