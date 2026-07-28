@@ -56,6 +56,43 @@ Volumen mayor, pedidos recurrentes. Le importa: consistencia de calibre, aprovec
 
 El SEO técnico ya está (meta tags, schema, sitemap, robots). Esta fase es contenido y presencia local.
 
+### Análisis SERP y competencia (julio 2026)
+
+Competidores revisados en resultados de búsqueda: **Madecentro, Sivaltriplex, Tablecortes, Formicentro, Aglocol, Triplex Holguín, Homecenter, Easy**.
+
+Qué encontramos:
+
+| Hallazgo | Implicación |
+|---|---|
+| Todos ofrecen corte a medida y canteado | **No es diferenciador.** No construir el mensaje sobre esto |
+| Ninguno promete plazo de entrega concreto | **Hueco real.** "48 horas" es territorio libre |
+| Ninguno cotiza el proyecto completo online; venden láminas con precio | **Hueco real.** El cotizador de piezas + cantos + optimización es único |
+| Aglocol domina las búsquedas informativas ("RH vs estándar", "qué calibre elegir") con artículos | Hay que competir con contenido, no solo con páginas de producto |
+| Nadie ataca "Bogotá" en el `<title>` | Ganancia rápida de intención local |
+
+Conclusión estratégica: el foso es **plazo garantizado + precio del proyecto antes de pagar + piezas etiquetadas**. Todo el copy debe apoyarse ahí.
+
+### Arquitectura del sitio: home persuade, sub-páginas rankean
+
+La **home** es la landing de conversión: elimina barreras, derriba objeciones y empuja a cotizar. No se optimiza para keywords informativas porque eso diluiría su función.
+
+Las **sub-páginas** capturan intención de búsqueda y transfieren autoridad a la home mediante enlazado interno. Cada una tiene un H1 único, H2 con keywords reales y schema propio.
+
+| URL | Keyword objetivo | Intención | H2 principales | Schema |
+|---|---|---|---|---|
+| `/` | tableros MDF melamínico a medida Bogotá | transaccional | (conversión) | LocalBusiness + FAQPage |
+| `/melaminico-a-la-medida.html` | melamínico a la medida | transaccional | Qué es · Calibres · Colores · Cómo cortamos | Service + Breadcrumb |
+| `/mdf-a-la-medida.html` | MDF cortado a la medida | transaccional | Qué es y cuándo conviene · Calibres · MDF crudo y RH | Service + Breadcrumb |
+| `/melaminico-rh.html` | melamínico RH humedad cocina baño | informativa → compra | RH vs estándar · Cuándo sí · Cuándo no · Calibres | FAQPage + Breadcrumb |
+| `/canteado.html` | canto rígido flexible tableros | informativa | Rígido o flexible · Cuántos lados · Encolado en caliente | FAQPage + Breadcrumb |
+| `/maquinaria.html` | seccionadora Striebig canteadora Holz-Her KDT | marca / autoridad | Striebig · KDT · Holz-Her · Etiquetado · CNC aliado | Article + Breadcrumb |
+
+**Enlazado interno:** cada sub-página enlaza a las otras cuatro (bloque "Sigue explorando") y a la home. La home enlaza a las cinco desde la sección "Materiales y guías" y desde el footer. Así el link equity circula en vez de quedarse en una sola página.
+
+**Enlaces externos a fabricantes** (`maquinaria.html`): Striebig, Holz-Her y KDT. Enlazar a fuentes de autoridad del sector refuerza la relevancia temática y respalda el claim técnico.
+
+> **Corrección importante aplicada:** el sitio afirmaba "Corte CNC de precisión milimétrica" en 7 lugares. La empresa **no opera CNC propio**, lo terceriza. Se reemplazó por las máquinas reales (seccionadora Striebig y KDT, canteadora Holz-Her) y el CNC se declara explícitamente como servicio de taller aliado. Un claim falso es riesgo reputacional con cliente técnico y no era sostenible.
+
 ### Keywords objetivo
 
 **Short-tail (prioridad 1):**
