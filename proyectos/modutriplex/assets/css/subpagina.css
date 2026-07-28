@@ -218,3 +218,20 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ── HUBS DE CONTENIDO (clima, tendencia, uso) ── */
+.hub-ciudades { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 26px; }
+.hub-ciudad {
+  display:inline-block; background:#1a1a28; border:1px solid var(--border);
+  border-radius:999px; padding:7px 15px; font-size:13px; color:var(--muted);
+}
+.hub-ciudad strong { color:var(--amber); font-weight:600; }
+.marca-link {
+  color:var(--amber); text-decoration:none;
+  border-bottom:1px dotted rgba(245,166,35,0.45);
+}
+.marca-link:hover { border-bottom-style:solid; }
+.color-muestra {
+  display:inline-block; width:14px; height:14px; border-radius:3px;
+  border:1px solid rgba(255,255,255,0.2); margin-right:8px; vertical-align:-2px;
+}
