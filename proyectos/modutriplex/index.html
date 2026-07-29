@@ -193,6 +193,53 @@
       transition: color 0.2s;
     }
     .nav-links a:hover { color: var(--red); }
+    .nav-dropdown { position: relative; }
+    .nav-dropdown > a { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+    .nav-dropdown > a::after {
+      content: '';
+      width: 6px; height: 6px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      margin-top: -3px;
+      transition: transform 0.2s;
+    }
+    .nav-dropdown:hover > a::after { transform: rotate(225deg); margin-top: 3px; }
+    .nav-dropdown-menu {
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      background: #14141f;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px;
+      min-width: 240px;
+      display: grid;
+      gap: 2px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-50%) translateY(8px);
+      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+      z-index: 200;
+    }
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown:focus-within .nav-dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+    .nav-dropdown-menu a {
+      display: block;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.8) !important;
+      white-space: nowrap;
+    }
+    .nav-dropdown-menu a:hover { background: rgba(230,51,41,0.12); color: var(--white) !important; }
+    .nav-dropdown-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 2px; }
     .nav-cta {
       display: inline-flex;
       align-items: center;
@@ -1278,6 +1325,8 @@
       gap: 8px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
       backdrop-filter: blur(12px);
+      max-height: 100vh;
+      overflow-y: auto;
     }
     .nav-mobile-drawer.open { display: flex; }
     .nav-mobile-drawer a {
@@ -1291,6 +1340,27 @@
       transition: color 0.2s;
     }
     .nav-mobile-drawer a:hover { color: var(--white); }
+    .nav-mobile-group-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-top: 10px;
+      padding-top: 10px;
+    }
+    .nav-mobile-drawer a[href^="/materiales"],
+    .nav-mobile-drawer a[href^="/melaminico"],
+    .nav-mobile-drawer a[href^="/mdf"],
+    .nav-mobile-drawer a[href^="/canteado"],
+    .nav-mobile-drawer a[href^="/colores"],
+    .nav-mobile-drawer a[href="/maquinaria"] {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 0;
+      color: rgba(255,255,255,0.65);
+    }
     .nav-mobile-drawer .nav-cta {
       background: var(--red);
       color: var(--white) !important;
@@ -1455,6 +1525,22 @@
   <ul class="nav-links">
     <li><a href="#hero">Inicio</a></li>
     <li><a href="#" onclick="track('hero_cta_click',{location:'nav'});window.open('https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto','_blank','noopener,noreferrer');return false;">Cotizador</a></li>
+    <li class="nav-dropdown">
+      <a href="#" tabindex="0">Materiales</a>
+      <div class="nav-dropdown-menu">
+        <a href="/melaminico-a-la-medida">Melamínico a la medida</a>
+        <a href="/mdf-a-la-medida">MDF a la medida</a>
+        <a href="/melaminico-rh">Melamínico RH</a>
+        <a href="/canteado">Canteado industrial</a>
+        <a href="/maquinaria">Nuestra maquinaria</a>
+        <div class="nav-dropdown-sep"></div>
+        <a href="/materiales-clima-frio">Materiales para clima frío</a>
+        <a href="/materiales-clima-calido">Materiales para clima cálido</a>
+        <a href="/colores-tendencia-cocinas">Colores en tendencia</a>
+        <a href="/materiales-alto-trafico">Materiales de alto tráfico</a>
+        <a href="/materiales-closets">Materiales para clósets</a>
+      </div>
+    </li>
     <li><a href="#nosotros">Nosotros</a></li>
     <li><a href="#footer">Contacto</a></li>
     <li><a href="#" class="nav-cta" onclick="track('hero_cta_click',{location:'nav'});window.open('https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto','_blank','noopener,noreferrer');return false;">
@@ -1469,6 +1555,17 @@
 <div class="nav-mobile-drawer" id="navDrawer" role="navigation" aria-label="Menú mobile">
   <a href="#hero">Inicio</a>
   <a href="#" onclick="track('hero_cta_click',{location:'nav_mobile'});window.open('https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto','_blank','noopener,noreferrer');return false;">Cotizador</a>
+  <div class="nav-mobile-group-label">Materiales</div>
+  <a href="/melaminico-a-la-medida">Melamínico a la medida</a>
+  <a href="/mdf-a-la-medida">MDF a la medida</a>
+  <a href="/melaminico-rh">Melamínico RH</a>
+  <a href="/canteado">Canteado industrial</a>
+  <a href="/maquinaria">Nuestra maquinaria</a>
+  <a href="/materiales-clima-frio">Materiales para clima frío</a>
+  <a href="/materiales-clima-calido">Materiales para clima cálido</a>
+  <a href="/colores-tendencia-cocinas">Colores en tendencia</a>
+  <a href="/materiales-alto-trafico">Materiales de alto tráfico</a>
+  <a href="/materiales-closets">Materiales para clósets</a>
   <a href="#por-que">Nosotros</a>
   <a href="#footer">Contacto</a>
   <a href="#" class="nav-cta" onclick="track('hero_cta_click',{location:'nav_mobile'});window.open('https://wa.me/573115856258?text=Hola%2C%20me%20interesa%20cotizar%20un%20proyecto','_blank','noopener,noreferrer');return false;">Quiero cotizar →</a>
