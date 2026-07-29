@@ -27,6 +27,7 @@
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
   # Range requests para streaming del video en Safari
   <FilesMatch "\.(mp4)$">
     Header set Accept-Ranges "bytes"
@@ -41,7 +42,19 @@
   RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
-  # Permitir URLs sin la extensión .html
+  # /index.html -> / (evita URL duplicada de la home)
+  RewriteRule ^index\.html$ / [L,R=301]
+
+  # /pagina.html -> /pagina (evita URL duplicada, un solo canonical real)
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^(.+)\.html$ /$1 [L,R=301]
+
+  # /pagina/ -> /pagina (el slash final no es un directorio real, daba 500)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !^/assets/
+  RewriteRule ^(.+)/$ /$1 [L,R=301]
+
+  # Permitir URLs sin la extensión .html (rewrite interno, sin redirect visible)
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME}\.html -f
   RewriteRule ^(.+)$ $1.html [L]
