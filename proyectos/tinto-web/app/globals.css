@@ -1,0 +1,808 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   TINTO — Design Tokens v0.3
+   Fuente: docs/03_offer_strategy/web/v0.3/WEB_TINTO_V0_3_DESIGN_TOKENS.md
+   Arquitectura: primitivo (--p-*) -> semantico -> componente.
+   Regla: ningun componente referencia un primitivo directamente.
+   ========================================================================== */
+
+:root {
+  /* ---------- 2. Primitivos de color ---------- */
+
+  /* Negro calido — escala local v0.3 no define escala; derivada calida, no gris neutro */
+  --p-void: #050403;
+  --p-void-950: #030201;
+  --p-void-900: #050403;
+  --p-void-800: #0d0a07;
+
+  /* Cafe profundo */
+  --p-espresso-950: #0a0705;
+  --p-espresso-900: #120d09;
+  --p-espresso-800: #1c140e;
+  --p-espresso-700: #291d14;
+
+  /* Cacao */
+  --p-cacao-600: #3a2a1c;
+  --p-cacao-500: #4d3826;
+
+  /* Vino oscuro */
+  --p-wine-900: #1c0a0f;
+  --p-wine-700: #3f1a24;
+  --p-wine-500: #6b2c3c;
+
+  /* Cobre */
+  --p-copper-600: #8a5530;
+  --p-copper-500: #b3763f;
+  --p-copper-400: #c98f57;
+
+  /* Dorado sobrio */
+  --p-gold-500: #c99a4e;
+  --p-gold-400: #d9ae6c;
+  --p-gold-300: #f0d58a;
+
+  /* Marfil */
+  --p-ivory-200: #e9ddc8;
+  --p-ivory-100: #f4ecdf;
+  --p-ivory-050: #faf5ec;
+
+  /* 2.1 Primitivos nuevos — verde: valores pendientes (andres confirma) */
+  --p-forest-700: #2f4438;
+  --p-forest-500: #456253;
+
+  /* 2.2 Paleta del prototipo hifi (Claude Design / Nocturne + TINTO).
+     Fuente: design_handoff_tinto/README.md -> Design Tokens.
+     El prototipo es hifi: estos valores mandan sobre la escala v0.3 en las
+     escenas del hub. Se conservan ambos: v0.3 sigue vigente fuera del hub. */
+  --p-ink: #151312;
+  --p-ink-deep: #0b0a09;
+  --p-charcoal: #24201e;
+  --p-cream: #f4eee7;
+  --p-muted: #bdb4ad;
+  --p-coffee: #6e4433;
+  --p-amber: #d79a55;
+  --p-gold-soft: #ddb981;
+
+  /* Rojo calido — solo error */
+  --p-danger-600: #8a3a3a;
+  --p-danger-400: #b55b5b;
+
+  /* ---------- 3. Tonos de territorio (tripletas RGB, no renombrar) ---------- */
+  --tone-forest-rgb: 158, 74, 92; /* Finanzas y patrimonio — vino */
+  --tone-petrol-rgb: 196, 138, 79; /* Activos inmobiliarios — cacao/cobre */
+  --tone-copper-rgb: 217, 174, 108; /* Educacion y orientacion — dorado */
+  --tone-default-rgb: 217, 174, 108;
+  --tone-active-rgb: var(--tone-default-rgb);
+
+  /* ---------- 4. Semanticos de color ---------- */
+
+  /* Fondos */
+  --bg-void: var(--p-void);
+  --bg-base: var(--p-espresso-950);
+  --bg-surface: rgba(28, 20, 14, 0.92);
+  --bg-surface-strong: rgba(34, 24, 17, 0.97);
+  --bg-surface-soft: rgba(18, 13, 9, 0.86);
+  --bg-field: rgba(5, 4, 3, 0.4);
+  --bg-overlay: rgba(10, 7, 5, 0.55);
+
+  /* Lineas */
+  --line: rgba(233, 221, 200, 0.14);
+  --line-strong: rgba(240, 213, 138, 0.28);
+  --line-hairline: rgba(233, 221, 200, 0.1);
+  --line-tone: rgba(var(--tone-active-rgb), 0.34);
+
+  /* Texto */
+  --text-primary: var(--p-ivory-100);
+  --text-muted: rgba(244, 236, 223, 0.66);
+  --text-faint: rgba(244, 236, 223, 0.44);
+  --text-on-action: var(--p-ivory-050);
+
+  /* Accion */
+  --action-primary-bg-from: var(--p-copper-500);
+  --action-primary-bg-to: var(--p-copper-600);
+  --action-primary-border: rgba(240, 213, 138, 0.3);
+
+  /* Estado */
+  --color-success: var(--p-forest-700); /* uso <=2% del area */
+  --color-danger: var(--p-danger-600);
+  --color-danger-text: var(--p-danger-400);
+
+  /* Foco */
+  --focus-ring: var(--p-gold-300);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 3px;
+
+  /* ---------- 5. Tipografia ---------- */
+  /* Fraunces / Inter entran por next/font en layout.tsx y exponen
+     --font-fraunces / --font-inter. Los fallbacks v0.3 quedan detras. */
+  --font-serif: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-inter), "Avenir Next", system-ui, sans-serif;
+
+  /* 5.2 Escala */
+  --text-display: clamp(2.4rem, 5vw, 3.6rem);
+  --text-title: clamp(1.6rem, 3vw, 2.2rem);
+  --text-subtitle: 1.15rem;
+  --text-body-lg: clamp(1rem, 1.6vw, 1.2rem);
+  --text-body: 1rem;
+  --text-small: 0.9rem;
+  --text-caption: 0.86rem;
+  --text-micro: 0.8rem;
+  --text-eyebrow: 0.72rem;
+
+  /* 5.3 Pesos — nunca 700+ */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* 5.4 Altura de linea */
+  --leading-display: 1.06;
+  --leading-title: 1.2;
+  --leading-body: 1.6;
+  --leading-tight: 1.35;
+
+  /* 5.5 Tracking */
+  --tracking-display: -0.02em;
+  --tracking-eyebrow: 0.18em;
+  --tracking-tag: 0.08em;
+  --tracking-normal: 0;
+
+  /* 5.6 Medida de linea — el texto no se estira */
+  --measure-body: 56ch;
+  --measure-body-mobile: 40ch;
+  --measure-display: 20ch;
+  --measure-display-mobile: 17ch;
+
+  /* ---------- 6. Escala espacial (base 4px) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* 6.1 Semanticos de separacion */
+  --gap-inline: var(--space-2);
+  --gap-related: var(--space-4);
+  --gap-block: var(--space-6);
+  --gap-zone: var(--space-8);
+  --gap-scene: var(--space-9);
+
+  /* ---------- 7. Radios ---------- */
+  --radius-xs: 4px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
+  --radius-halo: 40px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* ---------- 8. Sombras (calidas, luz ~10-11 en punto) ---------- */
+  --shadow-depth-1: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-depth-2: 0 20px 56px rgba(0, 0, 0, 0.34);
+  --shadow-depth-3: 0 32px 96px rgba(0, 0, 0, 0.42);
+  --shadow-inset-hairline: inset 0 0 0 1px rgba(244, 236, 223, 0.06);
+
+  /* Glows */
+  --glow-action: 0 12px 32px rgba(179, 118, 63, 0.24);
+  --glow-action-hover: 0 16px 44px rgba(179, 118, 63, 0.32);
+  --glow-tone: 0 0 48px rgba(var(--tone-active-rgb), 0.2);
+  --glow-node: 0 0 70px rgba(179, 118, 63, 0.18);
+  --glow-node-hover: 0 0 90px rgba(217, 174, 108, 0.26);
+
+  /* ---------- 9. Transparencia y capas ---------- */
+  --opacity-atmosphere: 0.16;
+  --opacity-texture: 0.05;
+  --opacity-silhouette: 0.22;
+  --opacity-disabled: 0.4;
+  --opacity-placeholder: 0.26;
+
+  /* 9.2 Escala Z */
+  --z-base: 0;
+  --z-atmosphere: 1;
+  --z-stage: 2;
+  --z-figure: 3;
+  --z-interface: 10;
+  --z-overlay: 20;
+  --z-modal: 40;
+  --z-skiplink: 100;
+
+  /* 9.3 Desenfoque — backdrop-filter solo en overlay y halos */
+  --blur-overlay: 8px;
+  --blur-halo: 6px;
+  --blur-depth: 4px;
+
+  /* ---------- 11. Tamanos ---------- */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+
+  --control-height: 44px;
+  --control-height-cta: 48px;
+  --control-height-cta-mobile: 52px;
+  --field-height: 48px;
+
+  --node-core: clamp(160px, 26vw, 232px);
+  --node-pulse: 140px;
+  --halo-width: min(280px, 30vw);
+  --halo-width-mobile: min(100%, 340px);
+  --logo-curtain: clamp(100px, 14vw, 180px);
+
+  --content-max: 1180px;
+  --media-portrait-max: 520px;
+
+  /* ---------- 12. Breakpoints ---------- */
+  --bp-xs: 320px;
+  --bp-sm: 375px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1180px;
+  --bp-2xl: 1440px;
+
+  /* ---------- 13. Touch targets ---------- */
+  --touch-min: 44px;
+  --touch-gap-min: 8px;
+
+  /* ---------- 14. Estados ---------- */
+  --lift-hover: -1px;
+  --lift-halo: -2px;
+  --press-scale: 0.98;
+  --press-scale-control: 0.96;
+  --brightness-hover: 1.06;
+  --brightness-active: 0.96;
+
+  /* ---------- 15. Motion (tier balanced por defecto) ---------- */
+  --motion-fast: 180ms;
+  --motion-enter: 220ms;
+  --motion-exit: 220ms;
+  --motion-auto: 800ms;
+  --motion-wave: 1800ms;
+
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* 15.1 Motion por tier */
+:root[data-motion="cinematic"] {
+  --motion-enter: 360ms;
+  --motion-exit: 360ms;
+  --motion-auto: 1200ms;
+  --motion-wave: 2400ms;
+  --blur-depth: 10px;
+}
+
+:root[data-motion="balanced"] {
+  --motion-enter: 220ms;
+  --motion-exit: 220ms;
+  --motion-auto: 800ms;
+  --motion-wave: 1800ms;
+  --blur-depth: 5px;
+}
+
+:root[data-motion="reduced"],
+:root:not([data-motion]) {
+  /* sobrescrito abajo solo cuando el usuario pide menos movimiento */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-enter: 120ms;
+    --motion-exit: 120ms;
+    --motion-auto: 0ms;
+    --motion-wave: 0ms;
+    --blur-depth: 0px;
+  }
+}
+
+/* ==========================================================================
+   Puente hacia Tailwind v4 — expone tokens como utilidades.
+   Tailwind v4 no usa tailwind.config.ts: la config vive en @theme.
+   ========================================================================== */
+
+@theme inline {
+  /* Colores primitivos -> utilidades bg- / text- / border- */
+  --color-void-950: var(--p-void-950);
+  --color-void-900: var(--p-void-900);
+  --color-void-800: var(--p-void-800);
+  --color-void: var(--p-void);
+  --color-espresso-950: var(--p-espresso-950);
+  --color-espresso-900: var(--p-espresso-900);
+  --color-espresso-800: var(--p-espresso-800);
+  --color-espresso-700: var(--p-espresso-700);
+  --color-cacao-600: var(--p-cacao-600);
+  --color-cacao-500: var(--p-cacao-500);
+  --color-wine-900: var(--p-wine-900);
+  --color-wine-700: var(--p-wine-700);
+  --color-wine-500: var(--p-wine-500);
+  --color-copper-600: var(--p-copper-600);
+  --color-copper-500: var(--p-copper-500);
+  --color-copper-400: var(--p-copper-400);
+  --color-gold-500: var(--p-gold-500);
+  --color-gold-400: var(--p-gold-400);
+  --color-gold-300: var(--p-gold-300);
+  --color-ivory-200: var(--p-ivory-200);
+  --color-ivory-100: var(--p-ivory-100);
+  --color-ivory-050: var(--p-ivory-050);
+  --color-forest-700: var(--p-forest-700);
+  --color-forest-500: var(--p-forest-500);
+  --color-danger-600: var(--p-danger-600);
+  --color-danger-400: var(--p-danger-400);
+
+  /* Semanticos */
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-surface-strong: var(--bg-surface-strong);
+  --color-bg-surface-soft: var(--bg-surface-soft);
+  --color-bg-field: var(--bg-field);
+  --color-bg-overlay: var(--bg-overlay);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-hairline: var(--line-hairline);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-text-on-action: var(--text-on-action);
+  --color-focus-ring: var(--focus-ring);
+
+  /* Tipografia */
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+
+  --text-display: var(--text-display);
+  --text-display--line-height: var(--leading-display);
+  --text-display--letter-spacing: var(--tracking-display);
+  --text-title: var(--text-title);
+  --text-title--line-height: var(--leading-title);
+  --text-subtitle: var(--text-subtitle);
+  --text-body-lg: var(--text-body-lg);
+  --text-body: var(--text-body);
+  --text-small: var(--text-small);
+  --text-caption: var(--text-caption);
+  --text-micro: var(--text-micro);
+  --text-eyebrow: var(--text-eyebrow);
+  --text-eyebrow--letter-spacing: var(--tracking-eyebrow);
+
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-medium: var(--weight-medium);
+  --font-weight-semibold: var(--weight-semibold);
+
+  --leading-display: var(--leading-display);
+  --leading-title: var(--leading-title);
+  --leading-body: var(--leading-body);
+  --leading-tight: var(--leading-tight);
+
+  --tracking-display: var(--tracking-display);
+  --tracking-eyebrow: var(--tracking-eyebrow);
+  --tracking-tag: var(--tracking-tag);
+
+  /* Espacio */
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-5: var(--space-5);
+  --spacing-6: var(--space-6);
+  --spacing-7: var(--space-7);
+  --spacing-8: var(--space-8);
+  --spacing-9: var(--space-9);
+
+  /* Radios */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-halo: var(--radius-halo);
+  --radius-pill: var(--radius-pill);
+
+  /* Sombras y glows */
+  --shadow-depth-1: var(--shadow-depth-1);
+  --shadow-depth-2: var(--shadow-depth-2);
+  --shadow-depth-3: var(--shadow-depth-3);
+  --shadow-glow-action: var(--glow-action);
+  --shadow-glow-action-hover: var(--glow-action-hover);
+  --shadow-glow-tone: var(--glow-tone);
+  --shadow-glow-node: var(--glow-node);
+  --shadow-glow-node-hover: var(--glow-node-hover);
+
+  /* Capas Z */
+  --z-index-atmosphere: var(--z-atmosphere);
+  --z-index-stage: var(--z-stage);
+  --z-index-figure: var(--z-figure);
+  --z-index-interface: var(--z-interface);
+  --z-index-overlay: var(--z-overlay);
+  --z-index-modal: var(--z-modal);
+  --z-index-skiplink: var(--z-skiplink);
+
+  /* Breakpoints */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 375px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1180px;
+  --breakpoint-2xl: 1440px;
+
+  /* Motion */
+  --ease-standard: var(--ease-standard);
+  --ease-enter: var(--ease-enter);
+  --ease-exit: var(--ease-exit);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+}
+
+/* Inputs a 16px fijos en movil: evita el zoom automatico de iOS */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==========================================================================
+   Utilidades de token que Tailwind no genera solo
+   ========================================================================== */
+
+@layer utilities {
+  /* Medida de linea — el texto no se estira en pantallas anchas */
+  .measure-body {
+    max-width: var(--measure-body-mobile);
+  }
+
+  .measure-display {
+    max-width: var(--measure-display-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .measure-body {
+      max-width: var(--measure-body);
+    }
+
+    .measure-display {
+      max-width: var(--measure-display);
+    }
+  }
+
+  .content-max {
+    max-width: var(--content-max);
+    margin-inline: auto;
+  }
+
+  /* Superficie de accion primaria */
+  .surface-action {
+    background-image: linear-gradient(
+      to right,
+      var(--action-primary-bg-from),
+      var(--action-primary-bg-to)
+    );
+    border: 1px solid var(--action-primary-border);
+    color: var(--text-on-action);
+    box-shadow: var(--glow-action);
+  }
+
+  /* Tono activo por territorio */
+  .tone-forest {
+    --tone-active-rgb: var(--tone-forest-rgb);
+  }
+
+  .tone-petrol {
+    --tone-active-rgb: var(--tone-petrol-rgb);
+  }
+
+  .tone-copper {
+    --tone-active-rgb: var(--tone-copper-rgb);
+  }
+
+  .bg-tone-soft {
+    background-color: rgba(var(--tone-active-rgb), var(--opacity-atmosphere));
+  }
+
+  .border-tone {
+    border-color: var(--line-tone);
+  }
+
+  /* Capa Z1 — atmosfera. Nunca supera --opacity-atmosphere (0.16). */
+  .opacity-atmosphere {
+    opacity: var(--opacity-atmosphere);
+  }
+
+  /* Fallback de canvas: gradiente radial por tono (ASSET_MAP CNV-01/02) */
+  .atmosphere-fallback {
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(var(--tone-active-rgb), 0.14),
+      rgba(var(--tone-active-rgb), 0) 70%
+    );
+  }
+
+  /* Touch target minimo sin alterar el tamano visual */
+  .touch-target {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+  }
+}
+
+/* ==========================================================================
+   Hub — capa del prototipo hifi
+   Fuente: design_handoff_tinto/TINTO Web Hub.dc.html
+   ========================================================================== */
+
+@theme inline {
+  --color-ink: var(--p-ink);
+  --color-ink-deep: var(--p-ink-deep);
+  --color-charcoal: var(--p-charcoal);
+  --color-cream: var(--p-cream);
+  --color-muted: var(--p-muted);
+  --color-coffee: var(--p-coffee);
+  --color-amber: var(--p-amber);
+  --color-gold-soft: var(--p-gold-soft);
+}
+
+/* `.lighten` viene del design system Nocturne: el negro del fondo de los
+   videos cae y la figura se funde con la escena, sin bordes duros. */
+.lighten {
+  mix-blend-mode: lighten;
+}
+
+/* Degradado base del hero — 6 paradas, 102deg */
+.hub-hero-gradient {
+  background: linear-gradient(
+    102deg,
+    #080807 0%,
+    #120f0e 26%,
+    #1d1715 46%,
+    #33241b 68%,
+    #5b3a2a 86%,
+    #7a4c36 100%
+  );
+}
+
+/* Doble mascara de la fundadora: linear + radial en interseccion */
+.hub-founder-mask {
+  -webkit-mask-image: linear-gradient(
+      96deg,
+      transparent 0%,
+      transparent 10%,
+      #000 34%,
+      #000 100%
+    ),
+    radial-gradient(64% 70% at 56% 42%, #000 46%, transparent 88%);
+  -webkit-mask-composite: destination-in;
+  mask-image: linear-gradient(
+      96deg,
+      transparent 0%,
+      transparent 10%,
+      #000 34%,
+      #000 100%
+    ),
+    radial-gradient(64% 70% at 56% 42%, #000 46%, transparent 88%);
+  mask-composite: intersect;
+}
+
+/* Centrada: el video ambiental ya no queda pegado al borde izquierdo, asi
+   que el desvanecido tiene que cerrar por los cuatro lados o deja un corte
+   recto visible. */
+.hub-ambient-mask {
+  -webkit-mask-image: radial-gradient(
+    62% 62% at 50% 55%,
+    #000 28%,
+    transparent 78%
+  );
+  mask-image: radial-gradient(62% 62% at 50% 55%, #000 28%, transparent 78%);
+}
+
+.hub-texture-mask {
+  -webkit-mask-image: radial-gradient(
+    66% 70% at 62% 46%,
+    #000 20%,
+    transparent 76%
+  );
+  mask-image: radial-gradient(66% 70% at 62% 46%, #000 20%, transparent 76%);
+}
+
+.hub-grid-mask {
+  -webkit-mask-image: linear-gradient(
+    100deg,
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 46%,
+    transparent 76%
+  );
+  mask-image: linear-gradient(
+    100deg,
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 46%,
+    transparent 76%
+  );
+}
+
+.hub-dots-mask {
+  -webkit-mask-image: radial-gradient(52% 60% at 22% 52%, #000, transparent 78%);
+  mask-image: radial-gradient(52% 60% at 22% 52%, #000, transparent 78%);
+}
+
+@keyframes tTrace {
+  from {
+    stroke-dashoffset: 320;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes tBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+@keyframes tGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes tLoaderBeat {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 1;
+  }
+  74% {
+    opacity: 0.35;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes tFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes tFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tSoftFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tCaret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes tSheen {
+  0% {
+    transform: translateX(-140%) skewX(-14deg);
+  }
+  100% {
+    transform: translateX(240%) skewX(-14deg);
+  }
+}
+@keyframes tPulseRing {
+  from {
+    opacity: 0.75;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+@keyframes tTicker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes tGhostDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.05;
+  }
+  50% {
+    transform: translateY(-22px);
+    opacity: 0.12;
+  }
+}
+@keyframes tSlowDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(-2%, -1.4%, 0) scale(1.11);
+  }
+}
+@keyframes tWave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+@keyframes tGridScroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 -240px;
+  }
+}
+@keyframes tGrowBoard {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.97);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* El prototipo colapsa toda animacion cuando el sistema pide menos
+   movimiento; el H1 se queda con la primera frase fija (ver useTypewriter). */
+@media (prefers-reduced-motion: reduce) {
+  .hub-scene *,
+  .hub-scene *::before,
+  .hub-scene *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
