@@ -3532,5 +3532,224 @@
   ]
 }
 </script>
+
+<!-- ════════════════════════════════════════
+     POPUP — VENTA DE MAQUINARIA (Striebig)
+     Renovación de equipo. No relacionado al cotizador.
+════════════════════════════════════════ -->
+<style>
+  .mv-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(5,6,12,0.78);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s;
+  }
+  .mv-overlay.mv-open { opacity: 1; visibility: visible; }
+  .mv-modal {
+    position: relative;
+    width: 100%; max-width: 780px;
+    max-height: 92vh; overflow-y: auto;
+    background: var(--card, #151522);
+    border: 1px solid var(--border, #222233);
+    border-radius: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.25s ease;
+  }
+  .mv-overlay.mv-open .mv-modal { transform: translateY(0) scale(1); }
+  @media (max-width: 720px) {
+    .mv-modal { grid-template-columns: 1fr; max-height: 94vh; }
+  }
+  .mv-media {
+    position: relative;
+    background: #000;
+    min-height: 220px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .mv-media img, .mv-media video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .mv-media video { display: none; }
+  .mv-media.mv-showvideo img { display: none; }
+  .mv-media.mv-showvideo video { display: block; }
+  .mv-playbtn {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.25);
+    border: none; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .mv-playbtn:hover { background: rgba(0,0,0,0.4); }
+  .mv-media.mv-showvideo .mv-playbtn { display: none; }
+  .mv-playbtn span {
+    width: 62px; height: 62px; border-radius: 50%;
+    background: var(--red, #E63329);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(230,51,41,0.5);
+  }
+  .mv-playbtn svg { margin-left: 4px; }
+  .mv-badge-sale {
+    position: absolute; top: 14px; left: 14px;
+    background: var(--amber, #F5A623); color: #1a1200;
+    font-family: 'Oswald', sans-serif; font-weight: 700;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 999px;
+    z-index: 2;
+  }
+  .mv-body {
+    padding: 32px 30px;
+    display: flex; flex-direction: column; gap: 14px;
+    color: var(--white, #fff);
+    font-family: 'Inter', sans-serif;
+  }
+  .mv-tag {
+    font-family: 'Oswald', sans-serif; font-weight: 600;
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--red, #E63329);
+  }
+  .mv-title {
+    font-family: 'Oswald', sans-serif; font-weight: 700;
+    font-size: 24px; line-height: 1.2; color: #fff; margin: 0;
+  }
+  .mv-desc {
+    font-size: 14.5px; line-height: 1.55; color: var(--muted, #aaa); margin: 0;
+  }
+  .mv-desc strong { color: #fff; }
+  .mv-specs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 2px 0 4px;
+  }
+  .mv-chip {
+    font-size: 12px; font-weight: 600; color: #fff;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border, #222233);
+    border-radius: 999px; padding: 5px 12px;
+  }
+  .mv-price-row {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-top: 4px;
+  }
+  .mv-price {
+    font-family: 'Oswald', sans-serif; font-weight: 700;
+    font-size: 30px; color: #fff;
+  }
+  .mv-price-note {
+    font-size: 13px; color: var(--amber, #F5A623); font-weight: 600;
+  }
+  .mv-cta {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--red, #E63329); color: #fff !important;
+    font-weight: 700; font-size: 15px;
+    padding: 14px 20px; border-radius: 999px;
+    text-decoration: none; border: 2px solid var(--red-dark, #b30f14);
+    box-shadow: 0 4px 14px rgba(230,51,41,0.3);
+    transition: transform 0.15s;
+    margin-top: 6px;
+  }
+  .mv-cta:hover { transform: scale(1.03); }
+  .mv-phone {
+    text-align: center; font-size: 12.5px; color: var(--muted, #aaa);
+  }
+  .mv-close {
+    position: absolute; top: 12px; right: 12px; z-index: 3;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 20px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mv-close:hover { background: rgba(0,0,0,0.75); }
+</style>
+
+<div class="mv-overlay" id="mvOverlay" role="dialog" aria-modal="true" aria-labelledby="mvTitle">
+  <div class="mv-modal">
+    <button class="mv-close" id="mvClose" aria-label="Cerrar">&times;</button>
+    <div class="mv-media" id="mvMedia">
+      <span class="mv-badge-sale">Se vende</span>
+      <img src="assets/img/maquina-venta-striebig.jpg" alt="Seccionadora vertical Striebig en venta, perfecto estado">
+      <video id="mvVideo" src="assets/video/maquina-venta-striebig.mp4" muted loop playsinline controls></video>
+      <button class="mv-playbtn" id="mvPlay" aria-label="Ver video de la máquina en operación">
+        <span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+      </button>
+    </div>
+    <div class="mv-body">
+      <span class="mv-tag">Renovación de maquinaria</span>
+      <h3 class="mv-title" id="mvTitle">Vendemos nuestra seccionadora vertical Striebig</h3>
+      <p class="mv-desc">
+        Sale de servicio activo por <strong>renovación de equipo</strong>, no por daño ni falla.
+        Es la misma máquina con la que cortamos a diario — la ves trabajando en el video.
+      </p>
+      <div class="mv-specs">
+        <span class="mv-chip">Perfecto estado</span>
+        <span class="mv-chip">Operativa a diario</span>
+        <span class="mv-chip">Fabricación suiza</span>
+      </div>
+      <div class="mv-price-row">
+        <span class="mv-price">$98.000.000</span>
+        <span class="mv-price-note">negociables</span>
+      </div>
+      <a class="mv-cta" id="mvCta" href="https://wa.me/573142373564?text=Hola%2C%20vi%20el%20anuncio%20de%20la%20Striebig%20en%20venta%20y%20quiero%20más%20información" target="_blank" rel="noopener noreferrer">
+        <svg width="18" height="18" viewBox="0 0 32 32" fill="#fff" aria-hidden="true"><path d="M16 3C8.8 3 3 8.8 3 16c0 2.3.6 4.4 1.7 6.3L3 29l6.9-1.7c1.8 1 3.9 1.6 6.1 1.6 7.2 0 13-5.8 13-13S23.2 3 16 3zm7.6 18.4c-.3.9-1.6 1.6-2.2 1.7-.6.1-1.3.1-2.1-.1-.5-.2-1.1-.4-1.9-.7-3.3-1.4-5.5-4.8-5.7-5-.2-.2-1.4-1.8-1.4-3.5s.9-2.5 1.2-2.8c.3-.3.7-.4.9-.4h.6c.2 0 .5-.1.7.5l1 2.4c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l2.3 1.1c.3.2.5.3.6.4.1.2.1.7-.2 1.5z"/></svg>
+        Hablar por WhatsApp
+      </a>
+      <span class="mv-phone">o llama / escribe al 314 237 3564</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var overlay = document.getElementById('mvOverlay');
+  var closeBtn = document.getElementById('mvClose');
+  var playBtn = document.getElementById('mvPlay');
+  var media = document.getElementById('mvMedia');
+  var video = document.getElementById('mvVideo');
+  var cta = document.getElementById('mvCta');
+  var SEEN_KEY = 'mv_maquina_popup_seen';
+
+  function openPopup() {
+    overlay.classList.add('mv-open');
+    document.body.style.overflow = 'hidden';
+    if (typeof track === 'function') track('maquina_popup_view', {});
+  }
+  function closePopup() {
+    overlay.classList.remove('mv-open');
+    document.body.style.overflow = '';
+    video.pause();
+  }
+
+  if (!sessionStorage.getItem(SEEN_KEY)) {
+    setTimeout(function() {
+      openPopup();
+      sessionStorage.setItem(SEEN_KEY, '1');
+    }, 6000);
+  }
+
+  closeBtn.addEventListener('click', closePopup);
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closePopup();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && overlay.classList.contains('mv-open')) closePopup();
+  });
+  playBtn.addEventListener('click', function() {
+    media.classList.add('mv-showvideo');
+    video.play();
+    if (typeof track === 'function') track('maquina_popup_video_play', {});
+  });
+  cta.addEventListener('click', function() {
+    if (typeof track === 'function') track('maquina_popup_whatsapp_click', {});
+  });
+})();
+</script>
+
 </body>
 </html>
