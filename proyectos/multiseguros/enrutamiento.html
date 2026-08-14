@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comunicación interna — MSDS</title>
+<style>
+  :root {
+    --tg: #2AABEE;
+    --tg-osc: #1c93d2;
+    --fondo: #17212b;
+    --burbuja-out: #2b5278;
+    --burbuja-in: #182533;
+    --texto: #e9edf0;
+    --gris: #7d8e9e;
+    --ok: #2f9e5f;
+    --pend: #b8862b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #eef1f5;
+    color: #1e2429;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 940px) { .wrap { grid-template-columns: 1fr; } }
+
+  /* ---------- Telegram ---------- */
+  .tg {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 28px rgba(0,0,0,.16);
+  }
+  .tg-bar {
+    background: var(--tg-osc);
+    color: #fff;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .tg-av {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #ffffff26;
+    display: grid; place-items: center;
+    font-size: 16px;
+  }
+  .tg-bar b { font-size: 15px; display: block; }
+  .tg-bar span { font-size: 11.5px; opacity: .8; }
+
+  .tg-chat {
+    background: var(--fondo);
+    padding: 16px 14px;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    justify-content: flex-end;
+  }
+  .msg {
+    max-width: 86%;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13.8px;
+    line-height: 1.45;
+    color: var(--texto);
+    white-space: pre-line;
+  }
+  .msg.out { background: var(--burbuja-out); align-self: flex-end; border-bottom-right-radius: 3px; }
+  .msg.in  { background: var(--burbuja-in);  align-self: flex-start; border-bottom-left-radius: 3px; }
+  .msg .h { display: block; text-align: right; font-size: 10.5px; color: var(--gris); margin-top: 4px; }
+  .msg.oculto { display: none; }
+
+  .tg-input {
+    background: #202b36;
+    padding: 11px 14px;
+    display: flex;
+    gap: 9px;
+    align-items: center;
+  }
+  .tg-input input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--texto);
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+  }
+  .tg-input input::placeholder { color: var(--gris); }
+  .tg-input button {
+    background: var(--tg);
+    border: 0;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .tg-input button:disabled { background: #46586a; cursor: default; }
+
+  /* ---------- flujo ---------- */
+  .flujo {
+    background: #fff;
+    border: 1px solid #dfe4ea;
+    border-radius: 14px;
+    padding: 20px 22px 22px;
+  }
+  .flujo > h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64717d;
+    margin-bottom: 18px;
+  }
+
+  .paso {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 13px;
+    padding-bottom: 20px;
+    position: relative;
+    opacity: .32;
+    transition: opacity .35s;
+  }
+  .paso.on { opacity: 1; }
+  .paso:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 16.5px; top: 34px; bottom: 4px;
+    width: 2px;
+    background: #e3e8ee;
+  }
+  .paso.on:not(:last-child)::before { background: #c3d3e3; }
+
+  .num {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #eef2f6;
+    color: #7c8a97;
+    display: grid; place-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    z-index: 1;
+    transition: background .3s, color .3s;
+  }
+  .paso.on .num { background: #e3f0fb; color: var(--tg-osc); }
+  .paso.hecho .num { background: #e4f4ea; color: var(--ok); }
+  .paso.falla .num { background: #fdeceb; color: #b5322c; }
+
+  .paso h3 { font-size: 14.5px; font-weight: 600; margin-bottom: 3px; }
+  .paso p { font-size: 13px; color: #5d6b78; line-height: 1.5; }
+  .paso .det {
+    margin-top: 7px;
+    font-size: 12.5px;
+    background: #f5f8fa;
+    border-radius: 7px;
+    padding: 8px 10px;
+    color: #46535f;
+    line-height: 1.5;
+    display: none;
+  }
+  .paso.on .det { display: block; }
+
+  .estado {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 7px;
+    vertical-align: 1px;
+  }
+  .estado.ok    { background: #e4f4ea; color: var(--ok); }
+  .estado.falta { background: #fdf1dc; color: var(--pend); }
+
+  .aviso {
+    margin-top: 4px;
+    padding: 14px 15px;
+    background: #fdf6e7;
+    border: 1px solid #f0dcae;
+    border-radius: 9px;
+    font-size: 13.2px;
+    line-height: 1.55;
+    color: #6b5418;
+    display: none;
+  }
+  .aviso.ver { display: block; }
+  .aviso b { display: block; margin-bottom: 4px; color: #574314; }
+
+  .reiniciar {
+    margin-top: 16px;
+    background: none;
+    border: 1px solid #d3dae1;
+    color: #64717d;
+    font-size: 12.5px;
+    font-family: inherit;
+    padding: 7px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .reiniciar:hover { background: #f5f8fa; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TELEGRAM DEL GERENTE -->
+  <div class="tg">
+    <div class="tg-bar">
+      <div class="tg-av">🤖</div>
+      <div>
+        <b>MSDS Gerencia Neiva</b>
+        <span>bot · en línea</span>
+      </div>
+    </div>
+    <div class="tg-chat" id="chat">
+      <div class="msg in">Hola Fabio. Escríbeme lo que necesites coordinar con el equipo.<span class="h">8:42</span></div>
+      <div class="msg out oculto" id="m-out"></div>
+      <div class="msg in oculto" id="m-in"></div>
+    </div>
+    <div class="tg-input">
+      <input id="texto" value="Informar a Jorge de reunión con AXA mañana a las 9am" autocomplete="off">
+      <button id="enviar" title="Enviar">➤</button>
+    </div>
+  </div>
+
+  <!-- FLUJO -->
+  <div class="flujo">
+    <h2>Qué hace el sistema con ese mensaje</h2>
+
+    <div class="paso" id="p1">
+      <div class="num">1</div>
+      <div>
+        <h3>El MasterBot lee el mensaje <span class="estado ok" id="e1">funciona</span></h3>
+        <p>Entiende que es una instrucción para otra persona, no una consulta.</p>
+        <div class="det">Identifica: <b>destinatario</b> Jorge · <b>asunto</b> reunión con AXA · <b>cuándo</b> mañana 9:00 am</div>
+      </div>
+    </div>
+
+    <div class="paso" id="p2">
+      <div class="num">2</div>
+      <div>
+        <h3>Crea el pendiente en el CRM <span class="estado ok" id="e2">funciona</span></h3>
+        <p>Queda asignado a Jorge, con fecha y hora, visible en el panel de gerencia.</p>
+        <div class="det" id="d2">Registrando…</div>
+      </div>
+    </div>
+
+    <div class="paso" id="p3">
+      <div class="num">3</div>
+      <div>
+        <h3>Avisa a Jorge por Telegram <span class="estado falta" id="e3">falta activar</span></h3>
+        <p>El aviso sale del sistema, pero no tiene a dónde llegar.</p>
+        <div class="det" id="d3">—</div>
+      </div>
+    </div>
+
+    <div class="aviso" id="aviso">
+      <b>Por qué no llega</b>
+      Telegram no permite escribirle a alguien por su número de teléfono. Necesita que la persona le mande <b>/start</b> a su bot una sola vez — ahí Telegram genera el código de su chat y el sistema ya puede escribirle siempre.
+      <br><br>
+      Tenemos el número de Jorge. Lo que falta es ese mensaje suyo, que toma treinta segundos y solo lo puede hacer él.
+    </div>
+
+    <button class="reiniciar" id="reiniciar">Volver a empezar</button>
+  </div>
+
+</div>
+
+<script>
+const SUPA = 'https://ekarbxdoaoqrtlmfzgyj.supabase.co';
+const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrYXJieGRvYW9xcnRsbWZ6Z3lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTYzNDk1OSwiZXhwIjoyMDk3MjEwOTU5fQ.KV9rv7Q0RNs1g3jKtWaf3UAh3K2cp-CvujeKWdAoySM';
+
+const $ = id => document.getElementById(id);
+const hora = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+function manana() {
+  const d = new Date(Date.now() + 86400000);
+  return d.toISOString().split('T')[0];
+}
+
+$('enviar').addEventListener('click', async () => {
+  const btn = $('enviar');
+  const txt = $('texto').value.trim();
+  if (!txt) return;
+  btn.disabled = true;
+
+  // mensaje del gerente
+  const out = $('m-out');
+  out.classList.remove('oculto');
+  out.innerHTML = txt + '<span class="h">' + hora() + '</span>';
+
+  // paso 1 — lectura
+  await esperar(600);
+  $('p1').classList.add('on', 'hecho');
+
+  // paso 2 — crear pendiente real en el CRM
+  await esperar(700);
+  $('p2').classList.add('on');
+  try {
+    const r = await fetch(SUPA + '/rest/v1/actividades', {
+      method: 'POST',
+      headers: {
+        'apikey': KEY,
+        'Authorization': 'Bearer ' + KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        asesor_id: 18,                     // Jorge
+        clase: 'Reunión con AXA',
+        descripcion: 'Reunión con AXA mañana 9:00 am. Asignada por gerencia vía Telegram.',
+        estado: 'abierta',
+        sla_horas: 18,
+        fecha_inicio: manana() + 'T09:00:00'
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    $('d2').innerHTML = 'Pendiente <b>#' + d[0].id + '</b> creado para Jorge · mañana 9:00 am<br>Ya aparece en el panel de gerencia.';
+    $('p2').classList.add('hecho');
+  } catch (e) {
+    $('d2').textContent = 'No se pudo registrar. Revisa la conexión.';
+    $('p2').classList.add('falla');
+  }
+
+  // paso 3 — el aviso que no llega
+  await esperar(800);
+  $('p3').classList.add('on', 'falla');
+  $('d3').innerHTML = 'Buscando el chat de Jorge… <b>no encontrado</b><br>Jorge no ha activado <b>@MSDS_Supervisor_bot</b>.';
+
+  await esperar(400);
+  $('aviso').classList.add('ver');
+
+  // respuesta del bot al gerente
+  const inn = $('m-in');
+  inn.classList.remove('oculto');
+  inn.innerHTML = 'Listo. Pendiente creado para Jorge: reunión con AXA mañana 9:00 am.\n\n⚠️ No pude avisarle por Telegram: Jorge todavía no ha activado su bot.' +
+                  '<span class="h">' + hora() + '</span>';
+});
+
+$('reiniciar').addEventListener('click', () => {
+  ['p1','p2','p3'].forEach(id => $(id).classList.remove('on','hecho','falla'));
+  $('aviso').classList.remove('ver');
+  $('m-out').classList.add('oculto');
+  $('m-in').classList.add('oculto');
+  $('d2').textContent = 'Registrando…';
+  $('d3').textContent = '—';
+  $('enviar').disabled = false;
+});
+</script>
+</body>
+</html>

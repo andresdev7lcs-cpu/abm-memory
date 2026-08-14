@@ -1,0 +1,1243 @@
+{
+  "name": "FIN — Consultas",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "e5000001-0000-4000-8000-000000000001",
+      "name": "Entrada",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1500,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsea el comando y sus argumentos. Todo lo demas se resuelve\n// consultando Sheets: aca solo se decide QUE consulta correr.\n\nconst s = $json;\nconst texto = String(s.payload?.texto || '').trim();\nconst m = texto.match(/^\\/(\\w+)(?:@\\w+)?\\s*(.*)$/);\nconst comando = m ? m[1].toLowerCase() : '';\nconst args = m ? m[2].trim() : '';\n\nconst MAPA = {\n  status: 'estado', estado: 'estado',\n  categorias: 'categorias', categoria: 'categorias',\n  hoy: 'hoy', today: 'hoy',\n  week: 'semana', semana: 'semana',\n  month: 'mes', mes: 'mes',\n  cycle: 'ciclo', ciclo: 'ciclo',\n  recent: 'recientes', recientes: 'recientes',\n  search: 'buscar', buscar: 'buscar',\n  pending: 'pendientes', pendientes: 'pendientes',\n  next_payment: 'proximo_pago', proximo_pago: 'proximo_pago',\n  configuration: 'configuracion', configuracion: 'configuracion',\n  budget: 'presupuesto', presupuesto: 'presupuesto',\n  help: 'ayuda', ayuda: 'ayuda',\n  start: 'inicio'\n};\n\nconst accion = MAPA[comando] || 'desconocido';\nconst limite = /^\\d+$/.test(args) ? parseInt(args, 10) : (accion === 'recientes' ? 5 : null);\n\nreturn [{ json: { ...s, consulta: { accion, args, limite } } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000002",
+      "name": "Parsear Comando",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Configuracion",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e5000001-0000-4000-8000-000000000003",
+      "name": "Leer Configuracion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1060,
+        320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Categorias",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e5000001-0000-4000-8000-000000000004",
+      "name": "Leer Categorias",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1060,
+        500
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Transacciones",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e5000001-0000-4000-8000-000000000005",
+      "name": "Leer Transacciones",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1060,
+        680
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Ingresos",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e5000001-0000-4000-8000-000000000006",
+      "name": "Leer Ingresos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1060,
+        860
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "GastosFijos",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e5000001-0000-4000-8000-000000000007",
+      "name": "Leer GastosFijos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1060,
+        1040
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pendientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e5000001-0000-4000-8000-000000000008",
+      "name": "Leer Pendientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1060,
+        1220
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {},
+        "numberInputs": 7
+      },
+      "id": "e5000001-0000-4000-8000-000000000009",
+      "name": "Unir Todo",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -820,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reune todas las lecturas + calcula ciclo vigente, saldos y dias\n// restantes. Es el mismo resolverCiclo de WF4: cualquier cambio en uno\n// debe reflejarse en el otro (por ahora duplicado adrede para que WF5\n// no dependa de invocar WF4 solo para leer).\n\nconst sobre = $('Parsear Comando').first().json;\nconst ZONA = 'America/Bogota';\n\nconst cfg = {};\nfor (const f of $('Leer Configuracion').all().map(i => i.json)) {\n  if (f && f.clave) cfg[String(f.clave).trim()] = String(f.valor ?? '').trim();\n}\nconst categorias = $('Leer Categorias').all().map(i => i.json).filter(c => c && c.categoria_id);\nconst transacciones = $('Leer Transacciones').all().map(i => i.json).filter(t => t && t.transaccion_id);\nconst ingresos = $('Leer Ingresos').all().map(i => i.json).filter(x => x && x.ingreso_id);\nconst fijos = $('Leer GastosFijos').all().map(i => i.json).filter(x => x && x.fijo_id);\nconst pendientes = $('Leer Pendientes').all().map(i => i.json).filter(x => x && x.pendiente_id);\n\nfunction fronterasDelMes(dt, dias) {\n  const ultimo = dt.daysInMonth;\n  const set = new Set(dias.map(d => Math.min(d, ultimo)));\n  return [...set].sort((a, b) => a - b).map(d => dt.set({ day: d }).startOf('day'));\n}\nfunction resolverCiclo(fechaISO, diasInicio) {\n  const f = DateTime.fromISO(fechaISO, { zone: ZONA }).startOf('day');\n  const todas = [\n    ...fronterasDelMes(f.minus({ months: 1 }), diasInicio),\n    ...fronterasDelMes(f, diasInicio),\n    ...fronterasDelMes(f.plus({ months: 1 }), diasInicio)\n  ].sort((a, b) => a.toMillis() - b.toMillis());\n  let inicio = null, fin = null;\n  for (let i = 0; i < todas.length; i++) {\n    if (todas[i] <= f && (i + 1 >= todas.length || todas[i + 1] > f)) {\n      inicio = todas[i];\n      fin = (i + 1 < todas.length) ? todas[i + 1].minus({ days: 1 }) : todas[i].endOf('month');\n      break;\n    }\n  }\n  if (!inicio) { inicio = todas[0]; fin = todas[1] ? todas[1].minus({ days: 1 }) : inicio.endOf('month'); }\n  const delMes = fronterasDelMes(inicio, diasInicio);\n  const idx = delMes.findIndex(d => d.toISODate() === inicio.toISODate());\n  const letra = String.fromCharCode(65 + (idx >= 0 ? idx : 0));\n  return { ciclo_id: `${inicio.toFormat('yyyy-LL')}-${letra}`, inicio: inicio.toISODate(), fin: fin.toISODate() };\n}\n\nconst diasInicio = (cfg.ciclo_dias_inicio || '1,16').split(',').map(s => parseInt(s.trim(), 10)).filter(Number.isFinite);\nconst hoy = DateTime.now().setZone(ZONA).startOf('day');\nconst ciclo = resolverCiclo(hoy.toISODate(), diasInicio);\nconst finCiclo = DateTime.fromISO(ciclo.fin, { zone: ZONA });\nconst diasRestantes = Math.max(1, Math.floor(finCiclo.diff(hoy, 'days').days) + 1);\n\nfunction netoCategoria(catId) {\n  let gasto = 0, reembolso = 0;\n  for (const t of transacciones) {\n    if (String(t.estado).trim() !== 'activo') continue;\n    if (String(t.ciclo_id).trim() !== ciclo.ciclo_id) continue;\n    if (String(t.categoria_id).trim() !== catId) continue;\n    const m = Number(t.monto) || 0;\n    if (t.tipo === 'gasto' || t.tipo === 'ajuste') gasto += m;\n    else if (t.tipo === 'reembolso') reembolso += m;\n  }\n  return gasto - reembolso;\n}\n\nconst umbral1 = parseFloat(cfg.umbral_aviso_1 || '70');\nconst umbral2 = parseFloat(cfg.umbral_aviso_2 || '85');\nconst umbralCrit = parseFloat(cfg.umbral_critico || '100');\n\nlet presupuestoTotal = 0, gastadoTotal = 0;\nconst catsCalc = [];\nfor (const c of categorias) {\n  const activa = String(c.activa).toUpperCase() === 'TRUE';\n  const presupuesto = Number(c.presupuesto) || 0;\n  const gastado = netoCategoria(String(c.categoria_id).trim());\n  if (activa) { presupuestoTotal += presupuesto; gastadoTotal += gastado; }\n  const pct = presupuesto === 0 ? null : Math.round((gastado / presupuesto) * 1000) / 10;\n  let estado = 'ok';\n  if (presupuesto === 0) estado = 'sin_presupuesto';\n  else if (pct > umbralCrit) estado = 'excedido';\n  else if (pct >= umbralCrit) estado = 'limite';\n  else if (pct >= umbral2) estado = 'alto';\n  else if (pct >= umbral1) estado = 'aviso';\n  catsCalc.push({ ...c, gastado, disponible: presupuesto - gastado, pct, estado, activa });\n}\n\nconst disponibleGlobal = presupuestoTotal - gastadoTotal;\nconst pctGlobal = presupuestoTotal === 0 ? 0 : Math.round((gastadoTotal / presupuestoTotal) * 1000) / 10;\nconst maximoDiario = Math.round(Math.max(disponibleGlobal, 0) / Math.max(diasRestantes, 1));\n\n// Proximo ingreso pendiente mas cercano.\nconst pendientesIngreso = ingresos\n  .filter(i => String(i.estado).trim() !== 'recibido')\n  .map(i => ({ ...i, _fecha: DateTime.fromISO(String(i.proxima_fecha || ''), { zone: ZONA }) }))\n  .filter(i => i._fecha.isValid)\n  .sort((a, b) => a._fecha.toMillis() - b._fecha.toMillis());\nconst proximoIngreso = pendientesIngreso[0] || null;\n\n// Fijos del ciclo vigente y cuales ya se registraron (por nombre+monto aprox).\nconst letraCiclo = ciclo.ciclo_id.slice(-1);\nconst fijosCiclo = fijos.filter(f => String(f.ciclo).trim() === letraCiclo && String(f.activo).toUpperCase() === 'TRUE');\nconst fijosPendientes = fijosCiclo.filter(f => {\n  const yaPagado = transacciones.some(t =>\n    String(t.estado).trim() === 'activo' &&\n    String(t.ciclo_id).trim() === ciclo.ciclo_id &&\n    String(t.categoria_id).trim() === String(f.categoria_id).trim() &&\n    Math.abs(Number(t.monto) - Number(f.monto)) < 1000\n  );\n  return !yaPagado;\n});\n\nconst hoyISO = hoy.toISODate();\nconst semanaInicio = hoy.minus({ days: hoy.weekday - 1 }).toISODate();\nconst mesInicio = hoy.startOf('month').toISODate();\n\nfunction sumaGastos(filtroFecha) {\n  return transacciones\n    .filter(t => String(t.estado).trim() === 'activo' && t.tipo === 'gasto' && filtroFecha(String(t.fecha_movimiento)))\n    .reduce((a, t) => a + (Number(t.monto) || 0), 0);\n}\n\nreturn [{\n  json: {\n    ...sobre,\n    cfg, categorias: catsCalc, transacciones, ingresos, fijos, pendientes,\n    ciclo, dias_restantes: diasRestantes, hoy: hoyISO,\n    saldos: { presupuesto: presupuestoTotal, gastado: gastadoTotal, disponible: disponibleGlobal, porcentaje: pctGlobal, maximo_diario: maximoDiario },\n    proximo_ingreso: proximoIngreso,\n    fijos_ciclo: fijosCiclo, fijos_pendientes: fijosPendientes,\n    gasto_hoy: sumaGastos(f => f === hoyISO),\n    gasto_semana: sumaGastos(f => f >= semanaInicio),\n    gasto_mes: sumaGastos(f => f >= mesInicio)\n  }\n}];"
+      },
+      "id": "e5000001-0000-4000-8000-00000000000a",
+      "name": "Calcular Estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r1",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "estado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "estado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r2",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "categorias",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "categorias"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r3",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "hoy",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "hoy"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r4",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "semana",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "semana"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r5",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "mes",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "mes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r6",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "ciclo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ciclo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r7",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "recientes",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "recientes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r8",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "buscar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "buscar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r9",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "pendientes",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pendientes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r10",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "proximo_pago",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "proximo_pago"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r11",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "presupuesto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "presupuesto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r12",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "configuracion",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "configuracion"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r13",
+                    "leftValue": "={{ $json.consulta.accion }}",
+                    "rightValue": "inicio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "inicio"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "ayuda"
+        }
+      },
+      "id": "e5000001-0000-4000-8000-00000000000b",
+      "name": "Enrutar Consulta",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -380,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst g = s.saldos;\nconst criticas = s.categorias.filter(c => ['alto', 'limite', 'excedido'].includes(c.estado)).sort((a, b) => (b.pct || 0) - (a.pct || 0));\n\nconst L = [\n  '📊 Estado del ciclo',\n  '',\n  `Presupuesto: ${fmt(g.presupuesto)}`,\n  `Gastado: ${fmt(g.gastado)} (${g.porcentaje}%)`,\n  `Disponible: ${fmt(g.disponible)}`,\n  `Faltan ${s.dias_restantes} días para el próximo ingreso`\n];\nif (s.proximo_ingreso) {\n  const dias = Math.ceil(DateTime.fromISO(s.proximo_ingreso.proxima_fecha, { zone: 'America/Bogota' }).diff(DateTime.now().setZone('America/Bogota').startOf('day'), 'days').days);\n  L.push(`Próximo ingreso: ${s.proximo_ingreso.nombre} en ${dias} días`);\n}\nif (criticas.length) {\n  L.push('', 'Categorías críticas:');\n  for (const c of criticas.slice(0, 5)) {\n    const icono = c.estado === 'excedido' ? '🚨' : c.estado === 'limite' ? '🔴' : '🟠';\n    L.push(`${icono} ${c.nombre}: ${c.pct}%`);\n  }\n}\nif (s.fijos_pendientes?.length) {\n  L.push('', `Fijos pendientes este ciclo: ${s.fijos_pendientes.map(f => f.concepto).join(', ')}`);\n}\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-00000000000c",
+      "name": "Resp: Estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst ICONO = { ok: '', aviso: ' 🟡', alto: ' 🟠', limite: ' 🔴', excedido: ' 🚨', sin_presupuesto: ' ℹ️' };\nconst activas = s.categorias.filter(c => c.activa).sort((a, b) => (b.pct || 0) - (a.pct || 0));\nconst L = ['📂 Categorías del ciclo', ''];\nfor (const c of activas) {\n  const linea = c.presupuesto > 0\n    ? `${c.nombre}: ${fmt(c.gastado)} / ${fmt(c.presupuesto)} — ${c.pct}%${ICONO[c.estado] || ''}`\n    : `${c.nombre}: ${fmt(c.gastado)} (sin presupuesto)${ICONO.sin_presupuesto}`;\n  L.push(linea);\n}\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-00000000000d",
+      "name": "Resp: Categorias",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst hoyTx = s.transacciones.filter(t => String(t.estado).trim() === 'activo' && t.tipo === 'gasto' && String(t.fecha_movimiento) === s.hoy);\nconst L = [`📅 Hoy: ${fmt(s.gasto_hoy)}`, ''];\nif (hoyTx.length === 0) L.push('Sin gastos registrados hoy.');\nelse for (const t of hoyTx) L.push(`• ${fmt(t.monto)} — ${t.categoria || t.categoria_id}${t.descripcion ? ' (' + t.descripcion + ')' : ''}`);\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-00000000000e",
+      "name": "Resp: Hoy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst L = [`📆 Esta semana: ${fmt(s.gasto_semana)}`, `Disponible del ciclo: ${fmt(s.saldos.disponible)}`];\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-00000000000f",
+      "name": "Resp: Semana",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst L = [`🗓️ Este mes: ${fmt(s.gasto_mes)}`];\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000010",
+      "name": "Resp: Mes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst L = [\n  `🔄 Ciclo ${s.ciclo.ciclo_id}`,\n  `${s.ciclo.inicio} al ${s.ciclo.fin}`,\n  '',\n  `Presupuesto: ${fmt(s.saldos.presupuesto)}`,\n  `Gastado: ${fmt(s.saldos.gastado)} (${s.saldos.porcentaje}%)`,\n  `Disponible: ${fmt(s.saldos.disponible)}`,\n  `Días restantes: ${s.dias_restantes}`,\n  `Máximo diario sugerido: ${fmt(s.saldos.maximo_diario)}`,\n  '',\n  '_Referencia matemática, no recomendación financiera._'\n];\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000011",
+      "name": "Resp: Ciclo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst n = s.consulta.limite || 5;\nconst recientes = s.transacciones.filter(t => String(t.estado).trim() === 'activo').sort((a, b) => new Date(b.timestamp_registro) - new Date(a.timestamp_registro)).slice(0, n);\nconst L = [`🧾 Últimos ${recientes.length} movimientos`, ''];\nfor (const t of recientes) {\n  const idCorto = String(t.transaccion_id).split('-').pop();\n  L.push(`${idCorto} · ${fmt(t.monto)} — ${t.categoria || t.categoria_id} · ${t.fecha_movimiento}`);\n}\nif (recientes.length) L.push('', 'Usa /corregir <id> o /anular <id> con el código de arriba.');\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000012",
+      "name": "Resp: Recientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst q = String(s.consulta.args || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\nif (!q) return [{ json: { chat_id: s.ctx.telegram_chat_id, texto: 'Usa /buscar <texto>, por ejemplo /buscar electrohuila' } }];\nconst norm = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\nconst r = s.transacciones.filter(t => String(t.estado).trim() === 'activo' && (norm(t.comercio_proveedor).includes(q) || norm(t.descripcion).includes(q) || norm(t.categoria).includes(q)));\nconst total = r.reduce((a, t) => a + (Number(t.monto) || 0), 0);\nconst L = [`🔎 \"${s.consulta.args}\" — ${r.length} resultado(s), total ${fmt(total)}`, ''];\nfor (const t of r.slice(0, 10)) L.push(`${fmt(t.monto)} — ${t.categoria || t.categoria_id} · ${t.fecha_movimiento}${t.comercio_proveedor ? ' · ' + t.comercio_proveedor : ''}`);\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000013",
+      "name": "Resp: Buscar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nconst abiertos = s.pendientes.filter(p => String(p.estado).trim() === 'abierto');\nconst L = [`⏳ Pendientes abiertos: ${abiertos.length}`, ''];\nfor (const p of abiertos) L.push(`${p.pendiente_id} — ${p.estado_maquina} (expira ${p.fecha_expiracion?.slice(11, 16) || ''})`);\nif (!abiertos.length) L.push('No tienes confirmaciones pendientes.');\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000014",
+      "name": "Resp: Pendientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst ZONA = 'America/Bogota';\nif (!s.proximo_ingreso) return [{ json: { chat_id: s.ctx.telegram_chat_id, texto: 'No hay ingresos pendientes configurados.' } }];\nconst dias = Math.ceil(DateTime.fromISO(s.proximo_ingreso.proxima_fecha, { zone: ZONA }).diff(DateTime.now().setZone(ZONA).startOf('day'), 'days').days);\nconst L = [\n  `💰 Próximo ingreso`,\n  '',\n  `${s.proximo_ingreso.nombre}`,\n  `Monto esperado: ${fmt(s.proximo_ingreso.monto_esperado)}`,\n  `Fecha: ${s.proximo_ingreso.proxima_fecha}`,\n  `Faltan ${dias} días`\n];\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000015",
+      "name": "Resp: Proximo Pago",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst activas = s.categorias.filter(c => c.activa);\nconst L = ['💵 Presupuestos por categoría', ''];\nfor (const c of activas) L.push(`${c.nombre}: ${fmt(c.presupuesto)}`);\nL.push('', `Total: ${fmt(s.saldos.presupuesto)}`);\nL.push('', 'Para cambiar un presupuesto, editalo directamente en la hoja Categorias.');\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000016",
+      "name": "Resp: Presupuesto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nif (!s.ctx.es_admin) return [{ json: { chat_id: s.ctx.telegram_chat_id, texto: 'Solo el administrador puede ver la configuración.' } }];\nconst L = ['⚙️ Configuración', ''];\nconst claves = ['ciclo_dias_inicio', 'umbral_aviso_1', 'umbral_aviso_2', 'umbral_critico', 'confirmacion_activa', 'resumen_semanal_activo', 'resumen_diario_activo', 'confianza_minima_ia'];\nfor (const k of claves) L.push(`${k}: ${s.cfg[k] ?? ''}`);\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000017",
+      "name": "Resp: Configuracion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        1060
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nconst texto = [\n  `👋 Hola ${s.ctx.nombre || ''}`.trim() + '.',\n  '',\n  'Registrá un gasto escribiendo, por ejemplo:',\n  '\"pagué 350 mil en la cena\"',\n  '',\n  'O mandame la foto de una factura.',\n  '',\n  'Comandos útiles:',\n  '/estado — resumen del ciclo',\n  '/categorias — presupuesto por categoría',\n  '/recientes — últimos movimientos',\n  '/ayuda — ver todos los comandos'\n].join('\\n');\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000018",
+      "name": "Resp: Inicio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nconst texto = [\n  '📖 Comandos disponibles', '',\n  '/estado — resumen del ciclo',\n  '/categorias — presupuesto por categoría',\n  '/hoy · /semana · /mes — gastos por periodo',\n  '/ciclo — detalle del ciclo actual',\n  '/recientes [n] — últimos movimientos',\n  '/buscar <texto> — buscar movimientos',\n  '/corregir <id> — corregir un movimiento',\n  '/anular <id> — anular un movimiento',\n  '/deshacer — deshacer el último movimiento',\n  '/pendientes — confirmaciones abiertas',\n  '/proximo_pago — próximo ingreso esperado',\n  '/presupuesto — presupuesto por categoría',\n  '/configuracion — ajustes (solo admin)'\n].join('\\n');\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto } }];"
+      },
+      "id": "e5000001-0000-4000-8000-000000000019",
+      "name": "Resp: Ayuda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        1260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FIN — Consultas (WF5)\n\nSolo lee. Nunca escribe en `Transacciones` (DEC-004).\n\n**Flujo**\n1. Parsear el comando (`/estado`, `/categorias`, etc).\n2. Leer las 6 hojas relevantes en paralelo.\n3. `Calcular Estado` reproduce `resolverCiclo` y el recalculo de saldos\n   de WF4 — deliberadamente duplicado para no pagar el costo de un\n   `Execute Workflow` extra en cada consulta de lectura.\n4. Enrutar por comando, cada rama arma su propia plantilla.\n\n**13 comandos cubiertos**, más `/ayuda` como fallback del switch para\ncualquier cosa no reconocida.\n\n`/configuracion` valida `ctx.es_admin` (viene de WF1) antes de mostrar\nnada — el resto de comandos no tiene restricción extra mas alla de la\nautorización que ya hizo el router.\n\n**Antes de importar:** reasignar credenciales, `Settings → Error\nWorkflow`, `Caller Policy → same owner`.",
+        "height": 380,
+        "width": 460
+      },
+      "id": "e5000001-0000-4000-8000-00000000001c",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1500,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traduce el formato {inline_keyboard:[[{text,callback_data}]]}\n// (el que arman los Code nodes previos) al formato que espera\n// el nodo nativo Telegram: rows[].row.buttons[].additionalFields.\nconst s = $json;\nlet filas = [];\nif (s.teclado) {\n  let ik;\n  try { ik = JSON.parse(s.teclado).inline_keyboard; } catch (e) { ik = []; }\n  filas = ik.map(fila => ({ row: { buttons: fila.map(b => ({ text: b.text, additionalFields: { callback_data: b.callback_data } })) } }));\n}\nreturn [{ json: { ...s, _filas_botones: filas, _con_botones: filas.length > 0 } }];"
+      },
+      "id": "e5000001-0000-4000-8000-00000000001b-tr",
+      "name": "Responder en Telegram — Preparar Botones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        },
+        "replyMarkup": "={{ $json._con_botones ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": {
+          "rows": "={{ $json._filas_botones }}"
+        }
+      },
+      "id": "e5000001-0000-4000-8000-00000000001b",
+      "name": "Responder en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        360,
+        660
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Entrada": {
+      "main": [
+        [
+          {
+            "node": "Parsear Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Comando": {
+      "main": [
+        [
+          {
+            "node": "Leer Configuracion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Categorias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Transacciones",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Ingresos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer GastosFijos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Unir Todo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Categorias": {
+      "main": [
+        [
+          {
+            "node": "Unir Todo",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Leer Transacciones": {
+      "main": [
+        [
+          {
+            "node": "Unir Todo",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Leer Ingresos": {
+      "main": [
+        [
+          {
+            "node": "Unir Todo",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Leer GastosFijos": {
+      "main": [
+        [
+          {
+            "node": "Unir Todo",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Leer Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Unir Todo",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Unir Todo": {
+      "main": [
+        [
+          {
+            "node": "Calcular Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Estado": {
+      "main": [
+        [
+          {
+            "node": "Enrutar Consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar Consulta": {
+      "main": [
+        [
+          {
+            "node": "Resp: Estado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Hoy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Semana",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Mes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Ciclo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Recientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Buscar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Proximo Pago",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Presupuesto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Inicio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Ayuda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Estado": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Categorias": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Hoy": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Semana": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Mes": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Ciclo": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Recientes": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Buscar": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Proximo Pago": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Presupuesto": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Inicio": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Ayuda": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder en Telegram — Preparar Botones": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

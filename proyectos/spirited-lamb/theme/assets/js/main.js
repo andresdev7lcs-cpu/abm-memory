@@ -210,6 +210,9 @@
           eventsList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
+      cell.addEventListener('mouseenter', () => showCalTooltip(cell));
+      cell.addEventListener('mousemove', e => positionCalTooltip(e));
+      cell.addEventListener('mouseleave', hideCalTooltip);
     });
 
     const monthEvs = filteredEvents().filter(ev => {
@@ -277,12 +280,48 @@
   const modal         = document.getElementById('sl-event-modal');
   const modalBackdrop = document.getElementById('sl-modal-backdrop');
   const modalClose    = document.getElementById('sl-modal-close');
+  const modalPrev     = document.getElementById('sl-modal-prev');
+  const modalNext     = document.getElementById('sl-modal-next');
 
-  function openModal(ev) {
+  let modalDayDates = [];  // sorted list of date strings that have events
+  let modalDayIndex = -1;
+
+  function eventDaysInView() {
+    const set = new Set();
+    filteredEvents().forEach(ev => {
+      const d = new Date(ev.startDate || ev.date || '');
+      if (!isNaN(d)) set.add(d.toISOString().slice(0, 10));
+    });
+    return Array.from(set).sort();
+  }
+
+  function openModal(ev, dateStr) {
     if (!modal || !ev) return;
 
+    modalDayDates = eventDaysInView();
+    const resolvedDate = dateStr || (ev.startDate || ev.date || '').slice(0, 10);
+    modalDayIndex = modalDayDates.indexOf(resolvedDate);
+
+    renderModal(ev);
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    modalClose?.focus();
+    updateModalNavState();
+  }
+
+  function renderModal(ev) {
     const titleEl = document.getElementById('sl-modal-title');
     if (titleEl) titleEl.textContent = ev.title || '';
+
+    const imgEl = document.getElementById('sl-modal-img');
+    if (imgEl) {
+      const src = ev.imageUrl || ev.image || '';
+      imgEl.src = src;
+      imgEl.alt = ev.title || '';
+      imgEl.style.display = src ? '' : 'none';
+    }
 
     const d    = new Date(ev.startDate || ev.date || '');
     const dStr = isNaN(d) ? '' : d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
@@ -301,14 +340,42 @@
       locEl.style.display = loc ? '' : 'none';
     }
 
+    const costEl = document.getElementById('sl-modal-cost');
+    if (costEl) {
+      const cost = ev.cost || ev.price || '';
+      costEl.textContent = cost;
+      costEl.style.display = cost ? '' : 'none';
+    }
+
     const descEl = document.getElementById('sl-modal-desc');
     if (descEl) descEl.textContent = ev.description || '';
 
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-    modalClose?.focus();
+    const linkEl = document.getElementById('sl-modal-link');
+    if (linkEl) {
+      const link = ev.url || ev.link || '';
+      linkEl.href = link;
+      linkEl.style.display = link ? '' : 'none';
+    }
   }
+
+  function updateModalNavState() {
+    if (modalPrev) modalPrev.disabled = modalDayIndex <= 0;
+    if (modalNext) modalNext.disabled = modalDayIndex < 0 || modalDayIndex >= modalDayDates.length - 1;
+  }
+
+  function goToModalDay(delta) {
+    if (modalDayIndex < 0) return;
+    const newIndex = modalDayIndex + delta;
+    if (newIndex < 0 || newIndex >= modalDayDates.length) return;
+    modalDayIndex = newIndex;
+    const dateStr = modalDayDates[modalDayIndex];
+    const evs = eventsForDate(dateStr);
+    if (evs.length) renderModal(evs[0]);
+    updateModalNavState();
+  }
+
+  modalPrev?.addEventListener('click', () => goToModalDay(-1));
+  modalNext?.addEventListener('click', () => goToModalDay(1));
 
   function closeModal() {
     if (!modal) return;
@@ -319,7 +386,46 @@
 
   modalClose?.addEventListener('click', closeModal);
   modalBackdrop?.addEventListener('click', closeModal);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'ArrowLeft')  goToModalDay(-1);
+    if (e.key === 'ArrowRight') goToModalDay(1);
+  });
+
+  // ── Hover mini-preview tooltip ────────────────────────
+  const calTooltip      = document.getElementById('sl-cal-tooltip');
+  const calTooltipImg   = document.getElementById('sl-cal-tooltip-img');
+  const calTooltipTitle = document.getElementById('sl-cal-tooltip-title');
+
+  function showCalTooltip(cell) {
+    if (!calTooltip) return;
+    const evs = eventsForDate(cell.dataset.date);
+    if (!evs.length) return;
+    const ev = evs[0];
+    const src = ev.imageUrl || ev.image || '';
+    if (calTooltipImg) {
+      calTooltipImg.src = src;
+      calTooltipImg.style.display = src ? '' : 'none';
+    }
+    if (calTooltipTitle) {
+      calTooltipTitle.textContent = ev.title + (evs.length > 1 ? ` (+${evs.length - 1} more)` : '');
+    }
+    calTooltip.classList.add('visible');
+    calTooltip.setAttribute('aria-hidden', 'false');
+  }
+
+  function positionCalTooltip(e) {
+    if (!calTooltip || !calTooltip.classList.contains('visible')) return;
+    calTooltip.style.left = e.clientX + 16 + 'px';
+    calTooltip.style.top  = e.clientY + 16 + 'px';
+  }
+
+  function hideCalTooltip() {
+    if (!calTooltip) return;
+    calTooltip.classList.remove('visible');
+    calTooltip.setAttribute('aria-hidden', 'true');
+  }
 
   // ── Contact form ──────────────────────────────────────
   const contactForm   = document.getElementById('sl-contact-form');

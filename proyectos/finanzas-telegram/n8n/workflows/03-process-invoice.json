@@ -1,0 +1,133 @@
+{
+  "name": "FIN — Procesar Factura",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "c3000001-0000-4000-8000-000000000001",
+      "name": "Entrada",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// STUB — Fase 4 sin implementar todavia.\n// Responde honesto en vez de fallar en silencio o hacer algo\n// incorrecto con la imagen/PDF que llego. La forma del sobre\n// {meta, ctx, payload} es identica a la que va a consumir la\n// version completa (OCR/vision), asi que WF1 no necesita cambiar\n// cuando esto se reemplace.\nconst s = $json;\nreturn [{\n  json: {\n    chat_id: s.ctx.telegram_chat_id,\n    texto: 'Todavía no puedo leer facturas ni fotos. Mientras tanto contame el gasto en texto, por ejemplo: \"pagué 35.000 en gasolina\".'\n  }\n}];"
+      },
+      "id": "c3000001-0000-4000-8000-000000000002",
+      "name": "Responder Aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FIN — Procesar Factura (WF3) — STUB Fase 4\n\nEste workflow es un placeholder deliberado, no un error.\n\nExiste para que WF1 pueda enrutar imagenes y PDFs a algo real\ny honesto (\"todavia no puedo leer facturas\") en vez de:\n- fallar en silencio,\n- o mandar datos con forma equivocada al manejador de errores.\n\n**Cuando se implemente la Fase 4** (prompts/invoice-extraction.md ya\nesta escrito), este mismo workflow se reemplaza nodo por nodo,\nconservando el nombre `FIN — Procesar Factura` y este mismo id en\nn8n, para que WF1 no necesite tocarse.",
+        "height": 260,
+        "width": 420
+      },
+      "id": "c3000001-0000-4000-8000-000000000004",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traduce el formato {inline_keyboard:[[{text,callback_data}]]}\n// (el que arman los Code nodes previos) al formato que espera\n// el nodo nativo Telegram: rows[].row.buttons[].additionalFields.\nconst s = $json;\nlet filas = [];\nif (s.teclado) {\n  let ik;\n  try { ik = JSON.parse(s.teclado).inline_keyboard; } catch (e) { ik = []; }\n  filas = ik.map(fila => ({ row: { buttons: fila.map(b => ({ text: b.text, additionalFields: { callback_data: b.callback_data } })) } }));\n}\nreturn [{ json: { ...s, _filas_botones: filas, _con_botones: filas.length > 0 } }];"
+      },
+      "id": "c3000001-0000-4000-8000-000000000003-tr",
+      "name": "Responder en Telegram — Preparar Botones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        },
+        "replyMarkup": "={{ $json._con_botones ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": {
+          "rows": "={{ $json._filas_botones }}"
+        }
+      },
+      "id": "c3000001-0000-4000-8000-000000000003",
+      "name": "Responder en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -260,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Entrada": {
+      "main": [
+        [
+          {
+            "node": "Responder Aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder Aviso": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram — Preparar Botones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder en Telegram — Preparar Botones": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

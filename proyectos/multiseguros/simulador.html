@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de cliente — MSDS</title>
+<style>
+  :root {
+    --verde: #128C7E;
+    --verde-claro: #25D366;
+    --fondo: #ECE5DD;
+    --burbuja: #DCF8C6;
+    --texto: #303030;
+    --gris: #667781;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+    background: #f0f2f5;
+    color: var(--texto);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .marco {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.14);
+    overflow: hidden;
+  }
+  .barra {
+    background: var(--verde);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #fff3;
+    display: grid; place-items: center;
+    font-size: 17px; font-weight: 600;
+  }
+  .barra h1 { font-size: 16px; font-weight: 600; }
+  .barra span { font-size: 12px; opacity: .85; }
+
+  .chat {
+    background: var(--fondo);
+    padding: 22px 16px;
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .burbuja {
+    background: var(--burbuja);
+    border-radius: 10px 10px 2px 10px;
+    padding: 10px 13px;
+    font-size: 14.5px;
+    line-height: 1.45;
+    align-self: flex-end;
+    max-width: 88%;
+    box-shadow: 0 1px 1px rgba(0,0,0,.08);
+  }
+  .burbuja .hora {
+    display: block;
+    text-align: right;
+    font-size: 11px;
+    color: var(--gris);
+    margin-top: 4px;
+  }
+
+  .panel { padding: 18px; }
+  .etiqueta {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--gris);
+    margin-bottom: 8px;
+  }
+  select {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1px solid #d6d9dc;
+    border-radius: 9px;
+    background: #fff;
+    margin-bottom: 14px;
+  }
+  button {
+    width: 100%;
+    padding: 15px;
+    font-size: 15.5px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fff;
+    background: var(--verde-claro);
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .15s, transform .08s;
+  }
+  button:hover:not(:disabled) { background: #1fb855; }
+  button:active:not(:disabled) { transform: scale(.985); }
+  button:disabled { background: #a8b0b5; cursor: default; }
+
+  .via {
+    font-size: 12.5px;
+    color: var(--gris);
+    margin: -6px 0 14px;
+    padding-left: 2px;
+  }
+
+  /* Vista "llamada": el gerente registra, no entra un WhatsApp */
+  .marco.llamada .barra { background: #3f5c78; }
+  .marco.llamada .chat { background: #f4f6f8; }
+  .marco.llamada .burbuja {
+    background: #fff;
+    border: 1px solid #dde3e9;
+    border-radius: 10px;
+    align-self: stretch;
+    max-width: 100%;
+  }
+  .marco.llamada .burbuja::before {
+    content: 'Nota del gerente tras la llamada';
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--gris);
+    margin-bottom: 6px;
+  }
+
+  .resultado {
+    margin-top: 14px;
+    padding: 13px 14px;
+    border-radius: 9px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+  .resultado.ok { display: block; background: #e6f6ec; color: #14612f; border: 1px solid #b7e3c6; }
+  .resultado.error { display: block; background: #fdecec; color: #96201d; border: 1px solid #f2b9b7; }
+  .resultado b { display: block; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<div class="marco">
+  <div class="barra">
+    <div class="avatar">M</div>
+    <div>
+      <h1 id="quien">Marta Ruiz</h1>
+      <span>en línea</span>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="burbuja">
+      <span id="texto">Buenos días, se me vence el SOAT esta semana y necesito renovarlo. ¿Me pueden ayudar?</span>
+      <span class="hora" id="hora">—</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="etiqueta">Situación del cliente</div>
+    <select id="caso">
+      <option value="siniestro">1 · Siniestro — choque en la vía (llamada)</option>
+      <option value="renovacion">2 · Renovación vencida hace 3 días (WhatsApp)</option>
+      <option value="clinica">3 · Clínica odontológica — RC profesional (WhatsApp)</option>
+    </select>
+    <div class="via" id="via">—</div>
+    <button id="enviar">Enviar mensaje</button>
+    <div class="resultado" id="resultado"></div>
+  </div>
+</div>
+
+<script>
+const WEBHOOK = 'https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/msds-comunicaciones';
+
+const CASOS = {
+  siniestro: {
+    quien: 'Carlos Mejía',
+    inicial: 'C',
+    tel: '+573145566778',
+    canal: 'llamada',
+    asunto: 'Siniestro — choque via Neiva-Campoalegre',
+    texto: 'Cliente llama reportando choque en la vía Neiva–Campoalegre. Vehículo asegurado, póliza vigente. Sin heridos. Solicita grúa y asignación de perito.',
+    // Lo registra el gerente al colgar la llamada
+    registra: 'gerente',
+    etiqueta: 'Llamada al conmutador · la registra el gerente'
+  },
+  renovacion: {
+    quien: 'Marta Ruiz',
+    inicial: 'M',
+    tel: '+573001234567',
+    canal: 'whatsapp',
+    asunto: 'Renovacion vencida hace 3 dias',
+    texto: 'Buenos días, me acabo de dar cuenta de que la póliza se me venció hace tres días. ¿Todavía estoy cubierta? Necesito renovarla hoy mismo.',
+    registra: 'cliente',
+    etiqueta: 'WhatsApp del cliente · entra sola'
+  },
+  clinica: {
+    quien: 'Clínica Odontológica Sonrisa',
+    inicial: 'S',
+    tel: '+573102233445',
+    canal: 'whatsapp',
+    asunto: 'Cotizacion RC profesional — clinica odontologica',
+    texto: 'Buenas tardes. Somos una clínica odontológica con 4 odontólogos y necesitamos cotizar una póliza de responsabilidad civil profesional. ¿Qué información les envío?',
+    registra: 'cliente',
+    etiqueta: 'WhatsApp del cliente · entra sola'
+  }
+};
+
+const $ = id => document.getElementById(id);
+
+function ahora() {
+  return new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+}
+
+function pintar() {
+  const c = CASOS[$('caso').value];
+  const esLlamada = c.canal === 'llamada';
+
+  $('quien').textContent = c.quien;
+  $('texto').textContent = c.texto;
+  $('via').textContent = c.etiqueta;
+  document.querySelector('.avatar').textContent = c.inicial;
+  $('hora').textContent = ahora();
+
+  document.querySelector('.marco').classList.toggle('llamada', esLlamada);
+  document.querySelector('.barra span').textContent = esLlamada ? 'llamada recibida' : 'en línea';
+  $('enviar').textContent = esLlamada ? 'Registrar la llamada' : 'Enviar mensaje';
+
+  $('resultado').className = 'resultado';
+}
+
+$('caso').addEventListener('change', pintar);
+pintar();
+
+$('enviar').addEventListener('click', async () => {
+  const c = CASOS[$('caso').value];
+  const btn = $('enviar');
+  const res = $('resultado');
+  const esLlamada = c.canal === 'llamada';
+  const rotulo = btn.textContent;
+
+  btn.disabled = true;
+  btn.textContent = esLlamada ? 'Registrando…' : 'Enviando…';
+  res.className = 'resultado';
+  $('hora').textContent = ahora();
+
+  const t0 = performance.now();
+  try {
+    const r = await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        canal: c.canal,
+        direccion: 'entrante',
+        remitente: c.tel,
+        asunto: c.asunto,
+        mensaje: c.texto,
+        cliente_nombre: ''
+      })
+    });
+    const seg = ((performance.now() - t0) / 1000).toFixed(1);
+
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+
+    res.className = 'resultado ok';
+    res.innerHTML = '<b>' + (esLlamada ? 'Llamada registrada' : 'Mensaje registrado') +
+      ' en ' + seg + ' segundos</b>' +
+      'Ya aparece en el panel de gerencia y el responsable recibió la notificación en Telegram.';
+  } catch (e) {
+    res.className = 'resultado error';
+    res.innerHTML = '<b>No se pudo enviar</b>Revisa la conexión a internet e intenta de nuevo.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = rotulo;
+  }
+});
+</script>
+</body>
+</html>

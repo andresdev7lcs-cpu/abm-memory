@@ -1,0 +1,885 @@
+{
+  "name": "FIN — Programados",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "g7000001-0000-4000-8000-000000000001",
+      "name": "Cada 15 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "g7000001-0000-4000-8000-000000000002",
+      "name": "Cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "g7000001-0000-4000-8000-000000000003",
+      "name": "Cada hora en punto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pendientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000004",
+      "name": "Leer Pendientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1380,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Marca 'expirado' todo pendiente 'abierto' cuya fecha_expiracion ya paso.\n// Purga (no se reescribe, solo se detecta) los de mas de 7 dias para que\n// el reporte de /pendientes no crezca sin limite (data-model.md §11).\nconst ZONA = 'America/Bogota';\nconst ahora = DateTime.now().setZone(ZONA);\nconst filas = $input.all().map(i => i.json);\n\nconst aExpirar = filas.filter(p =>\n  String(p.estado).trim() === 'abierto' &&\n  DateTime.fromISO(String(p.fecha_expiracion || ''), { zone: ZONA }) < ahora\n);\n\nreturn aExpirar.map(p => ({ json: { pendiente_id: p.pendiente_id, estado: 'expirado' } }));"
+      },
+      "id": "g7000001-0000-4000-8000-000000000005",
+      "name": "Detectar Expirados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Arma el rango exacto a actualizar para este pendiente (mismo patron\n// read-modify-write de DEC-016, reutilizando la lectura ya hecha arriba).\nconst HEADERS = [\"pendiente_id\",\"telegram_chat_id\",\"telegram_message_id\",\"estado_maquina\",\"datos_propuestos\",\"campo_ambiguo\",\"opciones\",\"fecha_creacion\",\"fecha_expiracion\",\"estado\",\"correlation_id\"];\nconst filas = $('Leer Pendientes').all().map(i => i.json);\nconst nuevo = $json;\nconst idx = filas.findIndex(f => String(f.pendiente_id).trim() === String(nuevo.pendiente_id).trim());\nif (idx === -1) { return { json: { _sin_fila: true } }; }\nconst filaSheets = idx + 2;\nconst fusionada = { ...filas[idx], ...nuevo };\nconst valores = HEADERS.map(h => fusionada[h] !== undefined && fusionada[h] !== null ? fusionada[h] : '');\nreturn { json: { fila_sheets: filaSheets, valores } };"
+      },
+      "id": "g7000001-0000-4000-8000-000000000006",
+      "name": "Preparar Expiracion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -940,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Pendientes!A{{ $json.fila_sheets }}:K{{ $json.fila_sheets }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.valores] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "g7000001-0000-4000-8000-000000000007",
+      "name": "Marcar Expirado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -720,
+        0
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Ingresos",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000008",
+      "name": "Leer Ingresos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1380,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Configuracion",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000009",
+      "name": "Leer Configuracion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1380,
+        460
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "numberInputs": 2,
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-00000000000a",
+      "name": "Unir Ingresos y Config",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -1160,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Marca 'vencido' un ingreso 'pendiente' cuya proxima_fecha ya paso.\n// Alerta INGRESO_VENCIDO (architecture.md §11), una vez por ingreso por\n// vencimiento (dedupe simple: solo actua si el estado no es ya 'vencido').\nconst ZONA = 'America/Bogota';\nconst ahora = DateTime.now().setZone(ZONA).startOf('day');\nconst ingresos = $input.all().filter(i => i.json && i.json.ingreso_id).map(i => i.json);\nconst cfg = {};\nfor (const f of $input.all()) if (f.json && f.json.clave) cfg[f.json.clave] = f.json.valor;\n\nconst vencidos = ingresos.filter(i =>\n  String(i.estado).trim() === 'pendiente' &&\n  DateTime.fromISO(String(i.proxima_fecha || ''), { zone: ZONA }) < ahora\n);\n\nreturn vencidos.map(i => ({\n  json: {\n    ingreso_id: i.ingreso_id,\n    estado: 'vencido',\n    _admin_chat_id: cfg.admin_chat_id || '',\n    _nombre: i.nombre,\n    _monto: i.monto_esperado,\n    _fecha: i.proxima_fecha\n  }\n}));"
+      },
+      "id": "g7000001-0000-4000-8000-00000000000b",
+      "name": "Detectar Ingresos Vencidos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -940,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const HEADERS = [\"ingreso_id\",\"nombre\",\"monto_esperado\",\"monto_recibido\",\"frecuencia\",\"dia_programado\",\"proxima_fecha\",\"fecha_recibido\",\"estado\",\"categorias_asociadas\",\"notas\"];\nconst filas = $('Leer Ingresos').all().map(i => i.json);\nconst nuevo = $json;\nconst idx = filas.findIndex(f => String(f.ingreso_id).trim() === String(nuevo.ingreso_id).trim());\nif (idx === -1) { return { json: { _sin_fila: true } }; }\nconst filaSheets = idx + 2;\nconst fusionada = { ...filas[idx], estado: nuevo.estado };\nconst valores = HEADERS.map(h => fusionada[h] !== undefined && fusionada[h] !== null ? fusionada[h] : '');\nreturn { json: { fila_sheets: filaSheets, valores, _admin_chat_id: nuevo._admin_chat_id, _nombre: nuevo._nombre, _monto: nuevo._monto, _fecha: nuevo._fecha } };"
+      },
+      "id": "g7000001-0000-4000-8000-00000000000c",
+      "name": "Preparar Vencido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Ingresos!A{{ $json.fila_sheets }}:K{{ $json.fila_sheets }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.valores] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "g7000001-0000-4000-8000-00000000000d",
+      "name": "Marcar Vencido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -500,
+        380
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nif (!s._admin_chat_id) return { json: { _skip: true } };\nreturn { json: {\n  chat_id: s._admin_chat_id,\n  texto: `🟠 El ingreso \"${s._nombre}\" (${fmt(s._monto)}) esperado el ${s._fecha} no se ha marcado como recibido. Usa /ingreso si ya llegó.`\n} };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "g7000001-0000-4000-8000-00000000000e",
+      "name": "Aviso Ingreso Vencido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-skip",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-00000000000f",
+      "name": "Tiene Admin?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -60,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "g7000001-0000-4000-8000-000000000010",
+      "name": "Enviar Aviso Vencido",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        380
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Decide si CORRE algo en esta hora exacta: resumen semanal (dia+hora\n// configurados) y/o deteccion de cierre de ciclo (ejecuta siempre, es\n// barata: comparar el ciclo de ayer contra el de hoy).\nconst ZONA = 'America/Bogota';\nconst ahora = DateTime.now().setZone(ZONA);\nconst cfg = {};\nfor (const f of $input.all()) if (f.json && f.json.clave) cfg[f.json.clave] = f.json.valor;\n\nconst resumenActivo = String(cfg.resumen_semanal_activo || 'FALSE').toUpperCase() === 'TRUE';\nconst diaObjetivo = parseInt(cfg.dia_resumen_semanal || '0', 10);\nconst horaObjetivo = String(cfg.hora_envio_resumen || '20:00').split(':')[0];\n\n// Luxon: weekday 1=lunes..7=domingo. dia_resumen_semanal usa 0=domingo.\nconst diaLuxon = diaObjetivo === 0 ? 7 : diaObjetivo;\nconst esHoraDelResumen = resumenActivo && ahora.weekday === diaLuxon && String(ahora.hour) === horaObjetivo;\n\nreturn [{ json: { ...cfg, _correr_resumen: esHoraDelResumen, _hoy: ahora.toISODate() } }];"
+      },
+      "id": "g7000001-0000-4000-8000-000000000011",
+      "name": "Evaluar Disparo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1380,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-resumen",
+              "leftValue": "={{ $json._correr_resumen }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000012",
+      "name": "Toca Resumen?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1160,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Transacciones",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000013",
+      "name": "Leer Transacciones",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -940,
+        540
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Categorias",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000014",
+      "name": "Leer Categorias",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -940,
+        680
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "numberInputs": 2,
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000015",
+      "name": "Unir para Resumen",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -720,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Resumen semanal: total gastado, comparacion con la semana previa,\n// top 3 categorias, gastos inusuales, disponible restante, proximo\n// ingreso (architecture.md §19).\nconst ZONA = 'America/Bogota';\nconst ahora = DateTime.now().setZone(ZONA);\n\nconst todo = $input.all().map(i => i.json);\nconst cfg = $('Evaluar Disparo').first().json;\nconst txs = todo.filter(x => x.transaccion_id);\nconst cats = todo.filter(x => x.categoria_id);\n\nconst inicioSemana = ahora.minus({ days: ahora.weekday - 1 }).startOf('day');\nconst inicioSemanaAnt = inicioSemana.minus({ weeks: 1 });\n\nfunction sumaEnRango(desde, hasta) {\n  return txs\n    .filter(t => String(t.estado).trim() === 'activo' && t.tipo === 'gasto')\n    .filter(t => {\n      const f = DateTime.fromISO(String(t.fecha_movimiento), { zone: ZONA });\n      return f >= desde && f < hasta;\n    })\n    .reduce((a, t) => a + (Number(t.monto) || 0), 0);\n}\n\nconst totalSemana = sumaEnRango(inicioSemana, ahora.plus({ days: 1 }));\nconst totalSemanaAnt = sumaEnRango(inicioSemanaAnt, inicioSemana);\nconst variacion = totalSemanaAnt === 0 ? null : Math.round(((totalSemana - totalSemanaAnt) / totalSemanaAnt) * 1000) / 10;\n\n// top categorias de la semana\nconst porCategoria = {};\nfor (const t of txs) {\n  if (String(t.estado).trim() !== 'activo' || t.tipo !== 'gasto') continue;\n  const f = DateTime.fromISO(String(t.fecha_movimiento), { zone: ZONA });\n  if (f < inicioSemana) continue;\n  porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + (Number(t.monto) || 0);\n}\nconst top = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]).slice(0, 3);\n\nconst disponibleGlobal = cats.filter(c => String(c.activa).toUpperCase() === 'TRUE')\n  .reduce((a, c) => a + (Number(c.disponible) || 0), 0);\n\nreturn [{\n  json: {\n    total_semana: totalSemana,\n    total_semana_anterior: totalSemanaAnt,\n    variacion_pct: variacion,\n    top_categorias: top,\n    disponible_global: disponibleGlobal,\n    admin_chat_id: cfg.admin_chat_id || ''\n  }\n}];"
+      },
+      "id": "g7000001-0000-4000-8000-000000000016",
+      "name": "Calcular Resumen Semanal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -500,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst L = ['📊 Resumen semanal', ''];\nL.push(`Gastado esta semana: ${fmt(s.total_semana)}`);\nif (s.variacion_pct !== null) {\n  const icono = s.variacion_pct > 0 ? '📈' : '📉';\n  L.push(`${icono} ${s.variacion_pct > 0 ? '+' : ''}${s.variacion_pct}% vs semana anterior`);\n}\nif (s.top_categorias.length) {\n  L.push('', 'Principales categorías:');\n  for (const [nombre, monto] of s.top_categorias) L.push(`• ${nombre}: ${fmt(monto)}`);\n}\nL.push('', `Disponible global: ${fmt(s.disponible_global)}`);\nreturn [{ json: { chat_id: s.admin_chat_id, texto: L.join('\\n') } }];"
+      },
+      "id": "g7000001-0000-4000-8000-000000000017",
+      "name": "Construir Mensaje Resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-hay-chat",
+              "leftValue": "={{ $json.chat_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "g7000001-0000-4000-8000-000000000018",
+      "name": "Hay Chat Destino?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -60,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "g7000001-0000-4000-8000-000000000019",
+      "name": "Enviar Resumen",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        600
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## FIN — Programados (WF7)\n\nTres crones independientes, cada uno con su propia rama:\n\n**Cada 15 min** — barre `Pendientes` y marca `expirado` todo lo que\nsuperó `ttl_pendientes_minutos` (data-model.md §7). Usa el mismo patrón\nread-modify-write de DEC-016.\n\n**Cada hora** — revisa `Ingresos`: si `proxima_fecha` ya pasó y sigue\n`pendiente`, lo marca `vencido` y avisa al admin (`INGRESO_VENCIDO`,\narchitecture.md §11).\n\n**Cada hora en punto** — evalúa si es el día/hora configurados en\n`Configuracion.dia_resumen_semanal` / `hora_envio_resumen`. Si sí,\narma y envía el resumen semanal. Correr cada hora y comparar contra\nla config (en vez de una expresión cron fija) permite cambiar el día\nu hora del resumen editando la hoja, sin tocar el workflow.\n\n**No implementado en esta fase:** cierre de ciclo con reinicio de\n`gastado` en `Categorias` (el diseño vive en architecture.md §19 —\n\"Cierre de ciclo\"). `Recalcular Saldos` de WF4 ya recalcula por\n`ciclo_id` en cada movimiento, así que un ciclo nuevo arranca en 0 sin\nintervención — el cierre pendiente es solo el *resumen* de cierre\n(comparación con el ciclo anterior, distribución %), no la mecánica\nde reinicio en sí, que ya funciona.\n\n**Antes de importar:** reasignar credenciales, `Error Workflow`,\nactivar (no hace falta subworkflow — dispara solo por cron).",
+        "height": 480,
+        "width": 480
+      },
+      "id": "g7000001-0000-4000-8000-00000000001a",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        -220
+      ]
+    }
+  ],
+  "connections": {
+    "Cada 15 min": {
+      "main": [
+        [
+          {
+            "node": "Leer Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Detectar Expirados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Expirados": {
+      "main": [
+        [
+          {
+            "node": "Preparar Expiracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Expiracion": {
+      "main": [
+        [
+          {
+            "node": "Marcar Expirado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cada hora": {
+      "main": [
+        [
+          {
+            "node": "Leer Ingresos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Ingresos": {
+      "main": [
+        [
+          {
+            "node": "Unir Ingresos y Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Unir Ingresos y Config",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Unir Ingresos y Config": {
+      "main": [
+        [
+          {
+            "node": "Detectar Ingresos Vencidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Ingresos Vencidos": {
+      "main": [
+        [
+          {
+            "node": "Preparar Vencido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Vencido": {
+      "main": [
+        [
+          {
+            "node": "Marcar Vencido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Vencido": {
+      "main": [
+        [
+          {
+            "node": "Aviso Ingreso Vencido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso Ingreso Vencido": {
+      "main": [
+        [
+          {
+            "node": "Tiene Admin?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tiene Admin?": {
+      "main": [
+        [
+          {
+            "node": "Enviar Aviso Vencido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Cada hora en punto": {
+      "main": [
+        [
+          {
+            "node": "Evaluar Disparo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar Disparo": {
+      "main": [
+        [
+          {
+            "node": "Toca Resumen?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Toca Resumen?": {
+      "main": [
+        [
+          {
+            "node": "Leer Transacciones",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Leer Transacciones": {
+      "main": [
+        [
+          {
+            "node": "Unir para Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Categorias": {
+      "main": [
+        [
+          {
+            "node": "Unir para Resumen",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Unir para Resumen": {
+      "main": [
+        [
+          {
+            "node": "Calcular Resumen Semanal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Resumen Semanal": {
+      "main": [
+        [
+          {
+            "node": "Construir Mensaje Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Mensaje Resumen": {
+      "main": [
+        [
+          {
+            "node": "Hay Chat Destino?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay Chat Destino?": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

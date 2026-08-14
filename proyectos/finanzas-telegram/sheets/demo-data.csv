@@ -1,0 +1,108 @@
+# finanzas-telegram - DATOS DE DEMOSTRACION
+# Ciclo de referencia: 2026-08-A (2026-08-01 a 2026-08-15). Fecha "hoy" simulada: 2026-08-08.
+# Presupuestos suman exactamente 4.000.000 COP por ciclo. Los montos son coherentes entre bloques.
+# TODAS las filas llevan DEMO en 'notas' o 'detalle'. AP debe reemplazarlas con datos reales.
+# Importar bloque por bloque: seleccionar las lineas de un bloque (sin la linea '# HOJA:') y pegarlas en A2 de la hoja correspondiente.
+
+# HOJA: Configuracion
+clave,valor,descripcion,tipo_dato,estado
+moneda,COP,Moneda base del sistema,texto,activo
+zona_horaria,America/Bogota,Zona horaria para resolver fechas,texto,activo
+idioma,es-CO,Idioma de las respuestas del bot,texto,activo
+autorizados_user_ids,,user_id numericos separados por coma. VACIO = bot cerrado. PENDIENTE AP,lista,activo
+admin_chat_id,,Destino de alertas tecnicas. PENDIENTE AP,texto,activo
+umbral_aviso_1,70,Porcentaje de aviso preventivo,numero,activo
+umbral_aviso_2,85,Porcentaje de aviso alto,numero,activo
+umbral_critico,100,Porcentaje de presupuesto consumido,numero,activo
+confirmacion_activa,TRUE,Pedir confirmacion en casos ambiguos,bool,activo
+resumen_diario_activo,FALSE,Enviar resumen diario,bool,activo
+resumen_semanal_activo,TRUE,Enviar resumen semanal,bool,activo
+hora_envio_resumen,20:00,Hora local de envio de resumenes,hora,activo
+dia_resumen_semanal,0,Dia del resumen semanal. 0 = domingo,numero,activo
+ciclo_modelo,A,Modelo de ciclo financiero A B o C,enum,activo
+ciclo_dias_inicio,"1,16",Dias del mes en que arranca cada ciclo,lista,activo
+presupuesto_ciclo_techo,4000000,Techo de control por ciclo en COP,numero,activo
+tolerancia_duplicado_horas,48,Ventana de deteccion de duplicados,numero,activo
+categoria_por_defecto,CAT-015,Categoria usada cuando no se resuelve,texto,activo
+confianza_minima_ia,0.80,Bajo este valor se exige confirmacion,numero,activo
+ttl_pendientes_minutos,15,Expiracion de interacciones pendientes,numero,activo
+max_archivo_mb,10,Limite de tamano de adjunto,numero,activo
+guardar_adjuntos_drive,FALSE,Persistir adjuntos en Drive privado,bool,activo
+factor_ritmo_excesivo,1.3,Multiplicador para alerta de ritmo,numero,activo
+umbral_movimiento_inusual,3,Veces la mediana de la categoria,numero,activo
+
+# HOJA: Categorias
+categoria_id,nombre,descripcion,grupo,presupuesto,ciclo,fecha_inicio,fecha_fin,gastado,disponible,porcentaje_usado,estado,activa,palabras_clave,notas
+CAT-001,Vivienda,Arriendo administracion e hipoteca,Esencial,900000,ciclo,2026-08-01,2026-08-15,0,900000,0.0,ok,TRUE,arriendo|administracion|hipoteca|canon,DEMO
+CAT-002,Servicios publicos,Energia agua gas internet,Esencial,600000,ciclo,2026-08-01,2026-08-15,195000,405000,32.5,ok,TRUE,electrohuila|energia|luz|agua|gas|internet|acueducto|recibo,DEMO
+CAT-003,Mercado,Compra de alimentos y aseo,Esencial,700000,ciclo,2026-08-01,2026-08-15,283750,416250,40.5,ok,TRUE,mercado|supermercado|d1|ara|exito|olimpica|jumbo|surtimax,DEMO
+CAT-004,Restaurantes y salidas,Comidas fuera y domicilios,Discrecional,800000,ciclo,2026-08-01,2026-08-15,685000,115000,85.6,alto,TRUE,cena|almuerzo|restaurante|domicilio|rappi|cafe|comida,DEMO
+CAT-005,Transporte,Combustible taxis y peajes,Variable,400000,ciclo,2026-08-01,2026-08-15,127000,273000,31.8,ok,TRUE,gasolina|terpel|taxi|uber|didi|peaje|bus|combustible|parqueadero,DEMO
+CAT-006,Salud,EPS medicamentos y consultas,Esencial,150000,ciclo,2026-08-01,2026-08-15,0,150000,0.0,ok,TRUE,eps|medicamento|drogueria|cruz verde|farmacia|consulta|copago,DEMO
+CAT-007,Mascotas,Veterinario y alimento,Variable,60000,ciclo,2026-08-01,2026-08-15,0,60000,0.0,ok,TRUE,veterinario|concentrado|guarderia canina|mascota,DEMO
+CAT-008,Suscripciones,Servicios digitales recurrentes,Discrecional,90000,ciclo,2026-08-01,2026-08-15,0,90000,0.0,ok,TRUE,netflix|spotify|disney|icloud|chatgpt|plan celular|suscripcion,DEMO
+CAT-009,Educacion,Cursos matriculas y libros,Esencial,100000,ciclo,2026-08-01,2026-08-15,0,100000,0.0,ok,TRUE,matricula|curso|colegio|universidad|libros|pension,DEMO
+CAT-010,Deudas,Cuotas de credito y tarjetas,Financiero,0,ciclo,2026-08-01,2026-08-15,0,0,,sin_presupuesto,TRUE,cuota|tarjeta de credito|prestamo|credito|abono,DEMO sin deuda activa
+CAT-011,Compras personales,Ropa tecnologia y regalos,Discrecional,80000,ciclo,2026-08-01,2026-08-15,0,80000,0.0,ok,TRUE,ropa|zapatos|tecnologia|regalo|accesorios,DEMO neto 0 tras reembolso
+CAT-012,Hogar,Aseo ferreteria y reparaciones,Variable,60000,ciclo,2026-08-01,2026-08-15,0,60000,0.0,ok,TRUE,aseo|ferreteria|muebles|reparacion|hogar,DEMO
+CAT-013,Viajes,Vuelos hospedaje y tiquetes,Discrecional,0,ciclo,2026-08-01,2026-08-15,0,0,,sin_presupuesto,TRUE,vuelo|hotel|avianca|tiquete|hospedaje|viaje,DEMO sin presupuesto a proposito para probar TC-14
+CAT-014,Imprevistos,Emergencias y multas,Variable,40000,ciclo,2026-08-01,2026-08-15,0,40000,0.0,ok,TRUE,imprevisto|emergencia|multa|urgencia,DEMO
+CAT-015,Otros,Categoria por defecto,Variable,20000,ciclo,2026-08-01,2026-08-15,0,20000,0.0,ok,TRUE,,DEMO categoria por defecto
+# Suma de presupuestos = 4.000.000 COP. Suma de gastado neto = 1.290.750 COP. Disponible global = 2.709.250 COP.
+
+# HOJA: Transacciones
+transaccion_id,timestamp_registro,fecha_movimiento,ciclo_id,tipo,monto,moneda,categoria_id,categoria,subcategoria,descripcion,comercio_proveedor,metodo_pago,persona,origen,telegram_user_id,telegram_chat_id,telegram_message_id,file_id,archivo_url_o_referencia,hash_archivo,texto_original,datos_extraidos,confianza_ia,requiere_revision,estado,posible_duplicado,transaccion_relacionada,correlation_id,notas
+TX-20260801-D0001,2026-08-01T07:42:10-05:00,2026-08-01,2026-08-A,gasto,85000,COP,CAT-005,Transporte,Combustible,Tanqueada,terpel,debito,AP,telegram_texto,000000001,000000001,1001,,,,gaste 85.000 en gasolina,{},0.95,FALSE,activo,FALSE,,demo-0001,DEMO
+TX-20260802-D0002,2026-08-02T21:15:33-05:00,2026-08-02,2026-08-A,gasto,220000,COP,CAT-004,Restaurantes y salidas,Cena fuera,Cena aniversario,,credito,AP,telegram_texto,000000001,000000001,1002,,,,pague 220 mil en la cena,{},0.93,FALSE,activo,FALSE,,demo-0002,DEMO
+TX-20260803-D0003,2026-08-03T18:02:44-05:00,2026-08-03,2026-08-A,gasto,187450,COP,CAT-003,Mercado,Mercado quincenal,Mercado,d1,debito,AP,telegram_texto,000000001,000000001,1003,,,,compre mercado por COP 187.450,{},0.96,FALSE,activo,FALSE,,demo-0003,DEMO
+TX-20260803-D0004,2026-08-03T20:30:12-05:00,2026-08-03,2026-08-A,gasto,180000,COP,CAT-004,Restaurantes y salidas,Domicilio,Domicilio fin de semana,rappi,credito,AP,telegram_texto,000000001,000000001,1004,,,,180k de domicilio,{},0.91,FALSE,activo,FALSE,,demo-0004,DEMO
+TX-20260804-D0005,2026-08-04T09:11:05-05:00,2026-08-04,2026-08-A,gasto,195000,COP,CAT-002,Servicios publicos,Energia,Factura de energia,electrohuila,transferencia,AP,telegram_imagen,000000001,000000001,1005,DEMO_FILE_ID_0005,,a1b2c3d4e5f60718293a4b5c6d7e8f901a2b3c4d5e6f708192a3b4c5d6e7f801,,"{""proveedor"":""Electrohuila"",""total"":195000,""factura"":""DEMO-88213""}",0.88,FALSE,activo,FALSE,,demo-0005,DEMO factura leida por vision
+TX-20260805-D0006,2026-08-05T13:48:59-05:00,2026-08-05,2026-08-A,gasto,165000,COP,CAT-004,Restaurantes y salidas,Almuerzo,Almuerzo de trabajo,,efectivo,AP,telegram_texto,000000001,000000001,1006,,,,almuerzo 165.000,{},0.92,FALSE,activo,FALSE,,demo-0006,DEMO cruza umbral 70 en CAT-004
+TX-20260805-D0007,2026-08-05T19:20:41-05:00,2026-08-05,2026-08-A,gasto,48000,COP,CAT-006,Salud,Medicamentos,Farmacia,cruz verde,debito,Stefania,telegram_texto,000000001,000000001,1007,,,,registra 48.000 en medicamentos de Stefania,{},0.94,FALSE,anulado,FALSE,,demo-0007,DEMO anulada por el usuario. No cuenta en los calculos
+TX-20260806-D0008,2026-08-06T11:05:27-05:00,2026-08-06,2026-08-A,gasto,42000,COP,CAT-005,Transporte,Taxi,Carreras del dia,didi,nequi,AP,telegram_texto,000000001,000000001,1008,,,,42k de transporte,{},0.90,FALSE,activo,FALSE,,demo-0008,DEMO
+TX-20260806-D0009,2026-08-06T16:37:02-05:00,2026-08-06,2026-08-A,gasto,200000,COP,CAT-011,Compras personales,Ropa,Compra de ropa,,credito,AP,telegram_texto,000000001,000000001,1009,,,,gaste 200 mil en ropa,{},0.89,FALSE,activo,FALSE,,demo-0009,DEMO excede CAT-011 y luego se reembolsa
+TX-20260807-D0010,2026-08-07T20:55:14-05:00,2026-08-07,2026-08-A,gasto,120000,COP,CAT-004,Restaurantes y salidas,Cena fuera,Cena con amigos,,credito,AP,telegram_texto,000000001,000000001,1010,,,,cena 120.000,{},0.93,FALSE,activo,FALSE,,demo-0010,DEMO cruza umbral 85 en CAT-004
+TX-20260808-D0011,2026-08-08T10:22:38-05:00,2026-08-08,2026-08-A,gasto,96300,COP,CAT-003,Mercado,Mercado semanal,Mercado,ara,debito,AP,telegram_texto,000000001,000000001,1011,,,,mercado 96.300,{},0.95,FALSE,activo,FALSE,,demo-0011,DEMO
+TX-20260808-D0012,2026-08-08T12:04:51-05:00,2026-08-08,2026-08-A,reembolso,200000,COP,CAT-011,Compras personales,Ropa,Devolucion de la compra de ropa,,credito,AP,telegram_texto,000000001,000000001,1012,,,,me devolvieron 200 mil de la ropa,{},0.91,FALSE,activo,FALSE,TX-20260806-D0009,demo-0012,DEMO reembolso. Resta del gasto de CAT-011. NO es ingreso
+
+# HOJA: Ingresos
+ingreso_id,nombre,monto_esperado,monto_recibido,frecuencia,dia_programado,proxima_fecha,fecha_recibido,estado,categorias_asociadas,notas
+ING-001,Ingreso dia 15,4000000,,quincenal,15,2026-08-15,,pendiente,,DEMO financia el ciclo 16 al fin de mes. Proximo ingreso a 7 dias del 2026-08-08
+ING-002,Ingreso fin de mes,4000000,4000000,quincenal,31,2026-08-31,2026-07-31,recibido,,DEMO el dia 31 se ajusta solo al ultimo dia del mes. Financia el ciclo 1 al 15
+
+# HOJA: Resumen
+metrica,valor,unidad,ciclo_id,actualizado_en
+presupuesto_total,4000000,COP,2026-08-A,2026-08-08T12:05:00-05:00
+gastado_total,1290750,COP,2026-08-A,2026-08-08T12:05:00-05:00
+disponible_total,2709250,COP,2026-08-A,2026-08-08T12:05:00-05:00
+porcentaje_consumido,32.3,%,2026-08-A,2026-08-08T12:05:00-05:00
+gasto_hoy,96300,COP,2026-08-A,2026-08-08T12:05:00-05:00
+gasto_semana,985750,COP,2026-08-A,2026-08-08T12:05:00-05:00
+gasto_ciclo,1290750,COP,2026-08-A,2026-08-08T12:05:00-05:00
+dias_restantes_ciclo,8,dias,2026-08-A,2026-08-08T12:05:00-05:00
+proximo_ingreso_nombre,Ingreso dia 15,texto,2026-08-A,2026-08-08T12:05:00-05:00
+proximo_ingreso_fecha,2026-08-15,fecha,2026-08-A,2026-08-08T12:05:00-05:00
+dias_proximo_ingreso,7,dias,2026-08-A,2026-08-08T12:05:00-05:00
+promedio_diario_disponible,338656,COP,2026-08-A,2026-08-08T12:05:00-05:00
+maximo_diario_sugerido,338656,COP,2026-08-A,2026-08-08T12:05:00-05:00
+categorias_en_aviso,1,conteo,2026-08-A,2026-08-08T12:05:00-05:00
+categorias_excedidas,0,conteo,2026-08-A,2026-08-08T12:05:00-05:00
+tendencia_vs_ciclo_anterior,sin_datos,texto,2026-08-A,2026-08-08T12:05:00-05:00
+transacciones_ciclo,11,conteo,2026-08-A,2026-08-08T12:05:00-05:00
+pendientes_abiertos,0,conteo,2026-08-A,2026-08-08T12:05:00-05:00
+
+# HOJA: Alertas
+alerta_id,timestamp,clave_dedupe,tipo,nivel,categoria,valor_actual,limite,mensaje,enviada,telegram_message_id,resuelta,fecha_resolucion
+AL-20260805-D001,2026-08-05T13:49:02-05:00,2026-08-A|CAT-004|CAT_70,CAT_70,medio,Restaurantes y salidas,70.6,70,Llevas el 70% del presupuesto de Restaurantes y salidas. Quedan $235.000. DEMO,TRUE,2001,FALSE,
+AL-20260806-D002,2026-08-06T16:37:20-05:00,2026-08-A|CAT-011|CAT_EXCEDIDO,CAT_EXCEDIDO,critico,Compras personales,250.0,100,Excediste el presupuesto de Compras personales en $120.000. DEMO,TRUE,2002,TRUE,2026-08-08T12:04:55-05:00
+AL-20260807-D003,2026-08-07T20:55:31-05:00,2026-08-A|CAT-004|CAT_85,CAT_85,alto,Restaurantes y salidas,85.6,85,Estas cerca del limite de Restaurantes y salidas. Solo quedan $115.000 en este ciclo. DEMO,TRUE,2003,FALSE,
+
+# HOJA: Pendientes
+pendiente_id,telegram_chat_id,telegram_message_id,estado_maquina,datos_propuestos,campo_ambiguo,opciones,fecha_creacion,fecha_expiracion,estado,correlation_id
+PE-20260807-D001,000000001,1099,espera_monto,"{""tipo"":""gasto"",""categoria_id"":""CAT-002"",""descripcion"":""recibo de la luz"",""monto"":null}",monto,"[]",2026-08-07T09:12:00-05:00,2026-08-07T09:27:00-05:00,expirado,demo-p001
+
+# HOJA: Auditoria
+evento_id,timestamp,correlation_id,workflow,ejecucion,usuario,accion,resultado,detalle,error,datos_tecnicos
+EV-20260807-D001,2026-08-07T20:55:14-05:00,demo-0010,02-interpretar-movimiento,DEMO-EX-4471,000000001,interpretar,ok,Extraccion resuelta por pre-normalizador sin llamada al LLM. DEMO,,"{""duracion_ms"":180,""tokens_ia"":0,""confianza"":0.93}"
+EV-20260807-D002,2026-08-07T20:55:29-05:00,demo-0010,04-registrar-movimiento,DEMO-EX-4472,000000001,escribir_transaccion,ok,Fila TX-20260807-D0010 escrita y verificada. DEMO,,"{""duracion_ms"":940,""fila"":11,""reintentos"":0}"
+EV-20260807-D003,2026-08-07T20:55:31-05:00,demo-0010,04-registrar-movimiento,DEMO-EX-4472,000000001,alertar,ok,Alerta CAT_85 emitida para CAT-004. DEMO,,"{""duracion_ms"":210,""clave_dedupe"":""2026-08-A|CAT-004|CAT_85""}"

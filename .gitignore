@@ -3,6 +3,7 @@ CREDENCIALES.md
 *_keys.*
 *.env
 .DS_Store
+*.textClipping
 __pycache__/
 *.pyc
 *secret*

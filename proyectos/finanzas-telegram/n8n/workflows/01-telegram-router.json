@@ -1,0 +1,810 @@
+{
+  "name": "FIN — TG Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fin-telegram",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000001",
+      "name": "Webhook Telegram",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        300
+      ],
+      "webhookId": "fin-telegram-prod"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Puerta de entrada. Tres cosas, en este orden:\n//   1. Validar que el update viene de Telegram (secret token).\n//   2. Descartar updates repetidos (idempotencia, architecture.md §9).\n//   3. Normalizar el sobre {meta, ctx, payload} que consumen WF2..WF6.\n//\n// Todavia NO se autoriza al usuario: eso necesita leer la hoja\n// Configuracion y no queremos esa latencia antes de responderle 200\n// a Telegram.\n\nconst SECRETO = '__TELEGRAM_WEBHOOK_SECRET__';\nconst headers = $json.headers || {};\nconst recibido = headers['x-telegram-bot-api-secret-token'] || '';\n\n// Comparacion de longitud constante: evita filtrar el secreto por tiempo.\nfunction iguales(a, b) {\n  if (a.length !== b.length) return false;\n  let dif = 0;\n  for (let i = 0; i < a.length; i++) dif |= a.charCodeAt(i) ^ b.charCodeAt(i);\n  return dif === 0;\n}\n\nconst origenValido = SECRETO.length > 0 && iguales(SECRETO, String(recibido));\n\nif (!origenValido) {\n  return [{ json: { _origen_valido: false, _duplicado: false } }];\n}\n\nconst update = $json.body || {};\nconst updateId = update.update_id;\n\n// Dedupe: los ultimos 500 update_id sobreviven entre ejecuciones.\nconst estado = $getWorkflowStaticData('global');\nif (!Array.isArray(estado.updateIds)) estado.updateIds = [];\n\nif (updateId !== undefined && estado.updateIds.includes(updateId)) {\n  return [{ json: { _origen_valido: true, _duplicado: true, _update_id: updateId } }];\n}\nif (updateId !== undefined) {\n  estado.updateIds.push(updateId);\n  if (estado.updateIds.length > 500) estado.updateIds = estado.updateIds.slice(-500);\n}\n\n// --- Normalizacion ---\nconst msg = update.message || update.edited_message || null;\nconst cb = update.callback_query || null;\nconst from = (msg && msg.from) || (cb && cb.from) || {};\nconst chat = (msg && msg.chat) || (cb && cb.message && cb.message.chat) || {};\n\nlet tipo = 'desconocido';\nlet texto = '';\nlet fileId = null;\nlet mime = null;\nlet fileSize = null;\n\nif (cb) {\n  tipo = 'callback';\n  texto = cb.data || '';\n} else if (msg) {\n  if (msg.photo && msg.photo.length) {\n    tipo = 'imagen';\n    const mayor = msg.photo[msg.photo.length - 1]; // la ultima es la de mayor resolucion\n    fileId = mayor.file_id;\n    fileSize = mayor.file_size || null;\n    mime = 'image/jpeg';\n    texto = msg.caption || '';\n  } else if (msg.document) {\n    tipo = 'documento';\n    fileId = msg.document.file_id;\n    mime = msg.document.mime_type || null;\n    fileSize = msg.document.file_size || null;\n    texto = msg.caption || '';\n  } else if (msg.voice || msg.audio) {\n    tipo = 'audio';\n    const a = msg.voice || msg.audio;\n    fileId = a.file_id;\n    mime = a.mime_type || null;\n    fileSize = a.file_size || null;\n  } else if (typeof msg.text === 'string') {\n    texto = msg.text;\n    tipo = msg.text.trim().startsWith('/') ? 'comando' : 'texto';\n  }\n}\n\n// correlation_id: hilo unico para seguir la peticion en Auditoria.\nconst correlationId = [\n  Date.now().toString(36),\n  Math.random().toString(36).slice(2, 8)\n].join('-');\n\nreturn [{\n  json: {\n    _origen_valido: true,\n    _duplicado: false,\n    _tipo: tipo,\n    meta: {\n      correlation_id: correlationId,\n      execution_id: $execution.id,\n      origen: tipo === 'texto' || tipo === 'comando' ? 'telegram_texto'\n            : tipo === 'imagen'    ? 'telegram_imagen'\n            : tipo === 'documento' ? 'telegram_pdf'\n            : tipo === 'audio'     ? 'telegram_audio'\n            : 'telegram_texto',\n      recibido_en: new Date().toISOString(),\n      workflow_origen: '01-telegram-router'\n    },\n    ctx: {\n      telegram_user_id: from.id || null,\n      telegram_chat_id: chat.id || null,\n      telegram_message_id: (msg && msg.message_id) || (cb && cb.message && cb.message.message_id) || null,\n      update_id: updateId || null,\n      nombre: from.first_name || '',\n      username: from.username || '',\n      callback_query_id: cb ? cb.id : null\n    },\n    payload: {\n      tipo,\n      texto,\n      file_id: fileId,\n      mime_type: mime,\n      file_size: fileSize\n    }\n  }\n}];"
+      },
+      "id": "a1000001-0000-4000-8000-000000000002",
+      "name": "Validar Origen y Deduplicar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-origen",
+              "leftValue": "={{ $json._origen_valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000001-0000-4000-8000-000000000003",
+      "name": "Origen Valido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "unauthorized",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000004",
+      "name": "Responder 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        460
+      ],
+      "notes": "Secret token ausente o incorrecto. No se procesa nada (TC-40)."
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000005",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        200
+      ],
+      "notes": "Se responde YA, antes de procesar. Telegram reintenta si tarda mas de ~60s."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-dup",
+              "leftValue": "={{ $json._duplicado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000001-0000-4000-8000-000000000006",
+      "name": "Update Nuevo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        200
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a1000001-0000-4000-8000-000000000007",
+      "name": "Descartar Duplicado",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        340
+      ],
+      "notes": "TC-41: Telegram reenvio el mismo update_id. Ya se respondio 200."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Configuracion",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "a1000001-0000-4000-8000-000000000008",
+      "name": "Leer Configuracion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -20,
+        120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Autorizacion. Fail-closed: lista vacia = nadie entra (security.md §2).\n//\n// Fuente de verdad: hoja Configuracion.\n// Respaldo de arranque en frio: TELEGRAM_ALLOWED_USER_IDS, solo si la\n// hoja no respondio.\n\nconst sobre = $('Validar Origen y Deduplicar').first().json;\nconst filas = $input.all().map(i => i.json).filter(r => r && r.clave);\n\nconst cfg = {};\nfor (const f of filas) cfg[String(f.clave).trim()] = String(f.valor ?? '').trim();\n\nconst hojaRespondio = filas.length > 0;\nconst crudo = hojaRespondio\n  ? (cfg.autorizados_user_ids || '')\n  : ($env.TELEGRAM_ALLOWED_USER_IDS || '');\n\nconst autorizados = crudo.split(',').map(s => s.trim()).filter(Boolean);\nconst userId = String(sobre.ctx.telegram_user_id ?? '');\nconst autorizado = autorizados.length > 0 && autorizados.includes(userId);\n\nreturn [{\n  json: {\n    ...sobre,\n    _autorizado: autorizado,\n    _fuente_allowlist: hojaRespondio ? 'hoja' : 'env',\n    ctx: {\n      ...sobre.ctx,\n      es_admin: userId !== '' && userId === (cfg.admin_chat_id || '')\n    },\n    config: cfg\n  }\n}];"
+      },
+      "id": "a1000001-0000-4000-8000-000000000009",
+      "name": "Autorizar Usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-authz",
+              "leftValue": "={{ $json._autorizado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000001-0000-4000-8000-00000000000a",
+      "name": "Autorizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        420,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.ctx.telegram_chat_id }}",
+        "text": "No autorizado.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-00000000000b",
+      "name": "Rechazar",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        320
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Respuesta seca. No revela que es el bot ni quien lo opera (TC-39)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Registro del intento no autorizado. Solo el user_id numerico:\n// nada de nombre, username ni texto del mensaje (security.md §7).\nconst s = $json;\nconst ahora = new Date();\nconst stamp = ahora.toISOString().slice(0, 10).replace(/-/g, '');\nconst rnd = Math.random().toString(36).slice(2, 6).toUpperCase();\n\nreturn [{\n  json: {\n    evento_id: `EV-${stamp}-${rnd}`,\n    timestamp: ahora.toISOString(),\n    correlation_id: s.meta.correlation_id,\n    workflow: '01-telegram-router',\n    ejecucion: String(s.meta.execution_id),\n    usuario: String(s.ctx.telegram_user_id ?? ''),\n    accion: 'autorizar',\n    resultado: 'warn',\n    detalle: 'Intento de acceso de usuario no autorizado',\n    error: '',\n    datos_tecnicos: JSON.stringify({\n      tipo_mensaje: s.payload.tipo,\n      fuente_allowlist: s._fuente_allowlist\n    })\n  }\n}];"
+      },
+      "id": "a1000001-0000-4000-8000-00000000000c",
+      "name": "Auditar Rechazo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-callback",
+                    "leftValue": "={{ $json.payload.tipo }}",
+                    "rightValue": "callback",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "callback"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-comando",
+                    "leftValue": "={{ $json.payload.tipo }}",
+                    "rightValue": "comando",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "comando"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-archivo",
+                    "leftValue": "={{ $json.payload.tipo }}",
+                    "rightValue": "imagen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "imagen"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-doc",
+                    "leftValue": "={{ $json.payload.tipo }}",
+                    "rightValue": "documento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "documento"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-texto",
+                    "leftValue": "={{ $json.payload.tipo }}",
+                    "rightValue": "texto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "texto"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "otro"
+        }
+      },
+      "id": "a1000001-0000-4000-8000-00000000000e",
+      "name": "Enrutar por Tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RLDpqlwBbl5S6CoI",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-00000000000f",
+      "name": "→ WF6 Correcciones",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "5FdmASiJauvAHfza",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000010",
+      "name": "→ WF5 Consultas",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "nE1XPm6keZSNdjlQ",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000011",
+      "name": "→ WF3 Factura",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "beQUbNmXUzLxN1NX",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000012",
+      "name": "→ WF2 Interpretar",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.ctx.telegram_chat_id }}",
+        "text": "Por ahora entiendo texto, fotos de facturas y PDF. Escribe /ayuda para ver todo lo que puedo hacer.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a1000001-0000-4000-8000-000000000013",
+      "name": "Tipo No Soportado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        280
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Cubre audio (aun no implementado, Fase 4) y tipos desconocidos."
+    },
+    {
+      "parameters": {
+        "content": "## FIN — TG Router (WF1)\n\nUnico workflow con webhook. Los demas son subworkflows.\n\n**Orden de operaciones — importa**\n1. `Validar Origen` compara el header `X-Telegram-Bot-Api-Secret-Token`\n   contra `$env.TELEGRAM_WEBHOOK_SECRET`, en tiempo constante.\n   Sin match → **401** y no se procesa nada.\n2. Dedupe por `update_id` sobre `staticData` (ultimos 500).\n3. **Responder 200 antes de procesar.** Telegram reintenta el update si\n   la respuesta tarda; responder primero corta esa fuente de duplicados.\n4. Recien ahi se lee `Configuracion` y se autoriza al usuario.\n\n**Fail-closed:** si `autorizados_user_ids` esta vacio, nadie entra.\n\n**Antes de importar**\n- Reemplazar `1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg` (o correr\n  `node scripts/set-sheet-id.js`).\n- Reemplazar `beQUbNmXUzLxN1NX`, `nE1XPm6keZSNdjlQ`, `5FdmASiJauvAHfza`, `RLDpqlwBbl5S6CoI`\n  con los IDs reales tras importar esos workflows.\n- Reasignar las credenciales: n8n no las trae en el import.\n- `Settings → Error Workflow → SYS — Manejador de Errores`.",
+        "height": 480,
+        "width": 460
+      },
+      "id": "a1000001-0000-4000-8000-000000000014",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila en el orden EXACTO de columnas de 'Auditoria'.\nconst HEADERS = [\"evento_id\", \"timestamp\", \"correlation_id\", \"workflow\", \"ejecucion\", \"usuario\", \"accion\", \"resultado\", \"detalle\", \"error\", \"datos_tecnicos\"];\nconst item = $json;\nconst fila = HEADERS.map(h => item[h] !== undefined && item[h] !== null ? item[h] : '');\nreturn { json: { fila } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "a1000001-0000-4000-8000-00000000000d-row",
+      "name": "Guardar Auditoria Rechazo — Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Auditoria!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.fila] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1000001-0000-4000-8000-00000000000d",
+      "name": "Guardar Auditoria Rechazo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1080,
+        320
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook Telegram": {
+      "main": [
+        [
+          {
+            "node": "Validar Origen y Deduplicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Origen y Deduplicar": {
+      "main": [
+        [
+          {
+            "node": "Origen Valido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Origen Valido?": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder 200": {
+      "main": [
+        [
+          {
+            "node": "Update Nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Nuevo?": {
+      "main": [
+        [
+          {
+            "node": "Leer Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Descartar Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Autorizar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Enrutar por Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rechazar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rechazar": {
+      "main": [
+        [
+          {
+            "node": "Auditar Rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auditar Rechazo": {
+      "main": [
+        [
+          {
+            "node": "Guardar Auditoria Rechazo — Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar por Tipo": {
+      "main": [
+        [
+          {
+            "node": "→ WF6 Correcciones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ WF5 Consultas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ WF3 Factura",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ WF3 Factura",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ WF2 Interpretar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tipo No Soportado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Auditoria Rechazo — Fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar Auditoria Rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

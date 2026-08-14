@@ -1,0 +1,335 @@
+{
+  "name": "FIN — Setup Sheet (un solo uso)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fin-setup-sheet",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f0000001-0000-4000-8000-000000000001",
+      "name": "Disparador",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        300
+      ],
+      "webhookId": "fin-setup-sheet"
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg?fields=sheets.properties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "f0000001-0000-4000-8000-000000000002",
+      "name": "Leer Pestanas Existentes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -880,
+        300
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "notes": "Solo lee. Sirve para no intentar crear una pestana que ya existe: batchUpdate falla entero si una addSheet choca."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construye el batchUpdate de estructura.\n// SOLO agrega pestanas nuevas. Nunca borra ni toca Sheet1 ni Gastos.\n\nconst HOJAS = [\n  'Configuracion', 'Categorias', 'GastosFijos', 'Transacciones',\n  'Ingresos', 'Resumen', 'Alertas', 'Pendientes', 'Auditoria'\n];\n\nconst existentes = new Set(\n  ($json.sheets || []).map(s => s.properties.title)\n);\n\nconst faltantes = HOJAS.filter(h => !existentes.has(h));\n\nconst requests = [];\nfor (const titulo of faltantes) {\n  requests.push({\n    addSheet: {\n      properties: {\n        title: titulo,\n        gridProperties: { rowCount: 2000, columnCount: 32, frozenRowCount: 1 }\n      }\n    }\n  });\n}\n\nreturn [{\n  json: {\n    faltantes,\n    ya_existian: [...existentes],\n    hay_trabajo: requests.length > 0,\n    body: { requests }\n  }\n}];"
+      },
+      "id": "f0000001-0000-4000-8000-000000000003",
+      "name": "Calcular Pestanas Faltantes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-trabajo",
+              "leftValue": "={{ $json.hay_trabajo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f0000001-0000-4000-8000-000000000004",
+      "name": "Faltan Pestanas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f0000001-0000-4000-8000-000000000005",
+      "name": "Crear Pestanas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -220,
+        200
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "f0000001-0000-4000-8000-000000000006",
+      "name": "Ya Estaban",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Encabezados + datos iniciales, construidos con los numeros REALES\n// del sheet de AP (pestanas Sheet1 y Gastos).\n//\n// Ciclo A = 1 al 15 (ingreso el 15). Ciclo B = 16 a fin (ingreso el 31).\n// Todo lo marcado CONFIRMAR necesita decision de AP.\n\nconst H = {\n  Configuracion: ['clave','valor','descripcion','tipo_dato','estado'],\n  Categorias: ['categoria_id','nombre','descripcion','grupo','presupuesto','ciclo','fecha_inicio','fecha_fin','gastado','disponible','porcentaje_usado','estado','activa','palabras_clave','notas'],\n  GastosFijos: ['fijo_id','concepto','monto','categoria_id','ciclo','dia_estimado','frecuencia','estado_ciclo','ultimo_pago','activo','notas'],\n  Transacciones: ['transaccion_id','timestamp_registro','fecha_movimiento','ciclo_id','tipo','monto','moneda','categoria_id','categoria','subcategoria','descripcion','comercio_proveedor','metodo_pago','persona','origen','telegram_user_id','telegram_chat_id','telegram_message_id','file_id','archivo_url_o_referencia','hash_archivo','texto_original','datos_extraidos','confianza_ia','requiere_revision','estado','posible_duplicado','transaccion_relacionada','correlation_id','notas'],\n  Ingresos: ['ingreso_id','nombre','monto_esperado','monto_recibido','frecuencia','dia_programado','proxima_fecha','fecha_recibido','estado','categorias_asociadas','notas'],\n  Resumen: ['metrica','valor','unidad','ciclo_id','actualizado_en'],\n  Alertas: ['alerta_id','timestamp','clave_dedupe','tipo','nivel','categoria','valor_actual','limite','mensaje','enviada','telegram_message_id','resuelta','fecha_resolucion'],\n  Pendientes: ['pendiente_id','telegram_chat_id','telegram_message_id','estado_maquina','datos_propuestos','campo_ambiguo','opciones','fecha_creacion','fecha_expiracion','estado','correlation_id'],\n  Auditoria: ['evento_id','timestamp','correlation_id','workflow','ejecucion','usuario','accion','resultado','detalle','error','datos_tecnicos']\n};\n\nconst CONFIG = [\n  ['moneda','COP','Moneda base','texto','activo'],\n  ['zona_horaria','America/Bogota','Zona horaria para resolver fechas','texto','activo'],\n  ['idioma','es-CO','Idioma de las respuestas','texto','activo'],\n  ['autorizados_user_ids','8695082898','user_id numericos autorizados, separados por coma','lista','activo'],\n  ['admin_chat_id','8695082898','Destino de alertas tecnicas','texto','activo'],\n  ['umbral_aviso_1','70','Porcentaje de aviso preventivo','numero','activo'],\n  ['umbral_aviso_2','85','Porcentaje de aviso alto','numero','activo'],\n  ['umbral_critico','100','Porcentaje de presupuesto consumido','numero','activo'],\n  ['confirmacion_activa','TRUE','Pedir confirmacion en casos ambiguos','bool','activo'],\n  ['resumen_diario_activo','FALSE','Enviar resumen diario','bool','activo'],\n  ['resumen_semanal_activo','TRUE','Enviar resumen semanal','bool','activo'],\n  ['hora_envio_resumen','20:00','Hora local de envio','hora','activo'],\n  ['dia_resumen_semanal','0','0 = domingo','numero','activo'],\n  ['ciclo_modelo','A','Modelo de ciclo financiero','enum','activo'],\n  ['ciclo_dias_inicio','1,16','Ciclo A: 1 al 15. Ciclo B: 16 a fin de mes','lista','activo'],\n  ['presupuesto_ciclo_techo','4000000','Techo de control por ciclo en COP','numero','activo'],\n  ['tolerancia_duplicado_horas','48','Ventana de deteccion de duplicados','numero','activo'],\n  ['categoria_por_defecto','CAT-015','Categoria usada cuando no se resuelve','texto','activo'],\n  ['confianza_minima_ia','0.80','Bajo este valor se exige confirmacion','numero','activo'],\n  ['ttl_pendientes_minutos','15','Expiracion de pendientes','numero','activo'],\n  ['max_archivo_mb','10','Limite de adjunto','numero','activo'],\n  ['guardar_adjuntos_drive','FALSE','Persistir adjuntos en Drive','bool','activo'],\n  ['factor_ritmo_excesivo','1.3','Multiplicador de alerta de ritmo','numero','activo'],\n  ['umbral_movimiento_inusual','3','Veces la mediana de la categoria','numero','activo']\n];\n\n// Presupuestos = plan del ciclo A (1 al 15), tomados de la pestana \"Gastos\".\n// Fijos A = 2.110.000 | Variable A = 2.048.000 | Total = 4.158.000\nconst CAT = [\n  ['CAT-001','Vivienda','Apto, administracion y Apto Chia','Esencial',0,'ciclo','','',0,0,'','ok','TRUE','arriendo|administracion|apto|chia|mensualidad apto|canon','CONFIRMAR: apto 2.500.000 + Chia 800.000 no estan en ningun ciclo'],\n  ['CAT-002','Servicios publicos','Agua, luz, gas, Starlink','Esencial',490000,'ciclo','','',0,0,'','ok','TRUE','agua|luz|energia|gas|starlink|internet|acueducto|recibo','Ciclo A: agua 150.000 + luz 340.000. Ciclo B: gas 40.000. CONFIRMAR Starlink 160.000'],\n  ['CAT-003','Mercado','Mercado quincenal','Esencial',600000,'ciclo','','',0,0,'','ok','TRUE','mercado|supermercado|d1|ara|exito|olimpica|jumbo','600.000 por ciclo. CONFIRMAR: la lista mensual decia 800.000/mes'],\n  ['CAT-004','Mascotas','Comida Siena, Comida Mia, bano','Variable',380000,'ciclo','','',0,0,'','ok','TRUE','comida siena|comida mia|siena|mia|bano bebas|bebas|veterinario|concentrado','Ciclo A: Comida Mia 380.000. Ciclo B: Comida Siena 250.000 + Bano 270.000. CONFIRMAR si son mascotas'],\n  ['CAT-005','Transporte','Gasolina y movilidad','Variable',250000,'ciclo','','',0,0,'','ok','TRUE','gasolina|terpel|taxi|uber|didi|peaje|combustible|parqueadero','Ciclo A: 250.000'],\n  ['CAT-006','Deudas y creditos','TC Andres y Fedesco','Financiero',350000,'ciclo','','',0,0,'','ok','TRUE','tc andres|tarjeta|credito|fedesco|cuota|prestamo|abono','TC 350.000 por ciclo. CONFIRMAR: la lista mensual decia 1.150.000/mes'],\n  ['CAT-007','Cuidado personal','Corte, depilacion, pedicure','Discrecional',40000,'ciclo','','',0,0,'','ok','TRUE','corte|corte andres|depilacion|pedicure|manicure|peluqueria','Ciclo A: corte 40.000. Ciclo B: depilacion 100.000'],\n  ['CAT-008','Apoyo familiar','Transferencia a German','Esencial',0,'ciclo','','',0,0,'','ok','TRUE','german','Solo ciclo B: 300.000'],\n  ['CAT-009','Bienestar','Gimnasio y salud fisica','Discrecional',0,'ciclo','','',0,0,'','ok','TRUE','gimnasio|gym|entrenamiento','Solo ciclo B: 270.000'],\n  ['CAT-010','Restaurantes y salidas','Comidas fuera y domicilios','Discrecional',600000,'ciclo','','',0,0,'','ok','TRUE','cena|almuerzo|restaurante|domicilio|rappi|cafe|comida fuera','SUGERIDO: sin historico. Ajustar'],\n  ['CAT-011','Salud','EPS, medicamentos, consultas','Esencial',300000,'ciclo','','',0,0,'','ok','TRUE','eps|medicamento|drogueria|farmacia|consulta|copago|cruz verde','SUGERIDO: sin historico. Ajustar'],\n  ['CAT-012','Compras personales','Ropa, tecnologia, regalos','Discrecional',400000,'ciclo','','',0,0,'','ok','TRUE','ropa|zapatos|tecnologia|regalo|accesorios','SUGERIDO: sin historico. Ajustar'],\n  ['CAT-013','Hogar','Aseo, ferreteria, reparaciones','Variable',250000,'ciclo','','',0,0,'','ok','TRUE','aseo|ferreteria|muebles|reparacion|hogar','SUGERIDO: sin historico. Ajustar'],\n  ['CAT-014','Imprevistos','Emergencias y multas','Variable',350000,'ciclo','','',0,0,'','ok','TRUE','imprevisto|emergencia|multa|urgencia','SUGERIDO: sin historico. Ajustar'],\n  ['CAT-015','Otros','Categoria por defecto','Variable',148000,'ciclo','','',0,0,'','ok','TRUE','','SUGERIDO: cuadra el ciclo A en 4.158.000']\n];\n\n// Plan de gastos fijos por ciclo, tal cual la pestana \"Gastos\" de AP.\nconst FIJOS = [\n  ['GF-001','Comida Mia',380000,'CAT-004','A',5,'quincenal','pendiente','','TRUE',''],\n  ['GF-002','Agua',150000,'CAT-002','A',8,'quincenal','pendiente','','TRUE',''],\n  ['GF-003','Luz',340000,'CAT-002','A',8,'quincenal','pendiente','','TRUE',''],\n  ['GF-004','TC Andres',350000,'CAT-006','A',10,'quincenal','pendiente','','TRUE','CONFIRMAR monto'],\n  ['GF-005','Mercado',600000,'CAT-003','A',3,'quincenal','pendiente','','TRUE',''],\n  ['GF-006','Gasolina',250000,'CAT-005','A',7,'quincenal','pendiente','','TRUE',''],\n  ['GF-007','Corte Andres',40000,'CAT-007','A',12,'quincenal','pendiente','','TRUE',''],\n  ['GF-008','Comida Siena',250000,'CAT-004','B',18,'quincenal','pendiente','','TRUE',''],\n  ['GF-009','Administracion',534000,'CAT-001','B',20,'quincenal','pendiente','','TRUE',''],\n  ['GF-010','Gas',40000,'CAT-002','B',22,'quincenal','pendiente','','TRUE',''],\n  ['GF-011','TC Andres',350000,'CAT-006','B',25,'quincenal','pendiente','','TRUE','CONFIRMAR monto'],\n  ['GF-012','Fedesco',240000,'CAT-006','B',20,'quincenal','pendiente','','TRUE',''],\n  ['GF-013','German',300000,'CAT-008','B',18,'quincenal','pendiente','','TRUE',''],\n  ['GF-014','Mercado',600000,'CAT-003','B',18,'quincenal','pendiente','','TRUE',''],\n  ['GF-015','Gimnasio',270000,'CAT-009','B',20,'quincenal','pendiente','','TRUE',''],\n  ['GF-016','Bano bebas',270000,'CAT-004','B',22,'quincenal','pendiente','','TRUE',''],\n  ['GF-017','Depilacion y demas',100000,'CAT-007','B',24,'quincenal','pendiente','','TRUE',''],\n  ['GF-018','Pago mensualidad apto',2500000,'CAT-001','','','mensual','sin_asignar','','FALSE','CONFIRMAR: no esta en ningun ciclo. Con que ingreso se paga?'],\n  ['GF-019','Apto Chia',800000,'CAT-001','','','mensual','sin_asignar','','FALSE','CONFIRMAR: no esta en ningun ciclo'],\n  ['GF-020','Starlink',160000,'CAT-002','','','mensual','sin_asignar','','FALSE','CONFIRMAR: esta en la lista mensual pero no en el plan quincenal']\n];\n\nconst ING = [\n  ['ING-001','Ingreso quincena 1',4158000,'','quincenal',15,'','','pendiente','','Llega el 15. Financia el ciclo B (16 a fin de mes)'],\n  ['ING-002','Ingreso quincena 2',3841000,'','quincenal',31,'','','pendiente','','Llega el 31 (o ultimo dia). Financia el ciclo A del mes siguiente']\n];\n\n// Solo encabezados para las hojas que llena el sistema.\nconst data = [\n  { range: 'Configuracion!A1', values: [H.Configuracion, ...CONFIG] },\n  { range: 'Categorias!A1',    values: [H.Categorias, ...CAT] },\n  { range: 'GastosFijos!A1',   values: [H.GastosFijos, ...FIJOS] },\n  { range: 'Ingresos!A1',      values: [H.Ingresos, ...ING] },\n  { range: 'Transacciones!A1', values: [H.Transacciones] },\n  { range: 'Resumen!A1',       values: [H.Resumen] },\n  { range: 'Alertas!A1',       values: [H.Alertas] },\n  { range: 'Pendientes!A1',    values: [H.Pendientes] },\n  { range: 'Auditoria!A1',     values: [H.Auditoria] }\n];\n\nconst sumaCat = CAT.reduce((a, c) => a + Number(c[4] || 0), 0);\nconst sumaFijosA = FIJOS.filter(f => f[4] === 'A').reduce((a, f) => a + f[2], 0);\nconst sumaFijosB = FIJOS.filter(f => f[4] === 'B').reduce((a, f) => a + f[2], 0);\n\nreturn [{\n  json: {\n    body: { valueInputOption: 'RAW', data },\n    control: {\n      presupuesto_ciclo_A: sumaCat,\n      fijos_ciclo_A: sumaFijosA,\n      fijos_ciclo_B: sumaFijosB,\n      variable_ciclo_A: sumaCat - sumaFijosA,\n      filas_categorias: CAT.length,\n      filas_fijos: FIJOS.length\n    }\n  }\n}];"
+      },
+      "id": "f0000001-0000-4000-8000-000000000007",
+      "name": "Construir Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f0000001-0000-4000-8000-000000000008",
+      "name": "Escribir Datos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reporte de lo que se hizo, para verificar sin abrir el Sheet.\nconst pestanas = $('Calcular Pestanas Faltantes').first().json;\nconst datos = $('Construir Datos').first().json;\nconst resp = $json;\n\nreturn [{\n  json: {\n    ok: true,\n    pestanas_creadas: pestanas.faltantes,\n    pestanas_ya_existian: pestanas.ya_existian,\n    celdas_actualizadas: resp.totalUpdatedCells || null,\n    rangos_actualizados: resp.totalUpdatedSheets || null,\n    control: datos.control\n  }\n}];"
+      },
+      "id": "f0000001-0000-4000-8000-000000000009",
+      "name": "Reportar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "f0000001-0000-4000-8000-00000000000a",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FIN — Setup Sheet (un solo uso)\n\nCrea la estructura de 9 pestanas en el Sheet de AP y carga la\nconfiguracion, las categorias, los gastos fijos y los ingresos con los\n**numeros reales** de sus pestanas `Sheet1` y `Gastos`.\n\n**Es aditivo. No borra nada.**\n- `Sheet1` y `Gastos` quedan intactas.\n- Solo crea pestanas que NO existan (se consulta antes).\n- Volver a ejecutarlo reescribe los encabezados y los datos base,\n  pero no toca `Transacciones` mas alla del encabezado.\n\n**Uso**\n1. Activar el workflow.\n2. `curl -X POST <webhook-url>`\n3. Verificar el JSON de respuesta.\n4. **Desactivar y borrar este workflow.**\n\n**No dejarlo activo.** Es un webhook sin autenticacion que escribe en\nel Sheet. Vive lo que dura el setup.",
+        "height": 400,
+        "width": 440
+      },
+      "id": "f0000001-0000-4000-8000-00000000000b",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Disparador": {
+      "main": [
+        [
+          {
+            "node": "Leer Pestanas Existentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Pestanas Existentes": {
+      "main": [
+        [
+          {
+            "node": "Calcular Pestanas Faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Pestanas Faltantes": {
+      "main": [
+        [
+          {
+            "node": "Faltan Pestanas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Faltan Pestanas?": {
+      "main": [
+        [
+          {
+            "node": "Crear Pestanas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ya Estaban",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Pestanas": {
+      "main": [
+        [
+          {
+            "node": "Construir Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ya Estaban": {
+      "main": [
+        [
+          {
+            "node": "Construir Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Datos": {
+      "main": [
+        [
+          {
+            "node": "Escribir Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escribir Datos": {
+      "main": [
+        [
+          {
+            "node": "Reportar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reportar": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

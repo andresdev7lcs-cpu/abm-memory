@@ -1,0 +1,1005 @@
+{
+  "name": "FIN — Registrar Movimiento",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "d4000001-0000-4000-8000-000000000001",
+      "name": "Entrada",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Configuracion",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "d4000001-0000-4000-8000-000000000002",
+      "name": "Leer Configuracion",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1120,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Identidad y ciclo del movimiento.\n//\n// transaccion_id es DETERMINISTICO desde chat_id + message_id (DEC-005).\n// Un reintento de n8n o un reenvio de Telegram produce el mismo id, y el\n// nodo de idempotencia lo detecta antes de escribir.\n\nconst sobre = $('Entrada').first().json;\nconst c = sobre.contrato;\nconst ZONA = 'America/Bogota';\n\nconst cfg = {};\nfor (const f of $input.all().map(i => i.json)) {\n  if (f && f.clave) cfg[String(f.clave).trim()] = String(f.valor ?? '').trim();\n}\n\n// ---------- resolverCiclo ----------\n// Fronteras = dias del mes configurados. Un dia mayor al ultimo dia del\n// mes se ajusta solo: asi 31 funciona en meses de 30 y en febrero\n// (architecture.md §6.1, TC-23 a TC-26).\nfunction fronterasDelMes(dt, dias) {\n  const ultimo = dt.daysInMonth;\n  const set = new Set(dias.map(d => Math.min(d, ultimo)));\n  return [...set].sort((a, b) => a - b).map(d => dt.set({ day: d }).startOf('day'));\n}\n\nfunction resolverCiclo(fechaISO, diasInicio) {\n  const f = DateTime.fromISO(fechaISO, { zone: ZONA }).startOf('day');\n  const previo = f.minus({ months: 1 });\n  const siguiente = f.plus({ months: 1 });\n\n  const todas = [\n    ...fronterasDelMes(previo, diasInicio),\n    ...fronterasDelMes(f, diasInicio),\n    ...fronterasDelMes(siguiente, diasInicio)\n  ].sort((a, b) => a.toMillis() - b.toMillis());\n\n  let inicio = null, fin = null;\n  for (let i = 0; i < todas.length; i++) {\n    if (todas[i] <= f && (i + 1 >= todas.length || todas[i + 1] > f)) {\n      inicio = todas[i];\n      fin = (i + 1 < todas.length) ? todas[i + 1].minus({ days: 1 }) : todas[i].endOf('month');\n      break;\n    }\n  }\n  if (!inicio) { inicio = todas[0]; fin = todas[1] ? todas[1].minus({ days: 1 }) : inicio.endOf('month'); }\n\n  // Sufijo A/B/C segun el orden de la frontera dentro de su propio mes.\n  const delMes = fronterasDelMes(inicio, diasInicio);\n  const idx = delMes.findIndex(d => d.toISODate() === inicio.toISODate());\n  const letra = String.fromCharCode(65 + (idx >= 0 ? idx : 0));\n\n  return {\n    ciclo_id: `${inicio.toFormat('yyyy-LL')}-${letra}`,\n    inicio: inicio.toISODate(),\n    fin: fin.toISODate()\n  };\n}\n\nconst diasInicio = (cfg.ciclo_dias_inicio || '1,16')\n  .split(',').map(s => parseInt(s.trim(), 10)).filter(Number.isFinite);\n\nconst cicloMovimiento = resolverCiclo(c.fecha_movimiento, diasInicio);\nconst hoy = DateTime.now().setZone(ZONA).startOf('day');\nconst cicloVigente = resolverCiclo(hoy.toISODate(), diasInicio);\n\nconst cicloCerrado = cicloMovimiento.ciclo_id !== cicloVigente.ciclo_id;\nconst finVigente = DateTime.fromISO(cicloVigente.fin, { zone: ZONA });\nconst diasRestantes = Math.max(1, Math.floor(finVigente.diff(hoy, 'days').days) + 1);\n\n// ---------- transaccion_id determinístico ----------\n// require('crypto') esta bloqueado en el sandbox del Code node de esta\n// instancia. No hace falta resistencia criptografica aca: solo que el\n// mismo (chat_id, message_id) produzca siempre el mismo hash (idempotencia,\n// DEC-005). FNV-1a de 32 bits alcanza de sobra para eso.\nfunction fnv1a(str) {\n  let h = 0x811c9dc5;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 0x01000193);\n  }\n  return (h >>> 0).toString(16).padStart(8, '0').toUpperCase();\n}\nconst semilla = `${sobre.ctx.telegram_chat_id}:${sobre.ctx.telegram_message_id}`;\nconst hash6 = fnv1a(semilla).slice(0, 6);\nconst stamp = DateTime.fromISO(c.fecha_movimiento, { zone: ZONA }).toFormat('yyyyLLdd');\nconst transaccionId = `TX-${stamp}-${hash6}`;\n\nreturn [{\n  json: {\n    ...sobre,\n    config: cfg,\n    calc: {\n      transaccion_id: transaccionId,\n      ciclo_movimiento: cicloMovimiento,\n      ciclo_vigente: cicloVigente,\n      ciclo_cerrado: cicloCerrado,\n      dias_restantes: diasRestantes,\n      hoy: hoy.toISODate()\n    }\n  }\n}];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000003",
+      "name": "Resolver Ciclo e ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Transacciones",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "d4000001-0000-4000-8000-000000000004",
+      "name": "Leer Transacciones",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -680,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dos controles antes de escribir, en este orden:\n//   1. Idempotencia: el transaccion_id ya existe -> no se escribe nada.\n//   2. Duplicado por puntaje (architecture.md §12).\n\nconst s = $('Resolver Ciclo e ID').first().json;\nconst c = s.contrato;\nconst txs = $input.all().map(i => i.json).filter(t => t && t.transaccion_id);\n\n// --- 1. Idempotencia (TC-42) ---\nconst yaExiste = txs.find(t => String(t.transaccion_id).trim() === s.calc.transaccion_id);\nif (yaExiste) {\n  return [{ json: { ...s, _ya_registrado: true, _duplicado_score: 0, _existente: yaExiste } }];\n}\n\n// --- 2. Puntaje de duplicado ---\nconst ZONA = 'America/Bogota';\nconst ventanaH = parseInt(s.config.tolerancia_duplicado_horas || '48', 10);\nconst ahora = DateTime.now().setZone(ZONA);\n\nfunction norm(x) {\n  return String(x || '').toLowerCase()\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\n}\n\nlet mejor = null;\nlet mejorPuntaje = 0;\n\nfor (const t of txs) {\n  if (String(t.estado).trim() !== 'activo') continue;\n\n  const reg = DateTime.fromISO(String(t.timestamp_registro || ''), { zone: ZONA });\n  if (reg.isValid && ahora.diff(reg, 'hours').hours > ventanaH) continue;\n\n  let p = 0;\n  // Señales fuertes: por si solas confirman el duplicado.\n  if (c.evidencia?.hash_archivo && norm(t.hash_archivo) === norm(c.evidencia.hash_archivo)) p += 100;\n  if (String(t.telegram_message_id) === String(s.ctx.telegram_message_id)) p += 100;\n\n  // Señales debiles: suman.\n  if (Number(t.monto) === Number(c.monto)) p += 40;\n  if (c.comercio_proveedor && norm(t.comercio_proveedor) === norm(c.comercio_proveedor)) p += 25;\n  if (String(t.fecha_movimiento).trim() === c.fecha_movimiento) p += 20;\n  if (String(t.categoria_id).trim() === c.categoria_id) p += 10;\n\n  if (p > mejorPuntaje) { mejorPuntaje = p; mejor = t; }\n}\n\nreturn [{\n  json: {\n    ...s,\n    _ya_registrado: false,\n    _duplicado_score: mejorPuntaje,\n    _duplicado_confirmado: mejorPuntaje >= 100,\n    _duplicado_probable: mejorPuntaje >= 65 && mejorPuntaje < 100,\n    _similar: mejor\n  }\n}];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000005",
+      "name": "Idempotencia y Duplicados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-ya",
+                    "leftValue": "={{ $json._ya_registrado }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ya_registrado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-dupc",
+                    "leftValue": "={{ $json._duplicado_confirmado }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "duplicado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-dupp",
+                    "leftValue": "={{ $json._duplicado_probable }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "probable"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "registrar"
+        }
+      },
+      "id": "d4000001-0000-4000-8000-000000000006",
+      "name": "Puede Registrarse?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aviso de duplicado. NO se escribe la transaccion (TC-18).\nconst s = $json;\nconst sim = s._similar || {};\nconst yaReg = s._ya_registrado;\n\nconst texto = yaReg\n  ? `Este movimiento ya estaba registrado (${s.calc.transaccion_id}). No lo dupliqué.`\n  : [\n      '⚠️ Este gasto parece que ya está registrado.',\n      '',\n      `$${Number(sim.monto || 0).toLocaleString('es-CO')} — ${sim.comercio_proveedor || sim.categoria || 'sin proveedor'} — ${sim.fecha_movimiento || ''}`,\n      '',\n      '¿Lo registro de todas formas?'\n    ].join('\\n');\n\nconst teclado = yaReg ? null : {\n  inline_keyboard: [[\n    { text: 'Registrar igual', callback_data: `force:${s.calc.transaccion_id}` },\n    { text: 'No, cancelar', callback_data: 'cancel' }\n  ]]\n};\n\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto, teclado: teclado ? JSON.stringify(teclado) : null } }];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000007",
+      "name": "Avisar Duplicado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila exacta de la hoja Transacciones (30 columnas,\n// data-model.md §3). Los nombres deben coincidir caracter por caracter\n// con los encabezados: el nodo de Sheets mapea por nombre.\n\nconst s = $json;\nconst c = s.contrato;\nconst ahora = DateTime.now().setZone('America/Bogota');\n\nreturn [{\n  json: {\n    transaccion_id: s.calc.transaccion_id,\n    timestamp_registro: ahora.toISO(),\n    fecha_movimiento: c.fecha_movimiento,\n    ciclo_id: s.calc.ciclo_movimiento.ciclo_id,\n    tipo: c.tipo,\n    monto: c.monto,\n    moneda: 'COP',\n    categoria_id: c.categoria_id,\n    categoria: c.categoria_sugerida || '',\n    subcategoria: c.subcategoria || '',\n    descripcion: c.descripcion || '',\n    comercio_proveedor: c.comercio_proveedor || '',\n    metodo_pago: c.metodo_pago || 'no_especificado',\n    persona: c.persona || '',\n    origen: s.meta.origen,\n    telegram_user_id: String(s.ctx.telegram_user_id ?? ''),\n    telegram_chat_id: String(s.ctx.telegram_chat_id ?? ''),\n    telegram_message_id: String(s.ctx.telegram_message_id ?? ''),\n    file_id: c.evidencia?.file_id || '',\n    archivo_url_o_referencia: '',\n    hash_archivo: c.evidencia?.hash_archivo || '',\n    texto_original: (c.evidencia?.texto_original || '').slice(0, 500),\n    datos_extraidos: (c.evidencia?.datos_extraidos || '{}').slice(0, 2000),\n    confianza_ia: c.confianza,\n    requiere_revision: c.categoria_id === (s.config.categoria_por_defecto || 'CAT-015') ? 'TRUE' : 'FALSE',\n    estado: 'activo',\n    posible_duplicado: s._duplicado_score >= 65 ? 'TRUE' : 'FALSE',\n    transaccion_relacionada: '',\n    correlation_id: s.meta.correlation_id,\n    notas: s.calc.ciclo_cerrado ? `Imputado al ciclo cerrado ${s.calc.ciclo_movimiento.ciclo_id}` : ''\n  }\n}];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000008",
+      "name": "Construir Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rama de error de escritura. Regla P6 de la arquitectura:\n// si no se escribio, el usuario NO puede recibir un ✅ (TC-43).\nconst s = $('Idempotencia y Duplicados').first().json;\nreturn [{\n  json: {\n    chat_id: s.ctx.telegram_chat_id,\n    texto: '❌ No pude guardar el gasto. Nada quedó registrado. Volvé a enviarlo en un momento.',\n    teclado: null,\n    _fallo_escritura: true\n  }\n}];"
+      },
+      "id": "d4000001-0000-4000-8000-00000000000a",
+      "name": "Avisar Fallo de Escritura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Categorias",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "d4000001-0000-4000-8000-00000000000b",
+      "name": "Leer Categorias",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        420,
+        120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recalcula el ciclo vigente completo desde Transacciones.\n// No se hace un +=: se recalcula. Asi una anulacion, una correccion o\n// una escritura perdida se corrigen solas en el siguiente movimiento.\n\nconst s = $('Idempotencia y Duplicados').first().json;\nconst fila = $('Construir Fila').first().json;\nconst categorias = $input.all().map(i => i.json).filter(c => c && c.categoria_id);\n\n// Transacciones leidas antes de escribir + la recien escrita.\nconst previas = $('Leer Transacciones').all().map(i => i.json).filter(t => t && t.transaccion_id);\nconst todas = [...previas, fila];\n\nconst cicloVigente = s.calc.ciclo_vigente.ciclo_id;\nconst validas = todas.filter(t =>\n  String(t.estado).trim() === 'activo' &&\n  String(t.ciclo_id).trim() === cicloVigente\n);\n\nfunction netoDe(filtro) {\n  let gasto = 0, reembolso = 0;\n  for (const t of validas.filter(filtro)) {\n    const m = Number(t.monto) || 0;\n    if (t.tipo === 'gasto' || t.tipo === 'ajuste') gasto += m;\n    else if (t.tipo === 'reembolso') reembolso += m;\n    // ingreso y traslado quedan fuera del presupuesto (architecture.md §10)\n  }\n  return gasto - reembolso;\n}\n\nconst umbral1 = parseFloat(s.config.umbral_aviso_1 || '70');\nconst umbral2 = parseFloat(s.config.umbral_aviso_2 || '85');\nconst umbralCrit = parseFloat(s.config.umbral_critico || '100');\n\nlet presupuestoTotal = 0;\nlet gastadoTotal = 0;\nconst filasCategorias = [];\nlet catDelMovimiento = null;\nconst alertas = [];\n\nfor (const c of categorias) {\n  const activa = String(c.activa).toUpperCase() === 'TRUE';\n  const presupuesto = Number(c.presupuesto) || 0;\n  const gastado = netoDe(t => String(t.categoria_id).trim() === String(c.categoria_id).trim());\n\n  if (activa) { presupuestoTotal += presupuesto; gastadoTotal += gastado; }\n\n  const pct = presupuesto === 0 ? null : Math.round((gastado / presupuesto) * 1000) / 10;\n\n  let estado = 'ok';\n  if (presupuesto === 0) estado = 'sin_presupuesto';\n  else if (pct > umbralCrit) estado = 'excedido';\n  else if (pct >= umbralCrit) estado = 'limite';\n  else if (pct >= umbral2) estado = 'alto';\n  else if (pct >= umbral1) estado = 'aviso';\n\n  filasCategorias.push({\n    categoria_id: c.categoria_id,\n    fecha_inicio: s.calc.ciclo_vigente.inicio,\n    fecha_fin: s.calc.ciclo_vigente.fin,\n    gastado,\n    disponible: presupuesto - gastado,\n    porcentaje_usado: pct === null ? '' : pct,\n    estado\n  });\n\n  if (String(c.categoria_id).trim() === String(fila.categoria_id).trim()) {\n    catDelMovimiento = { ...c, presupuesto, gastado, disponible: presupuesto - gastado, pct, estado };\n\n    // Alertas de umbral, solo para la categoria tocada por este movimiento.\n    if (presupuesto === 0) {\n      alertas.push({ codigo: 'CATEGORIA_SIN_PRESUPUESTO', nivel: 'info', valor: 0, limite: 0 });\n    } else {\n      if (pct > umbralCrit) alertas.push({ codigo: 'CAT_EXCEDIDO', nivel: 'critico', valor: pct, limite: umbralCrit });\n      else if (pct >= umbralCrit) alertas.push({ codigo: 'CAT_100', nivel: 'critico', valor: pct, limite: umbralCrit });\n      if (pct >= umbral2 && pct <= umbralCrit) alertas.push({ codigo: 'CAT_85', nivel: 'alto', valor: pct, limite: umbral2 });\n      if (pct >= umbral1 && pct < umbral2) alertas.push({ codigo: 'CAT_70', nivel: 'medio', valor: pct, limite: umbral1 });\n    }\n  }\n}\n\nconst disponibleGlobal = presupuestoTotal - gastadoTotal;\nconst pctGlobal = presupuestoTotal === 0 ? 0 : Math.round((gastadoTotal / presupuestoTotal) * 1000) / 10;\nconst maximoDiario = Math.round(Math.max(disponibleGlobal, 0) / Math.max(s.calc.dias_restantes, 1));\n\nif (pctGlobal >= umbralCrit) alertas.push({ codigo: 'GLOBAL_100', nivel: 'critico', valor: pctGlobal, limite: umbralCrit });\nelse if (pctGlobal >= umbral2) alertas.push({ codigo: 'GLOBAL_85', nivel: 'alto', valor: pctGlobal, limite: umbral2 });\n\nreturn [{\n  json: {\n    ...s,\n    fila,\n    saldos: {\n      categoria: catDelMovimiento,\n      global: { presupuesto: presupuestoTotal, gastado: gastadoTotal, disponible: disponibleGlobal, porcentaje: pctGlobal },\n      ciclo: s.calc.ciclo_vigente,\n      dias_restantes: s.calc.dias_restantes,\n      maximo_diario_sugerido: maximoDiario\n    },\n    filas_categorias: filasCategorias,\n    alertas\n  }\n}];"
+      },
+      "id": "d4000001-0000-4000-8000-00000000000c",
+      "name": "Recalcular Saldos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "filas_categorias",
+        "options": {}
+      },
+      "id": "d4000001-0000-4000-8000-00000000000d",
+      "name": "Separar Categorias",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        860,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Alertas",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "d4000001-0000-4000-8000-00000000000f",
+      "name": "Leer Alertas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        860,
+        220
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Anti-repeticion (DEC-011): clave ciclo_id|categoria_id|codigo.\n// Si ya existe en este ciclo, la alerta no se vuelve a emitir. Al cambiar\n// de ciclo la clave cambia y los umbrales pueden dispararse otra vez.\n\nconst s = $('Recalcular Saldos').first().json;\nconst existentes = new Set(\n  $input.all().map(i => i.json)\n    .filter(a => a && a.clave_dedupe)\n    .map(a => String(a.clave_dedupe).trim())\n);\n\nconst ciclo = s.saldos.ciclo.ciclo_id;\nconst catId = s.fila.categoria_id;\nconst catNombre = s.fila.categoria;\nconst ahora = DateTime.now().setZone('America/Bogota');\nconst stamp = ahora.toFormat('yyyyLLdd');\n\nconst PLANTILLAS = {\n  CAT_70:  (n, d) => `🟡 Llevas el 70% del presupuesto de ${n}. Quedan $${d}.`,\n  CAT_85:  (n, d) => `🟠 Estás cerca del límite de ${n}. Solo quedan $${d} en este ciclo.`,\n  CAT_100: (n) => `🔴 Consumiste todo el presupuesto de ${n}.`,\n  CAT_EXCEDIDO: (n, d, e) => `🚨 Excediste el presupuesto de ${n} en $${e}.`,\n  GLOBAL_85: () => `🟠 Vas por el 85% del presupuesto total del ciclo.`,\n  GLOBAL_100: () => `🚨 Consumiste el presupuesto total del ciclo.`,\n  CATEGORIA_SIN_PRESUPUESTO: (n) => `ℹ️ ${n} no tiene presupuesto configurado. El gasto quedó registrado igual.`\n};\n\nconst fmt = (v) => Math.abs(Math.round(v)).toLocaleString('es-CO');\nconst cat = s.saldos.categoria || {};\nconst nuevas = [];\nlet i = 0;\n\nfor (const a of s.alertas) {\n  const esGlobal = a.codigo.startsWith('GLOBAL');\n  const clave = `${ciclo}|${esGlobal ? 'GLOBAL' : catId}|${a.codigo}`;\n  if (existentes.has(clave)) continue;\n\n  const plantilla = PLANTILLAS[a.codigo];\n  if (!plantilla) continue;\n  const mensaje = plantilla(catNombre, fmt(cat.disponible || 0), fmt(Math.abs(cat.disponible || 0)));\n\n  nuevas.push({\n    alerta_id: `AL-${stamp}-${String(++i).padStart(3, '0')}${Math.random().toString(36).slice(2, 4).toUpperCase()}`,\n    timestamp: ahora.toISO(),\n    clave_dedupe: clave,\n    tipo: a.codigo,\n    nivel: a.nivel,\n    categoria: esGlobal ? 'GLOBAL' : catNombre,\n    valor_actual: a.valor,\n    limite: a.limite,\n    mensaje,\n    enviada: 'TRUE',\n    telegram_message_id: '',\n    resuelta: 'FALSE',\n    fecha_resolucion: ''\n  });\n}\n\nif (nuevas.length === 0) return [{ json: { _sin_alertas: true } }];\nreturn nuevas.map(json => ({ json }));"
+      },
+      "id": "d4000001-0000-4000-8000-000000000010",
+      "name": "Filtrar Alertas Nuevas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Respuesta al usuario. Plantilla propia: nunca texto libre del modelo\n// (security.md §6, control 5).\n\nconst s = $('Recalcular Saldos').first().json;\nconst cat = s.saldos.categoria;\nconst g = s.saldos.global;\nconst fmt = (v) => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\n\nconst alertasNuevas = $input.all().map(i => i.json).filter(a => a && a.mensaje);\n\nconst esReembolso = s.fila.tipo === 'reembolso';\nconst titulo = esReembolso\n  ? `✅ Reembolso registrado: ${fmt(s.fila.monto)} en ${s.fila.categoria}`\n  : `✅ Gasto registrado: ${fmt(s.fila.monto)} en ${s.fila.categoria}`;\n\nconst lineas = [titulo, ''];\n\nif (cat && cat.presupuesto > 0) {\n  lineas.push(\n    `${cat.nombre}`,\n    `• Presupuesto: ${fmt(cat.presupuesto)}`,\n    `• Gastado: ${fmt(cat.gastado)}`,\n    `• Disponible: ${fmt(cat.disponible)}`,\n    `• Usado: ${cat.pct}%`,\n    ''\n  );\n} else if (cat) {\n  lineas.push(`${cat.nombre} no tiene presupuesto configurado.`, '');\n}\n\nlineas.push(\n  'Estado general',\n  `• Disponible: ${fmt(g.disponible)}`,\n  `• Faltan ${s.saldos.dias_restantes} días para el próximo ingreso`,\n  `• Máximo diario sugerido: ${fmt(s.saldos.maximo_diario_sugerido)}`\n);\n\nif (s.calc.ciclo_cerrado) {\n  lineas.push('', `ℹ️ Se registró en el ciclo ${s.calc.ciclo_movimiento.ciclo_id}, que ya está cerrado. No afecta el ciclo actual.`);\n}\n\nfor (const a of alertasNuevas) lineas.push('', a.mensaje);\n\n// El maximo diario es aritmetica, no consejo financiero (architecture.md §10).\nlineas.push('', '_Referencia matemática, no recomendación financiera._');\n\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: lineas.join('\\n'), teclado: null } }];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000012",
+      "name": "Construir Respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un evento de Auditoria por cada escritura en Transacciones\n// (regla de integridad #7 del data-model).\nconst s = $('Recalcular Saldos').first().json;\nconst ahora = DateTime.now().setZone('America/Bogota');\nconst stamp = ahora.toFormat('yyyyLLdd');\nconst rnd = Math.random().toString(36).slice(2, 6).toUpperCase();\n\nreturn [{\n  json: {\n    evento_id: `EV-${stamp}-${rnd}`,\n    timestamp: ahora.toISO(),\n    correlation_id: s.meta.correlation_id,\n    workflow: '04-registrar-movimiento',\n    ejecucion: String(s.meta.execution_id || ''),\n    usuario: String(s.ctx.telegram_user_id ?? ''),\n    accion: 'escribir_transaccion',\n    resultado: 'ok',\n    detalle: `${s.calc.transaccion_id} registrada en ${s.fila.categoria}`,\n    error: '',\n    datos_tecnicos: JSON.stringify({\n      via: s._via || 'desconocida',\n      confianza: s.contrato.confianza,\n      duplicado_score: s._duplicado_score,\n      ciclo: s.saldos.ciclo.ciclo_id,\n      alertas: s.alertas.map(a => a.codigo)\n    })\n  }\n}];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000014",
+      "name": "Construir Auditoria",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FIN — Registrar Movimiento (WF4)\n\n**Unico workflow que escribe en `Transacciones`** junto con WF6 (DEC-004).\nPunto unico de escritura = punto unico de validacion.\n\n**Orden**\n1. `Resolver Ciclo e ID` — `resolverCiclo` ajusta el dia 31 al ultimo dia\n   del mes: funciona en febrero y en meses de 30 (TC-23…TC-26).\n   `transaccion_id = TX-{fecha}-{hash6(chat_id:message_id)}`.\n2. `Idempotencia y Duplicados` — si el id ya existe, **no escribe**.\n   Si el puntaje de duplicado llega a 100, tampoco. Entre 65 y 99 pregunta.\n3. Escritura, y recien despues el recalculo.\n4. `Recalcular Saldos` **recalcula todo el ciclo**, no hace `+=`.\n   Una anulacion o una escritura perdida se corrigen solas en el\n   siguiente movimiento.\n5. Alertas con clave `ciclo|categoria|codigo`: el mismo umbral no se\n   repite dentro del ciclo (DEC-011).\n\n**Regla P6 — la mas importante**\n`Escribir Transaccion` tiene `onError: continueErrorOutput`. Si falla,\nla rama de error manda **❌ No pude guardar**. El usuario nunca ve un ✅\npor algo que no se escribio (TC-43).\n\n**Reembolso ≠ ingreso** (DEC-010): resta del gasto de su categoria y no\ntoca la hoja `Ingresos`. `traslado` e `ingreso` quedan fuera del\npresupuesto.",
+        "height": 560,
+        "width": 470
+      },
+      "id": "d4000001-0000-4000-8000-000000000016",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1340,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila en el orden EXACTO de columnas de 'Transacciones'.\nconst HEADERS = [\"transaccion_id\", \"timestamp_registro\", \"fecha_movimiento\", \"ciclo_id\", \"tipo\", \"monto\", \"moneda\", \"categoria_id\", \"categoria\", \"subcategoria\", \"descripcion\", \"comercio_proveedor\", \"metodo_pago\", \"persona\", \"origen\", \"telegram_user_id\", \"telegram_chat_id\", \"telegram_message_id\", \"file_id\", \"archivo_url_o_referencia\", \"hash_archivo\", \"texto_original\", \"datos_extraidos\", \"confianza_ia\", \"requiere_revision\", \"estado\", \"posible_duplicado\", \"transaccion_relacionada\", \"correlation_id\", \"notas\"];\nconst item = $json;\nconst fila = HEADERS.map(h => item[h] !== undefined && item[h] !== null ? item[h] : '');\nreturn { json: { fila } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "d4000001-0000-4000-8000-000000000009-row",
+      "name": "Escribir Transaccion — Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Transacciones!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.fila] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "d4000001-0000-4000-8000-000000000009",
+      "name": "Escribir Transaccion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        200,
+        200
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Busca la fila por 'categoria_id' en 'Categorias', fusiona los campos\n// nuevos sobre la fila existente y arma el rango a actualizar.\nconst HEADERS = [\"categoria_id\", \"nombre\", \"descripcion\", \"grupo\", \"presupuesto\", \"ciclo\", \"fecha_inicio\", \"fecha_fin\", \"gastado\", \"disponible\", \"porcentaje_usado\", \"estado\", \"activa\", \"palabras_clave\", \"notas\"];\nconst MATCH_COL = 'categoria_id';\nconst filas = $('Leer Categorias').all().map(i => i.json);\nconst nuevo = $json;\nconst idx = filas.findIndex(f => String(f[MATCH_COL]).trim() === String(nuevo[MATCH_COL]).trim());\nif (idx === -1) { return { json: { _sin_fila: true } }; }\nconst filaSheets = idx + 2;\nconst fusionada = { ...filas[idx], ...nuevo };\nconst valores = HEADERS.map(h => fusionada[h] !== undefined && fusionada[h] !== null ? fusionada[h] : '');\nreturn { json: { fila_sheets: filaSheets, valores } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "d4000001-0000-4000-8000-00000000000e-merge",
+      "name": "Actualizar Categorias — Buscar y Fusionar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Categorias!A{{ $json.fila_sheets }}:O{{ $json.fila_sheets }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.valores] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "d4000001-0000-4000-8000-00000000000e",
+      "name": "Actualizar Categorias",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1080,
+        20
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila en el orden EXACTO de columnas de 'Alertas'.\nconst HEADERS = [\"alerta_id\", \"timestamp\", \"clave_dedupe\", \"tipo\", \"nivel\", \"categoria\", \"valor_actual\", \"limite\", \"mensaje\", \"enviada\", \"telegram_message_id\", \"resuelta\", \"fecha_resolucion\"];\nconst item = $json;\nconst fila = HEADERS.map(h => item[h] !== undefined && item[h] !== null ? item[h] : '');\nreturn { json: { fila } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "d4000001-0000-4000-8000-000000000011-row",
+      "name": "Guardar Alertas — Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Alertas!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.fila] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "d4000001-0000-4000-8000-000000000011",
+      "name": "Guardar Alertas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1300,
+        220
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila en el orden EXACTO de columnas de 'Auditoria'.\nconst HEADERS = [\"evento_id\", \"timestamp\", \"correlation_id\", \"workflow\", \"ejecucion\", \"usuario\", \"accion\", \"resultado\", \"detalle\", \"error\", \"datos_tecnicos\"];\nconst item = $json;\nconst fila = HEADERS.map(h => item[h] !== undefined && item[h] !== null ? item[h] : '');\nreturn { json: { fila } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "d4000001-0000-4000-8000-000000000015-row",
+      "name": "Guardar Auditoria — Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Auditoria!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.fila] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "d4000001-0000-4000-8000-000000000015",
+      "name": "Guardar Auditoria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1740,
+        20
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traduce el formato {inline_keyboard:[[{text,callback_data}]]}\n// (el que arman los Code nodes previos) al formato que espera\n// el nodo nativo Telegram: rows[].row.buttons[].additionalFields.\nconst s = $json;\nlet filas = [];\nif (s.teclado) {\n  let ik;\n  try { ik = JSON.parse(s.teclado).inline_keyboard; } catch (e) { ik = []; }\n  filas = ik.map(fila => ({ row: { buttons: fila.map(b => ({ text: b.text, additionalFields: { callback_data: b.callback_data } })) } }));\n}\nreturn [{ json: { ...s, _filas_botones: filas, _con_botones: filas.length > 0 } }];"
+      },
+      "id": "d4000001-0000-4000-8000-000000000013-tr",
+      "name": "Responder en Telegram — Preparar Botones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        },
+        "replyMarkup": "={{ $json._con_botones ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": {
+          "rows": "={{ $json._filas_botones }}"
+        }
+      },
+      "id": "d4000001-0000-4000-8000-000000000013",
+      "name": "Responder en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1740,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-hay-alerta",
+              "leftValue": "={{ $json._sin_alertas }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4000001-0000-4000-8000-0000000000ga",
+      "name": "Hay Alertas Reales?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Entrada": {
+      "main": [
+        [
+          {
+            "node": "Leer Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Resolver Ciclo e ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Ciclo e ID": {
+      "main": [
+        [
+          {
+            "node": "Leer Transacciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Transacciones": {
+      "main": [
+        [
+          {
+            "node": "Idempotencia y Duplicados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idempotencia y Duplicados": {
+      "main": [
+        [
+          {
+            "node": "Puede Registrarse?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Puede Registrarse?": {
+      "main": [
+        [
+          {
+            "node": "Avisar Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Construir Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar Duplicado": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram — Preparar Botones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Fila": {
+      "main": [
+        [
+          {
+            "node": "Escribir Transaccion — Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escribir Transaccion": {
+      "main": [
+        [
+          {
+            "node": "Leer Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar Fallo de Escritura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar Fallo de Escritura": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram — Preparar Botones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Categorias": {
+      "main": [
+        [
+          {
+            "node": "Recalcular Saldos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recalcular Saldos": {
+      "main": [
+        [
+          {
+            "node": "Separar Categorias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Categorias": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Categorias — Buscar y Fusionar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Alertas": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Alertas Nuevas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Alertas Nuevas": {
+      "main": [
+        [
+          {
+            "node": "Hay Alertas Reales?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Construir Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram — Preparar Botones",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Construir Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Auditoria": {
+      "main": [
+        [
+          {
+            "node": "Guardar Auditoria — Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escribir Transaccion — Fila": {
+      "main": [
+        [
+          {
+            "node": "Escribir Transaccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Categorias — Buscar y Fusionar": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Alertas — Fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar Alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Auditoria — Fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder en Telegram — Preparar Botones": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay Alertas Reales?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Guardar Alertas — Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

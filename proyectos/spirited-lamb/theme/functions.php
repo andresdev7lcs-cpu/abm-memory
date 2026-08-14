@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('SL_VERSION', '1.2.1');
+define('SL_VERSION', '1.3.0');
 define('SL_DIR', get_template_directory());
 define('SL_URI', get_template_directory_uri());
 
@@ -34,7 +34,7 @@ add_action('wp_enqueue_scripts', function () {
     );
     // Pass config to JS
     wp_localize_script('spirited-lamb-main', 'SLConfig', [
-        'n8nEventsUrl' => 'https://7lcsapp-n8n.ydlmwq.easypanel.host/webhook/sl-parish-events',
+        'n8nEventsUrl' => 'https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/sl-parish-events',
         'ajaxUrl'      => admin_url('admin-ajax.php'),
         'themeUri'     => SL_URI,
     ]);
@@ -56,11 +56,42 @@ add_action('woocommerce_after_main_content', function () {
     echo '</div>';
 });
 
+// ── Auto-provision resource pages (Faith Formation Media, Confession & Adoration) ──
+// Runs once; creates the WP Page + assigns the matching page-{slug}.php template so
+// the pillar links on the homepage resolve without any manual wp-admin step.
+add_action('init', function () {
+    if (get_option('sl_resource_pages_synced_v1')) return;
+
+    $pages = [
+        'confession-adoration'  => ['title' => 'Confession & Adoration',  'template' => 'page-confession-adoration.php'],
+        'faith-formation-media' => ['title' => 'Faith Formation Media',   'template' => 'page-faith-formation-media.php'],
+    ];
+
+    foreach ($pages as $slug => $data) {
+        $existing = get_page_by_path($slug, OBJECT, 'page');
+        if (!$existing) {
+            $id = wp_insert_post([
+                'post_title'  => $data['title'],
+                'post_name'   => $slug,
+                'post_type'   => 'page',
+                'post_status' => 'publish',
+            ]);
+            if ($id && !is_wp_error($id)) {
+                update_post_meta($id, '_wp_page_template', $data['template']);
+            }
+        } elseif (get_post_meta($existing->ID, '_wp_page_template', true) !== $data['template']) {
+            update_post_meta($existing->ID, '_wp_page_template', $data['template']);
+        }
+    }
+
+    update_option('sl_resource_pages_synced_v1', 1);
+});
+
 // ── AJAX: proxy to n8n events endpoint (avoids CORS) ──────────
 add_action('wp_ajax_nopriv_sl_get_events', 'sl_get_events');
 add_action('wp_ajax_sl_get_events',        'sl_get_events');
 function sl_get_events() {
-    $n8n_url = 'https://7lcsapp-n8n.ydlmwq.easypanel.host/webhook/sl-parish-events';
+    $n8n_url = 'https://no-26feb-n8n.ydlmwq.easypanel.host/webhook/sl-parish-events';
     if ($n8n_url === 'PLACEHOLDER_N8N_WEBHOOK_URL') {
         wp_send_json_success(['events' => []]);
         return;

@@ -1,0 +1,172 @@
+{
+  "name": "Spirited Lamb - Events (Sheet -> Webhook)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-1",
+      "name": "Every 3 Days",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-400, 0]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16wYzSI5Ls8SPqL93N0VNxGM6iIFtQheVJUmGiKodsK8"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "options": {}
+      },
+      "id": "google-sheets-read-schedule",
+      "name": "Read Events (Schedule)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-160, 0],
+      "credentials": {
+        "googleApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Spirited Lamb Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "sl-parish-events",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger-1",
+      "name": "Webhook - sl-parish-events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-400, 240],
+      "webhookId": "sl-parish-events"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16wYzSI5Ls8SPqL93N0VNxGM6iIFtQheVJUmGiKodsK8"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "options": {}
+      },
+      "id": "google-sheets-read-webhook",
+      "name": "Read Events (Webhook)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-160, 240],
+      "credentials": {
+        "googleApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Spirited Lamb Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Only pass through events whose date falls in the current calendar month/year.\n// Client keeps adding rows for future/past months without deleting anything;\n// this is what keeps the calendar showing just the current month.\n// Always returns exactly ONE item (events array can be empty) so the Respond\n// node downstream always executes -- n8n skips nodes entirely when a node's\n// output has zero items, which would otherwise send an empty response body.\nconst now = new Date();\nconst curMonth = now.getMonth();\nconst curYear = now.getFullYear();\n\nconst events = $input.all()\n  .filter(item => {\n    const d = new Date(item.json.date);\n    return !isNaN(d) && d.getMonth() === curMonth && d.getFullYear() === curYear;\n  })\n  .map(item => item.json);\n\nreturn [{ json: { events } }];"
+      },
+      "id": "filter-current-month-1",
+      "name": "Filter Current Month",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-1",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [80, 240]
+    }
+  ],
+  "connections": {
+    "Every 3 Days": {
+      "main": [
+        [
+          {
+            "node": "Read Events (Schedule)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Events (Schedule)": {
+      "main": [
+        [
+        ]
+      ]
+    },
+    "Webhook - sl-parish-events": {
+      "main": [
+        [
+          {
+            "node": "Read Events (Webhook)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Events (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "Filter Current Month",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Current Month": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) exit;
     <meta name="description" content="Spirited Lamb — Catholic young adult community in Santa Barbara & Ventura Counties. Faith. Friends. Fellowship.">
     <meta property="og:title" content="Spirited Lamb — Faith. Friends. Fellowship.">
     <meta property="og:description" content="Catholic young adult community in Santa Barbara & Ventura Counties. Est. 2023.">
-    <meta property="og:image" content="https://mlptyjrdcsxoojvszlbn.supabase.co/storage/v1/object/public/SLWeb/jqs7kv1shsrmy0cvx6btn17cyr.png">
+    <meta property="og:image" content="<?php echo SL_URI; ?>/assets/img/hero-1.jpg">
     <meta property="og:url" content="https://spiritedlamb.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,13 +76,13 @@ if (!defined('ABSPATH')) exit;
     <!-- Slides -->
     <div class="sl-hero__slides" id="sl-hero-slides">
         <div class="sl-hero__slide active">
-            <img src="https://mlptyjrdcsxoojvszlbn.supabase.co/storage/v1/object/public/SLWeb/jqs7kv1shsrmy0cvx6btn17cyr.png" alt="Sacrifice" class="sl-hero__slide-img">
+            <img src="<?php echo SL_URI; ?>/assets/img/hero-1.jpg" alt="Eucharistic adoration" class="sl-hero__slide-img">
         </div>
         <div class="sl-hero__slide">
-            <img src="https://mlptyjrdcsxoojvszlbn.supabase.co/storage/v1/object/public/SLWeb/ey4tftzcjsrmw0cvx6cs3vxw50.png" alt="Sanctity" class="sl-hero__slide-img">
+            <img src="<?php echo SL_URI; ?>/assets/img/hero-2.jpg" alt="Spirited Lamb community gathering" class="sl-hero__slide-img">
         </div>
         <div class="sl-hero__slide">
-            <img src="https://mlptyjrdcsxoojvszlbn.supabase.co/storage/v1/object/public/SLWeb/sjrpkf863nrmt0cvx6ct53sbym.png" alt="Service" class="sl-hero__slide-img">
+            <img src="<?php echo SL_URI; ?>/assets/img/hero-3.jpg" alt="Spirited Lamb community member" class="sl-hero__slide-img">
         </div>
     </div>
 
@@ -103,11 +103,11 @@ if (!defined('ABSPATH')) exit;
         </h1>
 
         <h2 class="sl-hero__sub">
-            Your home for a faith in <br class="sl-br-md"> Catholic community
+            Your home for building <br class="sl-br-md"> Catholic community
         </h2>
 
         <div class="sl-hero__ctas">
-            <a href="#events" class="sl-btn sl-btn--white-hero">
+            <a href="#contact" class="sl-btn sl-btn--white-hero">
                 Join the Mission
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -204,15 +204,29 @@ if (!defined('ABSPATH')) exit;
 ═══════════════════════════════════════════ -->
 <div class="sl-modal" id="sl-event-modal" aria-modal="true" role="dialog" aria-hidden="true">
     <div class="sl-modal__backdrop" id="sl-modal-backdrop"></div>
+
+    <button class="sl-modal__nav sl-modal__nav--prev" id="sl-modal-prev" aria-label="Previous event day">&#8592;</button>
+
     <div class="sl-modal__box">
         <button class="sl-modal__close" id="sl-modal-close" aria-label="Close">&#x2715;</button>
+        <img class="sl-modal__img" id="sl-modal-img" src="" alt="">
         <h3 class="sl-modal__title" id="sl-modal-title"></h3>
         <div class="sl-modal__meta">
             <span class="sl-modal__meta-item" id="sl-modal-date"></span>
             <span class="sl-modal__meta-item" id="sl-modal-location"></span>
+            <span class="sl-modal__meta-item" id="sl-modal-cost"></span>
         </div>
         <p class="sl-modal__desc" id="sl-modal-desc"></p>
+        <a class="sl-btn sl-btn--primary sl-modal__link" id="sl-modal-link" href="#" target="_blank" rel="noopener">More Info →</a>
     </div>
+
+    <button class="sl-modal__nav sl-modal__nav--next" id="sl-modal-next" aria-label="Next event day">&#8594;</button>
+</div>
+
+<!-- Hover mini-preview -->
+<div class="sl-cal-tooltip" id="sl-cal-tooltip" aria-hidden="true">
+    <img id="sl-cal-tooltip-img" src="" alt="">
+    <span id="sl-cal-tooltip-title"></span>
 </div>
 
 
@@ -227,9 +241,6 @@ if (!defined('ABSPATH')) exit;
             </h2>
         </div>
         <div class="sl-partner__actions">
-            <a href="https://giving.parishsoft.com/App/Giving/PS-1252" target="_blank" rel="noopener" class="sl-btn sl-btn--primary">
-                Donate Now
-            </a>
             <a href="#contact" class="sl-btn sl-btn--white-solid">
                 Sponsorship Opportunities
             </a>
@@ -245,26 +256,26 @@ if (!defined('ABSPATH')) exit;
     <div class="sl-pillars-container">
         <div class="sl-pillars-grid">
 
-            <div class="sl-pillar">
-                <img src="https://images.unsplash.com/photo-1544427920-c49ccfb85579?auto=format&fit=crop&q=80&w=1200"
+            <a class="sl-pillar" href="/faith-formation-media/">
+                <img src="<?php echo SL_URI; ?>/assets/img/pillar-education.jpg"
                      alt="Education" class="sl-pillar__img">
                 <div class="sl-pillar__overlay"></div>
                 <div class="sl-pillar__label">Education</div>
-            </div>
+            </a>
 
-            <div class="sl-pillar">
-                <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&q=80&w=800"
+            <a class="sl-pillar" href="/confession-adoration/">
+                <img src="<?php echo SL_URI; ?>/assets/img/pillar-faith.jpg"
                      alt="Faith" class="sl-pillar__img">
                 <div class="sl-pillar__overlay"></div>
                 <div class="sl-pillar__label">Faith</div>
-            </div>
+            </a>
 
-            <div class="sl-pillar">
-                <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800"
+            <a class="sl-pillar" href="<?php echo SL_URI; ?>/assets/pdf/catholic-young-adult-directory.pdf" target="_blank" rel="noopener">
+                <img src="<?php echo SL_URI; ?>/assets/img/pillar-connection.jpg"
                      alt="Connection" class="sl-pillar__img">
                 <div class="sl-pillar__overlay"></div>
                 <div class="sl-pillar__label">Connection</div>
-            </div>
+            </a>
 
         </div>
     </div>
@@ -306,41 +317,8 @@ if (!defined('ABSPATH')) exit;
                 </div>
             </div>
 
-            <!-- Spotify -->
-            <a href="https://open.spotify.com" target="_blank" rel="noopener" class="sl-bento__card sl-bento__card--spotify">
-                <div class="sl-bento__card-top">
-                    <div class="sl-bento__icon-box">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-                    </div>
-                    <div class="sl-bento__card-top-right">
-                        <p class="sl-bento__platform">Spotify</p>
-                        <p class="sl-bento__platform-sub">The Lamb's Path Podcast</p>
-                    </div>
-                </div>
-                <h3 class="sl-bento__big-title">LISTEN ON <br>SPOTIFY</h3>
-                <div class="sl-bento__progress">
-                    <div class="sl-bento__progress-bar"></div>
-                </div>
-                <span class="sl-bento__cta-link">Open App →</span>
-            </a>
-
-            <!-- Resources -->
-            <div class="sl-bento__card sl-bento__card--resources">
-                <div class="sl-bento__card-top">
-                    <div class="sl-bento__icon-box">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    </div>
-                    <div class="sl-bento__card-top-right">
-                        <p class="sl-bento__platform">Resources</p>
-                        <p class="sl-bento__platform-sub">Deepen your faith</p>
-                    </div>
-                </div>
-                <h3 class="sl-bento__big-title">EDUCATIONAL <br>RESOURCES</h3>
-                <span class="sl-bento__cta-link">Explore Library →</span>
-            </div>
-
             <!-- YouTube — large card -->
-            <a href="https://youtube.com/playlist?list=PLII8HPmlG5kQlA5hCZC6ZmBrGHa3H0LMT&si=I-JA6hI8V3ElCThH"
+            <a href="https://www.youtube.com/channel/UCA0oFV-X0qWrbFmgHo4lvaA"
                target="_blank" rel="noopener" class="sl-bento__card sl-bento__card--yt">
                 <img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&q=80&w=1200"
                      alt="YouTube" class="sl-bento__yt-bg">
@@ -358,19 +336,19 @@ if (!defined('ABSPATH')) exit;
             </a>
 
             <!-- Instagram row -->
-            <div class="sl-bento__ig-row">
-                <a href="https://www.instagram.com/spirited_lamb" target="_blank" rel="noopener" class="sl-bento__ig-info">
-                    <div class="sl-bento__ig-top">
+                <div class="sl-bento__ig-row">
+                    <a href="https://www.instagram.com/spirited_lamb" target="_blank" rel="noopener" class="sl-bento__ig-info">
+                        <div class="sl-bento__ig-top">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="#C05A3F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                         <h4 class="sl-bento__ig-handle">@spirited_lamb</h4>
                     </div>
                     <p class="sl-bento__ig-desc">Connect for local stories, highlights, and community updates.</p>
                 </a>
                 <div class="sl-bento__ig-thumb">
-                    <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=400" alt="IG preview 1">
+                    <img src="<?php echo SL_URI; ?>/assets/img/instagram-1.jpg" alt="IG preview 1">
                 </div>
                 <div class="sl-bento__ig-thumb">
-                    <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&q=80&w=400" alt="IG preview 2">
+                    <img src="<?php echo SL_URI; ?>/assets/img/instagram-2.jpg" alt="IG preview 2">
                 </div>
             </div>
 
@@ -402,39 +380,7 @@ if (!defined('ABSPATH')) exit;
             <?php
             if (class_exists('WooCommerce')) {
                 echo do_shortcode('[products limit="4" columns="2" orderby="date" order="DESC"]');
-            } else {
-                $placeholders = [
-                    ['name' => 'Signature Lamb Hoodie', 'price' => '$55', 'cat' => 'Apparel',
-                     'img'  => 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800'],
-                    ['name' => 'Unity Cotton Tee',      'price' => '$32', 'cat' => 'Apparel',
-                     'img'  => 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800'],
-                    ['name' => 'Coastal Faith Cap',     'price' => '$28', 'cat' => 'Apparel',
-                     'img'  => 'https://images.unsplash.com/photo-1534215754734-18e55d13e346?auto=format&fit=crop&q=80&w=800'],
-                    ['name' => 'Faith Crewneck',        'price' => '$48', 'cat' => 'Apparel',
-                     'img'  => 'https://images.unsplash.com/photo-1541101767792-f9b2b1c4f127?auto=format&fit=crop&q=80&w=800'],
-                ];
-                foreach ($placeholders as $p) { ?>
-                    <div class="sl-product-card">
-                        <div class="sl-product-card__img-wrap">
-                            <img src="<?php echo esc_url($p['img']); ?>" alt="<?php echo esc_attr($p['name']); ?>" class="sl-product-card__img">
-                            <div class="sl-product-card__badge"><?php echo esc_html($p['cat']); ?></div>
-                            <div class="sl-product-card__hover">
-                                <button class="sl-btn sl-btn--white-solid sl-btn--sm">
-                                    Add to Cart
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="sl-product-card__info">
-                            <div class="sl-product-card__name-row">
-                                <h3 class="sl-product-card__name"><?php echo esc_html($p['name']); ?></h3>
-                                <span class="sl-product-card__price"><?php echo esc_html($p['price']); ?></span>
-                            </div>
-                            <p class="sl-product-card__sub">&#9733; Spirited Apparel</p>
-                        </div>
-                    </div>
-                <?php }
-                ?>
+            } else { ?>
                 <div class="sl-shop-notice">
                     <p>Shop launching soon — powered by Printify &amp; WooCommerce.</p>
                     <a href="#contact" class="sl-btn sl-btn--primary sl-btn--sm">Get Notified →</a>
@@ -477,7 +423,7 @@ if (!defined('ABSPATH')) exit;
             <span class="sl-bottom-banner__text">Coastal Faith</span>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="#C05A3F" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <span class="sl-bottom-banner__text sl-bottom-banner__text--gold">Community Joy</span>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M10 21c0-1.9-.4-3.5-1.2-4.7-.8-1.2-1.9-2.2-3.4-3V9.5c0-.8.6-1.5 1.4-1.5.5 0 1 .3 1.2.8l.7 1.6c.3.6 1 .9 1.6.7.5-.2.8-.6.8-1.1V5.3c0-.7.6-1.3 1.3-1.3s1.3.6 1.3 1.3V10c0 .4.3.8.7 1 .6.2 1.3-.1 1.6-.7l.7-1.6c.2-.5.7-.8 1.2-.8.8 0 1.4.7 1.4 1.5V13c-1.5.8-2.6 1.8-3.4 3-.8 1.2-1.2 2.8-1.2 4.7M8.2 16.4l1.7-2.1M15.8 16.4l-1.7-2.1"/></svg>
         <?php } ?>
     </div>
 </div>
@@ -505,7 +451,7 @@ if (!defined('ABSPATH')) exit;
                 <div class="sl-footer__col">
                     <h5>Social</h5>
                     <a href="https://www.instagram.com/spirited_lamb" target="_blank" rel="noopener">Instagram</a>
-                    <a href="https://youtube.com/playlist?list=PLII8HPmlG5kQlA5hCZC6ZmBrGHa3H0LMT" target="_blank" rel="noopener">YouTube</a>
+                    <a href="https://www.youtube.com/channel/UCA0oFV-X0qWrbFmgHo4lvaA" target="_blank" rel="noopener">YouTube</a>
                 </div>
                 <div class="sl-footer__col">
                     <h5>Contact</h5>

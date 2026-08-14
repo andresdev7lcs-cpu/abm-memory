@@ -1,0 +1,320 @@
+{
+  "name": "SYS — Manejador de Errores",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b1a00001-0000-4000-8000-000000000001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sanea el error antes de registrarlo. Nunca deja salir un secreto\n// ni el contenido completo de un documento (docs/security.md §7).\n\nconst SECRET_PATTERNS = [\n  { re: /[0-9]{8,10}:AA[A-Za-z0-9_-]{33}/g, tag: '[TOKEN_TELEGRAM]' },\n  { re: /\\bsk-[A-Za-z0-9_-]{20,}/g,          tag: '[API_KEY]' },\n  { re: /\\bAIza[A-Za-z0-9_-]{35}/g,          tag: '[API_KEY_GOOGLE]' },\n  { re: /-----BEGIN [A-Z ]*PRIVATE KEY-----[\\s\\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, tag: '[CLAVE_PRIVADA]' },\n  { re: /\\bBearer\\s+[A-Za-z0-9._-]{20,}/gi,  tag: '[BEARER]' },\n  { re: /\"(?:accessToken|apiKey|privateKey|password|secret)\"\\s*:\\s*\"[^\"]*\"/gi, tag: '\"[REDACTADO]\"' }\n];\n\nfunction sanear(texto) {\n  if (texto === null || texto === undefined) return '';\n  let s = String(texto);\n  for (const { re, tag } of SECRET_PATTERNS) s = s.replace(re, tag);\n  return s.slice(0, 900);\n}\n\nconst e = $json.execution || {};\nconst w = $json.workflow || {};\nconst lastNode = e.lastNodeExecuted || 'desconocido';\nconst rawMsg = (e.error && (e.error.message || e.error.description)) || 'sin mensaje';\n\n// Clasificación: define si se despierta al admin o solo se registra.\nconst msg = String(rawMsg).toLowerCase();\nlet nivel = 'error';\nlet notificarAdmin = true;\n\nif (msg.includes('quota') || msg.includes('rate limit') || msg.includes('429')) {\n  nivel = 'warn';\n} else if (msg.includes('timeout') || msg.includes('etimedout') || msg.includes('econnreset')) {\n  nivel = 'warn';\n  notificarAdmin = false; // transitorio: el reintento suele resolverlo\n}\n\n// Un fallo de escritura en Sheets siempre despierta al admin: es el unico\n// caso en que el usuario pudo quedar sin su movimiento registrado.\nif (msg.includes('sheets') || msg.includes('spreadsheet')) {\n  nivel = 'error';\n  notificarAdmin = true;\n}\n\nconst ahora = new Date();\nconst stamp = ahora.toISOString().slice(0, 10).replace(/-/g, '');\nconst rnd = Math.random().toString(36).slice(2, 6).toUpperCase();\n\nreturn [{\n  json: {\n    evento_id: `EV-${stamp}-${rnd}`,\n    timestamp: ahora.toISOString(),\n    correlation_id: (e.error && e.error.context && e.error.context.correlation_id) || 'sin-correlacion',\n    workflow: w.name || 'desconocido',\n    ejecucion: String(e.id || ''),\n    usuario: '',\n    accion: 'error_no_controlado',\n    resultado: nivel,\n    detalle: `Fallo en el nodo \"${lastNode}\"`,\n    error: sanear(rawMsg),\n    datos_tecnicos: JSON.stringify({\n      workflow_id: w.id || null,\n      nodo: lastNode,\n      modo: e.mode || null,\n      url_ejecucion: e.url || null\n    }),\n    _notificar_admin: notificarAdmin,\n    _nivel: nivel\n  }\n}];"
+      },
+      "id": "b1a00001-0000-4000-8000-000000000002",
+      "name": "Sanear y Clasificar Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-notificar",
+              "leftValue": "={{ $json._notificar_admin }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1a00001-0000-4000-8000-000000000004",
+      "name": "Notificar al Admin?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        60,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Configuracion",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "clave",
+              "lookupValue": "admin_chat_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b1a00001-0000-4000-8000-000000000005",
+      "name": "Leer admin_chat_id",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        300,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma el aviso tecnico. Texto corto: el admin lo lee en el celular.\nconst err = $('Sanear y Clasificar Error').first().json;\nconst cfg = $input.first().json || {};\nconst chatId = String(cfg.valor || '').trim();\n\nif (!chatId) {\n  // Sin admin_chat_id configurado no hay a quien avisar.\n  // No es un fallo: se registro en Auditoria y con eso basta.\n  return [];\n}\n\nconst icono = err._nivel === 'error' ? '🔴' : '🟠';\nconst texto = [\n  `${icono} Error en finanzas-telegram`,\n  '',\n  `Workflow: ${err.workflow}`,\n  `Nodo: ${err.detalle.replace('Fallo en el nodo ', '')}`,\n  `Ejecucion: ${err.ejecucion}`,\n  `Evento: ${err.evento_id}`,\n  '',\n  `${err.error}`\n].join('\\n');\n\nreturn [{ json: { chat_id: chatId, texto } }];"
+      },
+      "id": "b1a00001-0000-4000-8000-000000000006",
+      "name": "Construir Aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b1a00001-0000-4000-8000-000000000007",
+      "name": "Avisar al Admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        740,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "id": "b1a00001-0000-4000-8000-000000000008",
+      "name": "Solo Registrado",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        300,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## SYS — Manejador de Errores\n\nSe configura como **Error Workflow** de los 7 workflows restantes:\n`Settings → Error Workflow → SYS — Manejador de Errores`\n\n**Qué hace**\n1. Sanea el mensaje de error (quita tokens y API keys).\n2. Lo clasifica: `error` despierta al admin, `warn` transitorio no.\n3. Lo registra en la hoja `Auditoria`.\n4. Avisa al admin por Telegram si corresponde.\n\n**Por qué `onError: continue` en los nodos de Sheets**\nSi lo que fallo fue justamente Google Sheets, este workflow no puede\ndepender de Sheets para avisar. El aviso al admin sale igual.\n\n**Nunca** manda el error crudo al usuario final. Ese mensaje lo arma\nel workflow que fallo, con su propia plantilla.",
+        "height": 400,
+        "width": 420
+      },
+      "id": "b1a00001-0000-4000-8000-000000000009",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila en el orden EXACTO de columnas de 'Auditoria'.\nconst HEADERS = [\"evento_id\", \"timestamp\", \"correlation_id\", \"workflow\", \"ejecucion\", \"usuario\", \"accion\", \"resultado\", \"detalle\", \"error\", \"datos_tecnicos\"];\nconst item = $json;\nconst fila = HEADERS.map(h => item[h] !== undefined && item[h] !== null ? item[h] : '');\nreturn { json: { fila } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "b1a00001-0000-4000-8000-000000000003-row",
+      "name": "Registrar en Auditoria — Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Auditoria!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.fila] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "b1a00001-0000-4000-8000-000000000003",
+      "name": "Registrar en Auditoria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -180,
+        300
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Sanear y Clasificar Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanear y Clasificar Error": {
+      "main": [
+        [
+          {
+            "node": "Registrar en Auditoria — Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en Auditoria": {
+      "main": [
+        [
+          {
+            "node": "Notificar al Admin?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar al Admin?": {
+      "main": [
+        [
+          {
+            "node": "Leer admin_chat_id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Solo Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer admin_chat_id": {
+      "main": [
+        [
+          {
+            "node": "Construir Aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Aviso": {
+      "main": [
+        [
+          {
+            "node": "Avisar al Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en Auditoria — Fila": {
+      "main": [
+        [
+          {
+            "node": "Registrar en Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

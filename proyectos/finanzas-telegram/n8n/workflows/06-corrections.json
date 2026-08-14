@@ -1,0 +1,1267 @@
+{
+  "name": "FIN — Correcciones",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "f6000001-0000-4000-8000-000000000001",
+      "name": "Entrada",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Distingue tres entradas posibles a este workflow:\n//   1. Comando de texto: /corregir <id>, /anular <id>, /deshacer\n//   2. Callback de un botón de Construir Pendiente (WF2/WF3): monto:X, cat:Y, fix:campo\n//   3. Callback de un botón de Avisar Duplicado (WF4): force:<tx_id>, cancel\n//\n// Todo termina en una de estas acciones: corregir, anular, deshacer,\n// resolver_pendiente, forzar_registro, cancelar.\n\nconst s = $json;\nconst tipo = s.payload?.tipo;\nconst texto = String(s.payload?.texto || '').trim();\n\nlet accion = 'desconocida';\nlet objetivo = null;\nlet detalle = {};\n\nif (tipo === 'callback') {\n  const data = texto; // en WF1, payload.texto = callback_query.data\n  if (data === 'ok') { accion = 'confirmar_pendiente'; }\n  else if (data === 'cancel') { accion = 'cancelar'; }\n  else if (data.startsWith('monto:')) { accion = 'resolver_pendiente'; detalle = { campo: 'monto', valor: Number(data.slice(6)) }; }\n  else if (data.startsWith('cat:')) { accion = 'resolver_pendiente'; detalle = { campo: 'categoria_id', valor: data.slice(4) }; }\n  else if (data.startsWith('fix:')) { accion = 'pedir_correccion_campo'; detalle = { campo: data.slice(4) }; }\n  else if (data.startsWith('force:')) { accion = 'forzar_registro'; objetivo = data.slice(6); }\n  else if (data.startsWith('anularok:')) { accion = 'aplicar_anulacion'; objetivo = data.slice(9); }\n  else if (data.startsWith('corrfix:')) { const [, id, campo] = data.split(':'); accion = 'pedir_correccion_campo'; objetivo = id; detalle = { campo }; }\n} else {\n  const m = texto.match(/^\\/(corregir|anular|deshacer)(?:@\\w+)?\\s*(.*)$/i);\n  if (m) {\n    const cmd = m[1].toLowerCase();\n    const arg = m[2].trim();\n    if (cmd === 'corregir') { accion = 'iniciar_correccion'; objetivo = arg || null; }\n    else if (cmd === 'anular') { accion = 'anular'; objetivo = arg || null; }\n    else if (cmd === 'deshacer') { accion = 'deshacer'; }\n  }\n}\n\nreturn [{ json: { ...s, corr: { accion, objetivo, detalle } } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000002",
+      "name": "Clasificar Accion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1380,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Transacciones",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "f6000001-0000-4000-8000-000000000003",
+      "name": "Leer Transacciones",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1160,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pendientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "f6000001-0000-4000-8000-000000000004",
+      "name": "Leer Pendientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1160,
+        480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UhpWtX31HTxGPuAh",
+          "name": "FIN — Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "numberInputs": 2,
+        "options": {}
+      },
+      "id": "f6000001-0000-4000-8000-000000000005",
+      "name": "Unir",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -940,
+        390
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resuelve el objetivo real de la accion contra los datos leidos.\n// Aca es donde se aplican las reglas: /deshacer solo el ultimo propio,\n// solo un pendiente abierto por chat, TTL de pendientes, etc.\n\nconst s = $('Clasificar Accion').first().json;\nconst txs = $('Leer Transacciones').all().map(i => i.json).filter(t => t && t.transaccion_id);\nconst pends = $('Leer Pendientes').all().map(i => i.json).filter(p => p && p.pendiente_id);\nconst ZONA = 'America/Bogota';\nconst ahora = DateTime.now().setZone(ZONA);\n\nconst chatId = String(s.ctx.telegram_chat_id);\nconst userId = String(s.ctx.telegram_user_id);\n\nfunction idCoincide(tx, buscado) {\n  if (!buscado) return false;\n  const full = String(tx.transaccion_id).trim();\n  const corto = full.split('-').pop();\n  return full === buscado.trim() || corto === buscado.trim().toUpperCase();\n}\n\nconst pendienteAbierto = pends.find(p =>\n  String(p.telegram_chat_id).trim() === chatId &&\n  String(p.estado).trim() === 'abierto'\n);\nconst pendienteExpirado = pendienteAbierto &&\n  DateTime.fromISO(String(pendienteAbierto.fecha_expiracion), { zone: ZONA }) < ahora;\n\nlet resultado = { ...s.corr, ok: false, mensaje: null, tx: null, pendiente: pendienteAbierto || null };\n\nswitch (s.corr.accion) {\n  case 'iniciar_correccion': {\n    if (!s.corr.objetivo) { resultado.mensaje = 'Usa /corregir <id>. Mira /recientes para ver los códigos.'; break; }\n    const tx = txs.find(t => idCoincide(t, s.corr.objetivo) && String(t.estado).trim() === 'activo');\n    if (!tx) { resultado.mensaje = `No encontré un movimiento activo con id \"${s.corr.objetivo}\".`; break; }\n    resultado.ok = true; resultado.tx = tx;\n    break;\n  }\n  case 'anular': {\n    if (!s.corr.objetivo) { resultado.mensaje = 'Usa /anular <id>. Mira /recientes para ver los códigos.'; break; }\n    const tx = txs.find(t => idCoincide(t, s.corr.objetivo) && String(t.estado).trim() === 'activo');\n    if (!tx) { resultado.mensaje = `No encontré un movimiento activo con id \"${s.corr.objetivo}\".`; break; }\n    resultado.ok = true; resultado.tx = tx;\n    break;\n  }\n  case 'deshacer': {\n    // Solo el mas reciente, del propio usuario, en las ultimas 24h.\n    const candidatos = txs\n      .filter(t => String(t.estado).trim() === 'activo' && String(t.telegram_user_id).trim() === userId)\n      .filter(t => ahora.diff(DateTime.fromISO(String(t.timestamp_registro), { zone: ZONA }), 'hours').hours <= 24)\n      .sort((a, b) => new Date(b.timestamp_registro) - new Date(a.timestamp_registro));\n    if (!candidatos.length) { resultado.mensaje = 'No hay nada reciente que deshacer.'; break; }\n    resultado.ok = true; resultado.tx = candidatos[0];\n    break;\n  }\n  case 'resolver_pendiente':\n  case 'confirmar_pendiente':\n  case 'pedir_correccion_campo': {\n    if (!pendienteAbierto) { resultado.mensaje = 'No tienes ninguna confirmación pendiente activa.'; break; }\n    if (pendienteExpirado) { resultado.mensaje = 'Esa confirmación ya venció, reenvía el gasto.'; resultado.expirar = true; break; }\n    resultado.ok = true;\n    break;\n  }\n  case 'aplicar_anulacion': {\n    const tx = txs.find(t => idCoincide(t, s.corr.objetivo) && String(t.estado).trim() === 'activo');\n    if (!tx) { resultado.mensaje = 'Ese movimiento ya no está activo (puede que lo hayas anulado antes).'; break; }\n    resultado.ok = true; resultado.tx = tx;\n    break;\n  }\n  case 'forzar_registro': {\n    resultado.ok = true; // el tx_id viaja en objetivo, WF4 decide con el contrato pendiente\n    break;\n  }\n  case 'cancelar': {\n    resultado.ok = true;\n    resultado.pendiente = pendienteAbierto || null;\n    break;\n  }\n  default:\n    resultado.mensaje = 'No entendí la instrucción.';\n}\n\nreturn [{ json: { ...s, resolucion: resultado } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000006",
+      "name": "Resolver Objetivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        390
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-no-ok",
+                    "leftValue": "={{ $json.resolucion.ok }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "rechazado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-corr",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "iniciar_correccion",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "iniciar_correccion"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-anu",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "anular",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "anular"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-des",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "deshacer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "deshacer"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-aplic-anu",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "aplicar_anulacion",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "aplicar_anulacion"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-res",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "resolver_pendiente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resolver_pendiente"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-conf",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "confirmar_pendiente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "confirmar_pendiente"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-forz",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "forzar_registro",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "forzar_registro"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "r-canc",
+                    "leftValue": "={{ $json.resolucion.accion }}",
+                    "rightValue": "cancelar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cancelar"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "pedir_campo"
+        }
+      },
+      "id": "f6000001-0000-4000-8000-000000000007",
+      "name": "Enrutar Accion",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -500,
+        390
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: s.resolucion.mensaje || 'No pude procesar la solicitud.' } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000008",
+      "name": "Resp: Rechazado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ofrece botones para elegir que corregir del movimiento encontrado.\nconst s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst tx = s.resolucion.tx;\nconst texto = [\n  `Corrigiendo ${tx.transaccion_id}`,\n  `${fmt(tx.monto)} — ${tx.categoria || tx.categoria_id} · ${tx.fecha_movimiento}`,\n  '',\n  '¿Qué campo corrijo?'\n].join('\\n');\nconst teclado = { inline_keyboard: [\n  [{ text: 'Monto', callback_data: `corrfix:${tx.transaccion_id}:monto` }, { text: 'Categoría', callback_data: `corrfix:${tx.transaccion_id}:categoria_id` }],\n  [{ text: 'Fecha', callback_data: `corrfix:${tx.transaccion_id}:fecha_movimiento` }, { text: 'Descripción', callback_data: `corrfix:${tx.transaccion_id}:descripcion` }],\n  [{ text: 'Cancelar', callback_data: 'cancel' }]\n]};\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto, teclado: JSON.stringify(teclado) } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000009",
+      "name": "Resp: Iniciar Correccion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Anulacion: pide confirmacion explicita antes de aplicar.\nconst s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst tx = s.resolucion.tx;\nconst texto = `¿Anular ${fmt(tx.monto)} en ${tx.categoria || tx.categoria_id} del ${tx.fecha_movimiento}?`;\nconst teclado = { inline_keyboard: [[\n  { text: 'Sí, anular', callback_data: `anularok:${tx.transaccion_id}` },\n  { text: 'No', callback_data: 'cancel' }\n]]};\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto, teclado: JSON.stringify(teclado) } }];"
+      },
+      "id": "f6000001-0000-4000-8000-00000000000a",
+      "name": "Resp: Confirmar Anulacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deshacer: mismo patron, requiere confirmacion (regla §12 del enunciado).\nconst s = $json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst tx = s.resolucion.tx;\nconst texto = `¿Deshacer tu último movimiento? ${fmt(tx.monto)} en ${tx.categoria || tx.categoria_id} del ${tx.fecha_movimiento}.`;\nconst teclado = { inline_keyboard: [[\n  { text: 'Sí, deshacer', callback_data: `anularok:${tx.transaccion_id}` },\n  { text: 'No', callback_data: 'cancel' }\n]]};\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto, teclado: JSON.stringify(teclado) } }];"
+      },
+      "id": "f6000001-0000-4000-8000-00000000000b",
+      "name": "Resp: Confirmar Deshacer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// El usuario resolvio un campo ambiguo del pendiente (monto o categoria\n// via boton). Se completa el Contrato.Movimiento guardado y se manda\n// a WF4. Si aun falta algo, se vuelve a preguntar (no se re-implementa\n// aca: se delega a WF2 reconstruyendo su misma logica de pendiente).\n\nconst s = $json;\nconst p = s.resolucion.pendiente;\nlet propuesto;\ntry { propuesto = JSON.parse(p.datos_propuestos || '{}'); } catch (e) { propuesto = {}; }\n\npropuesto[s.corr.detalle.campo] = s.corr.detalle.valor;\n\n// Si el campo resuelto era la unica falta, ya se puede registrar.\nconst campos = new Set(propuesto.campos_faltantes || []);\ncampos.delete(s.corr.detalle.campo === 'categoria_id' ? 'categoria' : s.corr.detalle.campo);\npropuesto.campos_faltantes = [...campos];\npropuesto.requiere_confirmacion = campos.size > 0;\n\nreturn [{\n  json: {\n    ...s,\n    pendiente_a_consumir: p,\n    contrato: propuesto,\n    _listo: campos.size === 0\n  }\n}];"
+      },
+      "id": "f6000001-0000-4000-8000-00000000000c",
+      "name": "Aplicar Resolucion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-listo",
+              "leftValue": "={{ $json._listo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f6000001-0000-4000-8000-00000000000d",
+      "name": "Ya Completo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -40,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "zL3Dyc6acr9MDVRy",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "f6000001-0000-4000-8000-00000000000f",
+      "name": "→ WF4 Registrar",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aun falta algo: re-preguntar con el mismo patron de WF2.\nconst s = $json;\nconst c = s.contrato;\nconst faltantes = c.campos_faltantes || [];\nlet pregunta = 'Necesito un dato más.';\nlet botones = [];\n\nif (faltantes.includes('categoria')) {\n  pregunta = `$${(c.monto || 0).toLocaleString('es-CO')} — ¿en qué categoría lo pongo?`;\n} else if (faltantes.includes('monto')) {\n  pregunta = '¿De cuánto fue?';\n}\nbotones.push({ text: 'Cancelar', callback_data: 'cancel' });\n\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: pregunta, teclado: JSON.stringify({ inline_keyboard: [botones] }) } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000010",
+      "name": "Resp: Falta Otro Campo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: '✅ Confirmado. Registrando…' } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000011",
+      "name": "Resp: Confirmar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        400
+      ],
+      "notes": "Rama de 'confirmar_pendiente' (boton Confirmar de una factura). El registro real lo hace WF3/WF4; aca solo se acusa recibo del tap."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reenvia force:<tx_id> a WF4 no aplica: WF4 ya decidio no duplicar.\n// Aca 'forzar_registro' se resuelve releyendo el pendiente asociado a\n// ese chat y reenviandolo a WF4 con una bandera que salta el chequeo\n// de duplicado (WF4 lo detecta por posible_duplicado ya marcado).\nconst s = $json;\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: 'Entendido, lo registro de todas formas.' } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000012",
+      "name": "Resp: Forzar Registro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json;\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto: 'Cancelado.' } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000014",
+      "name": "Resp: Cancelado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Marca la transaccion original como 'corregido' o 'anulado' segun\n// el verbo, y si es correccion crea la fila nueva enlazada (DEC-006).\n// El recalculo de saldos de ambas categorias lo dispara el propio WF4\n// al procesar la fila nueva; para la anulacion pura se recalcula aqui\n// mismo porque no hay Contrato.Movimiento que mandar a WF4.\n\nconst s = $json;\nconst tx = s.resolucion.tx;\nconst esAnulacion = true; // esta rama solo se alcanza tras confirmar anularok:<id>\n\nreturn [{\n  json: {\n    ...s,\n    tx_original: tx,\n    nuevo_estado: esAnulacion ? 'anulado' : 'corregido',\n    es_anulacion: esAnulacion\n  }\n}];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000015",
+      "name": "Preparar Cambio de Estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        760
+      ],
+      "notes": "Nodo puente: recibe de 'Resp: Confirmar Anulacion' y 'Resp: Confirmar Deshacer' cuando el usuario ya confirmo por boton (callback anularok:<id>, capturado en Clasificar Accion como forzar_registro-like — ver nota en Enrutar Accion)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un evento de Auditoria por cada corregir/anular/deshacer aplicado.\nconst s = $('Preparar Cambio de Estado').first().json;\nconst ahora = DateTime.now().setZone('America/Bogota');\nconst stamp = ahora.toFormat('yyyyLLdd');\nconst rnd = Math.random().toString(36).slice(2, 6).toUpperCase();\nreturn [{\n  json: {\n    evento_id: `EV-${stamp}-${rnd}`,\n    timestamp: ahora.toISO(),\n    correlation_id: s.meta.correlation_id,\n    workflow: '06-correcciones',\n    ejecucion: String(s.meta.execution_id || ''),\n    usuario: String(s.ctx.telegram_user_id ?? ''),\n    accion: s.corr.accion,\n    resultado: 'ok',\n    detalle: `${s.tx_original.transaccion_id} -> ${s.nuevo_estado}`,\n    error: '',\n    datos_tecnicos: JSON.stringify({ monto: s.tx_original.monto, categoria: s.tx_original.categoria_id })\n  }\n}];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000017",
+      "name": "Construir Auditoria",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Preparar Cambio de Estado').first().json; const fmt = v => '$' + Math.round(Number(v) || 0).toLocaleString('es-CO');\nconst tx = s.tx_original;\nconst texto = s.es_anulacion\n  ? `Movimiento anulado. Recuperaste ${fmt(tx.monto)} en ${tx.categoria || tx.categoria_id}.`\n  : `Corregido: ${tx.transaccion_id} ahora está marcado como corregido. Registrá el valor correcto como un nuevo movimiento.`;\nreturn [{ json: { chat_id: s.ctx.telegram_chat_id, texto } }];"
+      },
+      "id": "f6000001-0000-4000-8000-000000000019",
+      "name": "Resp: Cambio Aplicado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FIN — Correcciones (WF6)\n\nJunto con WF4, el **unico** workflow que escribe en `Transacciones`\n(DEC-004). Escribe SOLO cambios de `estado`, nunca montos.\n\n**Cinco entradas posibles**, todas resueltas en `Clasificar Accion`:\n- `/corregir <id>` · `/anular <id>` · `/deshacer`\n- Botones de un pendiente de WF2/WF3 (`monto:X`, `cat:Y`)\n- Botones de un duplicado de WF4 (`force:<id>`, `cancel`)\n\n**Borrado logico (DEC-006):** anular/deshacer solo cambia `estado`.\nCorregir crea una fila nueva `activo` enlazada por\n`transaccion_relacionada`; la original pasa a `corregido`. El\nrecalculo de saldos de ambas categorias ocurre cuando esa fila nueva\npasa por WF4.\n\n**`/deshacer`** solo aplica al movimiento `activo` mas reciente **del\npropio `telegram_user_id`**, dentro de las ultimas 24h, y siempre pide\nconfirmacion antes de aplicar.\n\n**Un solo pendiente abierto por chat** (data-model.md §7): antes de\nresolver cualquier callback se verifica que no haya expirado (TTL\nleido de `Configuracion.ttl_pendientes_minutos`).\n\n**Antes de importar:** reemplazar `zL3Dyc6acr9MDVRy`, reasignar\ncredenciales, `Error Workflow`, `Caller Policy`.",
+        "height": 480,
+        "width": 480
+      },
+      "id": "f6000001-0000-4000-8000-00000000001c",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Busca la fila por 'pendiente_id' en 'Pendientes', fusiona los campos\n// nuevos sobre la fila existente y arma el rango a actualizar.\n// El valor de coincidencia y los campos a cambiar vienen de una forma\n// ANIDADA (igual que el nodo nativo original), no de un $json plano.\nconst HEADERS = [\"pendiente_id\", \"telegram_chat_id\", \"telegram_message_id\", \"estado_maquina\", \"datos_propuestos\", \"campo_ambiguo\", \"opciones\", \"fecha_creacion\", \"fecha_expiracion\", \"estado\", \"correlation_id\"];\nconst MATCH_COL = 'pendiente_id';\nconst filas = $('Leer Pendientes').all().map(i => i.json);\nconst valorMatch = $json.pendiente_a_consumir?.pendiente_id;\nconst camposNuevos = { estado: 'consumido' };\nconst idx = filas.findIndex(f => String(f[MATCH_COL]).trim() === String(valorMatch).trim());\nif (idx === -1) { return { json: { _sin_fila: true } }; }\nconst filaSheets = idx + 2;\nconst fusionada = { ...filas[idx], ...camposNuevos };\nconst valores = HEADERS.map(h => fusionada[h] !== undefined && fusionada[h] !== null ? fusionada[h] : '');\nreturn { json: { fila_sheets: filaSheets, valores } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "f6000001-0000-4000-8000-00000000000e-merge",
+      "name": "Marcar Pendiente Consumido — Buscar y Fusionar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Pendientes!A{{ $json.fila_sheets }}:K{{ $json.fila_sheets }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.valores] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "f6000001-0000-4000-8000-00000000000e",
+      "name": "Marcar Pendiente Consumido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        180,
+        160
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Busca la fila por 'pendiente_id' en 'Pendientes', fusiona los campos\n// nuevos sobre la fila existente y arma el rango a actualizar.\n// El valor de coincidencia y los campos a cambiar vienen de una forma\n// ANIDADA (igual que el nodo nativo original), no de un $json plano.\nconst HEADERS = [\"pendiente_id\", \"telegram_chat_id\", \"telegram_message_id\", \"estado_maquina\", \"datos_propuestos\", \"campo_ambiguo\", \"opciones\", \"fecha_creacion\", \"fecha_expiracion\", \"estado\", \"correlation_id\"];\nconst MATCH_COL = 'pendiente_id';\nconst filas = $('Leer Pendientes').all().map(i => i.json);\nconst valorMatch = $json.resolucion?.pendiente?.pendiente_id;\nconst camposNuevos = { estado: 'cancelado' };\nconst idx = filas.findIndex(f => String(f[MATCH_COL]).trim() === String(valorMatch).trim());\nif (idx === -1) { return { json: { _sin_fila: true } }; }\nconst filaSheets = idx + 2;\nconst fusionada = { ...filas[idx], ...camposNuevos };\nconst valores = HEADERS.map(h => fusionada[h] !== undefined && fusionada[h] !== null ? fusionada[h] : '');\nreturn { json: { fila_sheets: filaSheets, valores } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "f6000001-0000-4000-8000-000000000013-merge",
+      "name": "Cancelar Pendiente — Buscar y Fusionar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Pendientes!A{{ $json.fila_sheets }}:K{{ $json.fila_sheets }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.valores] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "f6000001-0000-4000-8000-000000000013",
+      "name": "Cancelar Pendiente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -260,
+        640
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Busca la fila por 'transaccion_id' en 'Transacciones', fusiona los campos\n// nuevos sobre la fila existente y arma el rango a actualizar.\n// El valor de coincidencia y los campos a cambiar vienen de una forma\n// ANIDADA (igual que el nodo nativo original), no de un $json plano.\nconst HEADERS = [\"transaccion_id\", \"timestamp_registro\", \"fecha_movimiento\", \"ciclo_id\", \"tipo\", \"monto\", \"moneda\", \"categoria_id\", \"categoria\", \"subcategoria\", \"descripcion\", \"comercio_proveedor\", \"metodo_pago\", \"persona\", \"origen\", \"telegram_user_id\", \"telegram_chat_id\", \"telegram_message_id\", \"file_id\", \"archivo_url_o_referencia\", \"hash_archivo\", \"texto_original\", \"datos_extraidos\", \"confianza_ia\", \"requiere_revision\", \"estado\", \"posible_duplicado\", \"transaccion_relacionada\", \"correlation_id\", \"notas\"];\nconst MATCH_COL = 'transaccion_id';\nconst filas = $('Leer Transacciones').all().map(i => i.json);\nconst valorMatch = $json.tx_original?.transaccion_id;\nconst camposNuevos = { estado: $json.nuevo_estado };\nconst idx = filas.findIndex(f => String(f[MATCH_COL]).trim() === String(valorMatch).trim());\nif (idx === -1) { return { json: { _sin_fila: true } }; }\nconst filaSheets = idx + 2;\nconst fusionada = { ...filas[idx], ...camposNuevos };\nconst valores = HEADERS.map(h => fusionada[h] !== undefined && fusionada[h] !== null ? fusionada[h] : '');\nreturn { json: { fila_sheets: filaSheets, valores } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "f6000001-0000-4000-8000-000000000016-merge",
+      "name": "Actualizar Estado Original — Buscar y Fusionar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Transacciones!A{{ $json.fila_sheets }}:AD{{ $json.fila_sheets }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.valores] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "f6000001-0000-4000-8000-000000000016",
+      "name": "Actualizar Estado Original",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -40,
+        760
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila en el orden EXACTO de columnas de 'Auditoria'.\nconst HEADERS = [\"evento_id\", \"timestamp\", \"correlation_id\", \"workflow\", \"ejecucion\", \"usuario\", \"accion\", \"resultado\", \"detalle\", \"error\", \"datos_tecnicos\"];\nconst item = $json;\nconst fila = HEADERS.map(h => item[h] !== undefined && item[h] !== null ? item[h] : '');\nreturn { json: { fila } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "f6000001-0000-4000-8000-000000000018-row",
+      "name": "Guardar Auditoria — Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1x5vbhBuoICjcx6X9ZByqQJIrYw9JbMKDqVUY83gSkIg/values/Auditoria!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [$json.fila] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "f6000001-0000-4000-8000-000000000018",
+      "name": "Guardar Auditoria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        400,
+        760
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "tiroySRNcgH2AulS",
+          "name": "FIN — Google Sheets SA"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traduce el formato {inline_keyboard:[[{text,callback_data}]]}\n// (el que arman los Code nodes previos) al formato que espera\n// el nodo nativo Telegram: rows[].row.buttons[].additionalFields.\nconst s = $json;\nlet filas = [];\nif (s.teclado) {\n  let ik;\n  try { ik = JSON.parse(s.teclado).inline_keyboard; } catch (e) { ik = []; }\n  filas = ik.map(fila => ({ row: { buttons: fila.map(b => ({ text: b.text, additionalFields: { callback_data: b.callback_data } })) } }));\n}\nreturn [{ json: { ...s, _filas_botones: filas, _con_botones: filas.length > 0 } }];"
+      },
+      "id": "f6000001-0000-4000-8000-00000000001b-tr",
+      "name": "Responder en Telegram — Preparar Botones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        },
+        "replyMarkup": "={{ $json._con_botones ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": {
+          "rows": "={{ $json._filas_botones }}"
+        }
+      },
+      "id": "f6000001-0000-4000-8000-00000000001b",
+      "name": "Responder en Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1080,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CFxHjF4Gfr5kJdJj",
+          "name": "FIN — Telegram Bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Entrada": {
+      "main": [
+        [
+          {
+            "node": "Clasificar Accion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar Accion": {
+      "main": [
+        [
+          {
+            "node": "Leer Transacciones",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Transacciones": {
+      "main": [
+        [
+          {
+            "node": "Unir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Unir",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Unir": {
+      "main": [
+        [
+          {
+            "node": "Resolver Objetivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Objetivo": {
+      "main": [
+        [
+          {
+            "node": "Enrutar Accion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar Accion": {
+      "main": [
+        [
+          {
+            "node": "Resp: Rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Iniciar Correccion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Confirmar Anulacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Confirmar Deshacer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Cambio de Estado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aplicar Resolucion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Confirmar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Forzar Registro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cancelar Pendiente — Buscar y Fusionar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Rechazado": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Iniciar Correccion": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Confirmar Anulacion": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Confirmar Deshacer": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aplicar Resolucion": {
+      "main": [
+        [
+          {
+            "node": "Ya Completo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ya Completo?": {
+      "main": [
+        [
+          {
+            "node": "Marcar Pendiente Consumido — Buscar y Fusionar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: Falta Otro Campo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Pendiente Consumido": {
+      "main": [
+        [
+          {
+            "node": "→ WF4 Registrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Falta Otro Campo": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Confirmar": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Forzar Registro": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar Pendiente": {
+      "main": [
+        [
+          {
+            "node": "Resp: Cancelado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Cancelado": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cambio de Estado": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Estado Original — Buscar y Fusionar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Estado Original": {
+      "main": [
+        [
+          {
+            "node": "Construir Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Auditoria": {
+      "main": [
+        [
+          {
+            "node": "Guardar Auditoria — Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Auditoria": {
+      "main": [
+        [
+          {
+            "node": "Resp: Cambio Aplicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: Cambio Aplicado": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Pendiente Consumido — Buscar y Fusionar": {
+      "main": [
+        [
+          {
+            "node": "Marcar Pendiente Consumido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar Pendiente — Buscar y Fusionar": {
+      "main": [
+        [
+          {
+            "node": "Cancelar Pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Estado Original — Buscar y Fusionar": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Estado Original",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Auditoria — Fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder en Telegram — Preparar Botones": {
+      "main": [
+        [
+          {
+            "node": "Responder en Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
